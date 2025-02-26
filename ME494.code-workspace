@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"name": "ME494",
+			"path": "../../../../My Drive (aidenprevey@gmail.com)/School/UW/ME494"
+		},
+		{
+			"name": "Laser Cleaning Embedded Code",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.h": "c",
+			"cstdint": "cpp"
+		}
+	}
+}
