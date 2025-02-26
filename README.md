@@ -1,1 +1,1 @@
-Code for the embeeded part of the laser cleaning capstone at UW
+Code for the embedded part of the laser cleaning capstone at UW
