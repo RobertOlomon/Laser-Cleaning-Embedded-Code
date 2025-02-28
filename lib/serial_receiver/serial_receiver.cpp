@@ -3,10 +3,10 @@
 #include <cstring>
 
 SerialReceiver::CommandMessage::CommandMessage()  // Define default message
-  : G0(0.0f), G1(0.0f), G4(0.0f), G90(false), M80(false), M17(false) {}
+  : G0(G0), G1(G1), G4(G4), G90(false), M80(false), M17(false) {}
 
-SerialReceiver::CommandMessage::CommandMessage(float G0, float G1, float G4, bool G90, bool M80 , bool M17)
-    : G0(G0), G1(G1), G4(G4), G90(G90), M80(M80), M17(M17) {}
+SerialReceiver::CommandMessage::CommandMessage(Gcommand G0, Gcommand G1, Gcommand G4, bool G90, bool M80 , bool M17)
+  : G0(G0), G1(G1), G4(G4), G90(G90), M80(M80), M17(M17) {}
 
 SerialReceiver::CommandMessage::CommandMessage(char buffer[]) {
 //recieved string from serial, parse to allowed Gcode and Mcode
@@ -22,14 +22,16 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[]) {
               Serial.print("Expected parameter after G" + static_cast<String>(gCmd) +  "\n");
               break;
           }
+          
           float param = atof(token);
-
           switch (gCmd) {
               case 0:
-                  G0 = param;
+                  G0.received = true;
+                  G0.value = param;
                   break;
               case 4:
-                  G4 = param;
+                  G4.received = true;
+                  G4.value = param;
                   break;
               default:
                   Serial.print("Unhandled G-code: G" + static_cast<String>(gCmd) + "\n");
@@ -141,8 +143,16 @@ void SerialReceiver::parse() {
   };
 }
 
-SerialReceiver::CommandMessage SerialReceiver::lastReceivedGeneralMessage() const {
+bool SerialReceiver::CommandMessage::is_M_command() {
+  return M80 || M17;
+}
+
+SerialReceiver::CommandMessage SerialReceiver::lastReceivedCommandMessage() const {
     return lastReceivedCommandMessage_;
+}
+
+SerialReceiver::FreeMessage SerialReceiver::lastReceivedFreeMessage() const {
+    return lastReceivedFreeMessage_;
 }
 
 SerialReceiver::MessageType SerialReceiver::lastReceivedMessageId() const {

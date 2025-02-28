@@ -8,8 +8,8 @@ class SerialReceiver
 {
 public:
   static constexpr int HEADER_SIZE = 5;
-  static constexpr int BUFFER_SIZE = 256;   
-
+  static constexpr int BUFFER_SIZE = 256;  
+  
   enum State
   {
     WAITING_FOR_HEADER = 0,
@@ -24,19 +24,26 @@ public:
     FREE
   };
 
+  struct Gcommand {
+    bool received = false;
+    float value = 0.0f;
+  };
+
   class CommandMessage
   {
   public:
-      float G0;
-      float G1;
-      float G4;
-      bool G90;
-      bool M80;
-      bool M17;
+      Gcommand G0;  // G0 is the move command
+      Gcommand G1;  // G1 is the move command
+      Gcommand G4;  // G4 is the dwell command
+      bool G90;  // G90 is the absolute positioning command
+      bool M80;  // M80 is the set max speed command
+      bool M17;  // M17 is the set acceleration command
 
       CommandMessage();
-      CommandMessage(float G0, float G1, float G4, bool G90, bool M80, bool M17);
+      CommandMessage(Gcommand G0, Gcommand G1, Gcommand G4, bool G90, bool M80, bool M17);
       CommandMessage(char buffer[]);
+
+      bool is_M_command();
   };
 
   // FreeMessage doesn't have any data associated with it
@@ -50,7 +57,8 @@ public:
   SerialReceiver();
 
   void parse();
-  CommandMessage lastReceivedGeneralMessage() const;
+  CommandMessage lastReceivedCommandMessage() const;
+  FreeMessage lastReceivedFreeMessage() const;
   MessageType lastReceivedMessageId() const;
   
   private:
