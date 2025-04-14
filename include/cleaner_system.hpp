@@ -1,5 +1,4 @@
 #include "TMC5160.h"
-#include "cleaner_system_constants.hpp"
 #include "stepper_motor.hpp"
 class Cleaner
 {
@@ -9,10 +8,20 @@ public:
     int reset();
 
 private:
-    float jaw_rotation_;
-    float jaw_pos_;
-    float clamp_pos_;
-    bool is_clamped_;
+    struct State
+    {
+        float jaw_rotation;
+        float jaw_pos;
+        float clamp_pos;
+        bool is_clamped;
+    };
+
+    int JAW_ROTATION_CS_PIN = 9;   // Pin for jaw rotation motor
+    int JAW_POSITION_CS_PIN = 10;  // Pin for jaw position motor
+    int CLAMP_CS_PIN        = 11;  // Pin for clamp motor
+
+    State state_;
+    State des_state_;
 
     StepperMotor jaw_rotation_motor_;
     StepperMotor jaw_pos_motor_;

@@ -35,3 +35,9 @@ int StepperMotor::begin()
     stepper_.setAccelerations(250, 350, 500, 700);
     return EXIT_SUCCESS;
 }
+
+void StepperMotor::turnOff()
+{
+    stepper_.disable();
+    digitalWrite(breakPin, LOW);
+}

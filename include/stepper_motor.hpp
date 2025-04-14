@@ -17,9 +17,9 @@ public:
         TMC5160::PowerStageParameters powerStageParams_,
         TMC5160::MotorParameters motorParams_);
     int begin();
-    void initializeStepper(float maxSpeed, float acceleration);
     void kill();
     void setRunCurrent(uint8_t currentLimit);
+    void turnOff();
 
 private:
     TMC5160_SPI stepper_;  // The wrapped driver instance

@@ -1,7 +1,6 @@
 #include "cleaner_system.hpp"
 
 #include "TMC5160.h"
-#include "cleaner_system_constants.hpp"
 
 Cleaner::Cleaner()
     : jaw_power_params_(),
@@ -55,30 +54,33 @@ TMC5160::MotorParameters Cleaner::makeClampMotorParams()
     return p;
 }
 
-Cleaner::~Cleaner() {}
+Cleaner::~Cleaner() = default;
 
 int Cleaner::reset()
 {
-    jaw_pos_      = 0.0f;
-    jaw_rotation_ = 0.0f;
-    clamp_pos_    = 0.0f;
-    is_clamped_   = false;
+    state_.jaw_rotation = 0.0f;
+    state_.jaw_pos      = 0.0f;
+    state_.clamp_pos    = 0.0f;
+    state_.is_clamped   = false;
+
+    des_state_.jaw_rotation = 0.0f;
+    des_state_.jaw_pos      = 0.0f;
+    des_state_.clamp_pos    = 0.0f;
+    des_state_.is_clamped   = false;
+
     // Initialize motors
+
     if (jaw_rotation_motor_.begin() != EXIT_SUCCESS)
     {
         Serial.println("Failed to initialize jaw rotation motor.");
         return EXIT_FAILURE;
     }
-    {
-        Serial.println("Failed to initialize jaw rotation motor.");
-        return EXIT_FAILURE;
-    }
-    if (!jaw_pos_motor_.begin())
+    if (!jaw_pos_motor_.begin() != EXIT_SUCCESS)
     {
         Serial.println("Failed to initialize jaw position motor.");
         return EXIT_FAILURE;
     }
-    if (!clamp_motor_.begin())
+    if (!clamp_motor_.begin() != EXIT_SUCCESS)
     {
         Serial.println("Failed to initialize clamp motor.");
         return EXIT_FAILURE;
