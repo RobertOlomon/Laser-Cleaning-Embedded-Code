@@ -2,5 +2,6 @@
     "files.associations": {
         "*.h": "c",
         "cstring": "cpp"
-    }
+    },
+    "editor.formatOnSave": true,
 }
