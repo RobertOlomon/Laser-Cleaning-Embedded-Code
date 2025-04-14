@@ -1,5 +1,4 @@
-#ifndef SERIAL_RECEIVER_H
-#define SERIAL_RECEIVER_H
+#pragma once
 
 #include <Arduino.h>
 #include <cstdint>
@@ -9,7 +8,7 @@ class SerialReceiver
 public:
   static constexpr int HEADER_SIZE = 5;
   static constexpr int BUFFER_SIZE = 256;  
-  
+
   enum State
   {
     WAITING_FOR_HEADER = 0,
@@ -71,5 +70,3 @@ public:
     FreeMessage lastReceivedFreeMessage_;
     
 };
-
-#endif // SERIAL_RECEIVER_H
