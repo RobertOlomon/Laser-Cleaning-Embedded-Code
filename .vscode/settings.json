@@ -4,4 +4,5 @@
         "cstring": "cpp"
     },
     "editor.formatOnSave": true,
+    "clang-format.executable": "D:/Applications/LLVM/bin/clang-format.exe",
 }
