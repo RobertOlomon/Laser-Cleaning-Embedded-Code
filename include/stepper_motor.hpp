@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-#include "TMC5160.h"
+#include "TMCStepper.h"
 
 /**
  * This class wraps the TMC5160 driver to provide a simple interface for controlling a stepper
@@ -9,7 +9,7 @@
  * interface.
  *
  */
-class StepperMotor
+class StepperMotor : public TMC5160Stepper
 {
 public:
     StepperMotor(
@@ -22,7 +22,7 @@ public:
     void turnOff();
 
 private:
-    TMC5160_SPI stepper_;  // The wrapped driver instance
+    TMC5160Stepper stepper_;  // The wrapped driver instance
     TMC5160::PowerStageParameters powerStageParams_;
     TMC5160::MotorParameters motorParams_;
     const int breakPin = 10;  // Replace with actual pin definition or move to constructor

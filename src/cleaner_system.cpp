@@ -56,6 +56,16 @@ TMC5160::MotorParameters Cleaner::makeClampMotorParams()
 
 Cleaner::~Cleaner() = default;
 
+void Cleaner::home()
+{
+    jaw_rotation_motor_.setCurrentPosition(0.0f); // Move to home position
+    int i = 0;
+    while(!digitalRead(LIMIT_SWITCH_PIN)){
+        jaw_rotation_motor_.setTargetPosition(10*i); // Move towards the limit switch
+
+    }
+}
+
 int Cleaner::reset()
 {
     state_.jaw_rotation = 0.0f;
@@ -85,6 +95,15 @@ int Cleaner::reset()
         Serial.println("Failed to initialize clamp motor.");
         return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
+}
+
+int Cleaner::shutdown()
+{
+    jaw_rotation_motor_.kill();
+    jaw_pos_motor_.kill();
+    clamp_motor_.kill();
 
     return EXIT_SUCCESS;
 }

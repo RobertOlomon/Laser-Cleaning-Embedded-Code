@@ -1,76 +1,139 @@
 #include "serial_receiver.hpp"
-#include <Arduino.h>
+
 #include <cstring>
 
-SerialReceiver::CommandMessage::CommandMessage() // Define default message
-    : G0(G0), G1(G1), G4(G4), G90(false), M80(false), M17(false) {}
+#include <Arduino.h>
 
-SerialReceiver::CommandMessage::CommandMessage(Gcommand G0, Gcommand G1,
-                                               Gcommand G4, bool G90, bool M80,
-                                               bool M17)
-    : G0(G0), G1(G1), G4(G4), G90(G90), M80(M80), M17(M17) {}
-
-SerialReceiver::CommandMessage::CommandMessage(char buffer[]) {
-  // recieved string from serial, parse to allowed Gcode and Mcode
-  char *token = strtok(buffer, " ");
-  while (token != NULL) {
-    if (token[0] == 'G') {
-      // Extract the command number (e.g., 0 or 4)
-      int gCmd = token[1] - '0';
-      // Get the parameter (assumes parameter follows the command)
-      token = strtok(token + 3, " ");
-      if (token == NULL) {
-        Serial.print("Expected parameter after G" + static_cast<String>(gCmd) +
-                     "\n");
-        break;
-      }
-
-      float param = atof(token);
-      switch (gCmd) {
-      case 0:
-        G0.received = true;
-        G0.value = param;
-        break;
-      case 4:
-        G4.received = true;
-        G4.value = param;
-        break;
-      default:
-        Serial.print("Unhandled G-code: G" + static_cast<String>(gCmd) + "\n");
-        break;
-      }
-    } else if (token[0] == 'M') {
-      // For M commands, if they have no additional parameter you can process
-      // directly.
-      int mCmd = atoi(token + 1);
-      switch (mCmd) {
-      case 80:
-        M80 = true;
-        break;
-      case 17:
-        M17 = true;
-        break;
-      default:
-        Serial.print("Unhandled M-code: M" + static_cast<String>(mCmd) + "\n");
-        break;
-      }
-    }
-    // Advance to the next token
-    token = strtok(NULL, " ");
-  }
+SerialReceiver::CommandMessage::CommandMessage()  // Define default message
+    : G0(G0),
+      G4(G4),
+      G90(false),
+      M80(false),
+      M17(false)
+{
 }
 
-SerialReceiver::FreeMessage::FreeMessage() {}
+SerialReceiver::CommandMessage::CommandMessage(
+    gCommand G0,
+    gCommand G4,
+    gCommand G28,
+    bool G90,
+    bool M80,
+    bool M17)
+    : G0(G0),
+      G4(G4),
+      G28(G28),
+      G90(G90),
+      M80(M80),
+      M17(M17)
+{
+}
 
-SerialReceiver::FreeMessage::FreeMessage(char buffer[]) {
-  // Empty constructor
+SerialReceiver::CommandMessage::CommandMessage(char buffer[])
+{
+    // received string from serial, parse to allowed Gcode and Mcode
+    char POS_STRTOK_FUCK_YOU[strlen(buffer)];
+    std::memcpy(POS_STRTOK_FUCK_YOU, buffer, strlen(buffer));
+    char *token = strtok(POS_STRTOK_FUCK_YOU, " ");
+
+    if (token[0] == 'G')
+    {
+        // Extract the command number (e.g., 0 or 4) by skipping G and seaching for int
+        int gCmd = atoi(token + 1);
+
+        switch (gCmd)
+        {
+            // For the Gcode, both G0 and G1 are used in the same way here, so they are
+            // combined.
+            case 0:
+            case 1:
+                G0.received = true;
+                ProcessGCommand(&buffer[strlen(token) + 1], &G0);
+                break;
+            case 4:
+                G4.received = true;
+                G4.val      = atof(&buffer[strlen(token) + 1]);
+                break;
+            case 28:
+                G28.received = true;
+                ProcessGCommand(&buffer[strlen(token) + 1], &G28);
+                break;
+
+            default:
+                Serial.print("Unhandled Gcode type: G");
+                Serial.print(std::to_string(token[0]).c_str());
+                Serial.print("\n");
+                break;
+        }
+    }
+    else if (token[0] == 'M')
+    {
+        // For M commands, if they have no additional parameter you can process
+        // directly.
+        int mCmd = atoi(token + 1);
+        switch (mCmd)
+        {
+            case 80:
+                M80 = true;
+                break;
+            case 17:
+                M17 = true;
+                break;
+            default:
+                Serial.print("Unhandled M-code: M");
+                Serial.println(mCmd);
+                break;
+        }
+    }
+}
+
+/** Param is the rest of the gCode command in the form of Y10.0 A10.0 C10.0 */
+
+void SerialReceiver::CommandMessage::ProcessGCommand(char *param, gCommand *command)
+{
+    char *token = strtok(param, " ");
+    // Process the G0 command and extract parameters
+    while (token != NULL)
+    {
+        // Check for Y, A, C parameters
+        switch (token[0])
+        {
+            case 'Y':
+                command->y = atof(token + 1);
+                break;
+            case 'A':
+                command->a = atof(token + 1);
+                break;
+            case 'C':
+                command->c = atof(token + 1);
+                break;
+            default:
+                Serial.print("Unhandled Gcode parameter: ");
+                Serial.print(std::to_string(token[0]).c_str());
+                Serial.print("\n");
+                break;
+        }
+        token = strtok(NULL, " ");
+    }
+}
+
+SerialReceiver::Stop::Stop() {}
+
+SerialReceiver::Stop::Stop(char buffer[])
+{
+    // Empty constructor
 }
 
 // Constructor for SerialReceiver
 SerialReceiver::SerialReceiver()
-    : state_(State::WAITING_FOR_HEADER), currMsgId_(MessageType::NONE),
-      lastReceivedMsgId_(MessageType::NONE), currMsgLen_(0),
-      lastReceivedCommandMessage_(), lastReceivedFreeMessage_() {}
+    : state_(State::WAITING_FOR_HEADER),
+      currMsgId_(MessageType::NONE),
+      lastReceivedMsgId_(MessageType::NONE),
+      currMsgLen_(0),
+      lastReceivedCommandMessage_(),
+      lastReceivedStopMessage_()
+{
+}
 
 /**
  * @brief Parses incoming serial data and processes messages based on their
@@ -92,68 +155,78 @@ SerialReceiver::SerialReceiver()
  * 4 bytes - Message length
  * n bytes - Message data
  *
- * It modyfies the lastReceivedCommandMessage_ and lastReceivedFreeMessage_
+ * It modyfies the lastReceivedCommandMessage_ and lastReceivedStopMessage_
  * based on the message type. and updates the lastReceivedMsgId_ with the
  * message type. The function updates the state machine and processes messages
  * of type COMMAND.
  */
 
-void SerialReceiver::parse() {
-  switch (state_) {
-  case State::WAITING_FOR_HEADER:
-    if (Serial.available() > 0 && Serial.read() == 0xA5) {
-      state_ = State::READING_HEADER;
-    }
-    break;
-  case State::READING_HEADER:
-    if (Serial.available() >= HEADER_SIZE) {
-      currMsgId_ = static_cast<MessageType>(
-          Serial.read()); // Read the message type and set to current message id
-      // Define a union to convert 4 bytes to an int32_t
-      union {
-        uint8_t bytes[4];
-        int32_t value;
-      } HeaderLength;
-      // Read the message length max size of 4 bytes
-      for (int i = 0; i < 4; i++) {
-        HeaderLength.bytes[i] = Serial.read();
-      }
-      currMsgLen_ = HeaderLength.value;
-      state_ = State::READING_BODY;
-    }
-    break;
-  case State::READING_BODY:
-    if (Serial.available() >= currMsgLen_) {
-      Serial.readBytes(currMsgData_, currMsgLen_);
-      switch (currMsgId_) {
-      case MessageType::COMMAND:
-        lastReceivedCommandMessage_ = CommandMessage(currMsgData_);
-        break;
-      case MessageType::FREE:
-        lastReceivedFreeMessage_ = FreeMessage(
-            currMsgData_); // Kinda useless but here for completeness
-        break;
-      case MessageType::NONE:
-        break;
-      }
-      lastReceivedMsgId_ = currMsgId_;
-      state_ = State::WAITING_FOR_HEADER;
-    }
-    break;
-  };
+void SerialReceiver::parse()
+{
+    switch (state_)
+    {
+        case State::WAITING_FOR_HEADER:
+            if (Serial.available() > 0 && Serial.read() == 0xA5)
+            {
+                state_ = State::READING_HEADER;
+            }
+            break;
+        case State::READING_HEADER:
+            if (Serial.available() >= HEADER_SIZE)
+            {
+                currMsgId_ = static_cast<MessageType>(
+                    Serial.read());  // Read the message type and set to current message id
+                // Define a union to convert 4 bytes to an int32_t
+                union
+                {
+                    uint8_t bytes[4];
+                    int32_t value;
+                } HeaderLength;
+                // Read the message length max size of 4 bytes
+                for (int i = 0; i < 4; i++)
+                {
+                    HeaderLength.bytes[i] = Serial.read();
+                }
+                currMsgLen_ = HeaderLength.value;
+                state_      = State::READING_BODY;
+            }
+            break;
+        case State::READING_BODY:
+            if (Serial.available() >= currMsgLen_)
+            {
+                Serial.readBytes(currMsgData_, currMsgLen_);
+                switch (currMsgId_)
+                {
+                    case MessageType::COMMAND:
+                        lastReceivedCommandMessage_ = CommandMessage(currMsgData_);
+                        break;
+                    case MessageType::STOP:
+                        lastReceivedStopMessage_ =
+                            Stop(currMsgData_);  // Kinda useless but here for completeness
+                        break;
+                    case MessageType::NONE:
+                        break;
+                }
+                lastReceivedMsgId_ = currMsgId_;
+                state_             = State::WAITING_FOR_HEADER;
+            }
+            break;
+    };
 }
 
 bool SerialReceiver::CommandMessage::is_M_command() { return M80 || M17; }
 
-SerialReceiver::CommandMessage
-SerialReceiver::lastReceivedCommandMessage() const {
-  return lastReceivedCommandMessage_;
+SerialReceiver::CommandMessage SerialReceiver::lastReceivedCommandMessage() const
+{
+    return lastReceivedCommandMessage_;
 }
 
-SerialReceiver::FreeMessage SerialReceiver::lastReceivedFreeMessage() const {
-  return lastReceivedFreeMessage_;
+SerialReceiver::Stop SerialReceiver::lastReceivedFreeMessage() const
+{
+    return lastReceivedStopMessage_;
 }
 
-SerialReceiver::MessageType SerialReceiver::lastReceivedMessageId() const {
-  return lastReceivedMsgId_;
+SerialReceiver::MessageType SerialReceiver::lastReceivedMessageId() const
+{
+    return lastReceivedMsgId_;
 }

@@ -1,10 +1,6 @@
 #pragma once
 
 #include <cstdint>
-
-#include <Arduino.h>
-
-
 class SerialReceiver
 {
 public:
@@ -22,45 +18,51 @@ public:
     {
         NONE = 0,
         COMMAND,
-        FREE
+        STOP
     };
 
-    struct Gcommand
+    struct gCommand
     {
         bool received = false;
-        float value = 0.0f;
+        float y       = 0.0f;  // slide position mm
+        float a       = 0.0f;  // jaw rotation rads
+        float c       = 0.0f;  // jaw position mm
+        float val     = 0.0f;  // value for G4 and other commands
     };
 
     class CommandMessage
     {
     public:
-        Gcommand G0;  // G0 is the move command
-        Gcommand G1;  // G1 is the move command
-        Gcommand G4;  // G4 is the dwell command
-        bool G90;     // G90 is the absolute positioning command
-        bool M80;     // M80 is the set max speed command
-        bool M17;     // M17 is the set acceleration command
+        gCommand G0;   // G0 is the move command
+        gCommand G4;   // G4 is the dwell command
+        gCommand G28;  // G28 is the home command
+        bool G90;      // G90 is the absolute positioning command
+        bool M80;      // M80 is the set max speed command
+        bool M17;      // M17 is the set acceleration command
 
         CommandMessage();
-        CommandMessage(Gcommand G0, Gcommand G1, Gcommand G4, bool G90, bool M80, bool M17);
+        CommandMessage(gCommand G0, gCommand G4, gCommand G28, bool G90, bool M80, bool M17);
         CommandMessage(char buffer[]);
 
         bool is_M_command();
+
+    private:
+        void ProcessGCommand(char* param, gCommand* command);
     };
 
-    // FreeMessage doesn't have any data associated with it
-    class FreeMessage
+    // Stop doesn't have any data associated with it
+    class Stop
     {
     public:
-        FreeMessage();
-        FreeMessage(char buffer[]);
+        Stop();
+        Stop(char buffer[]);
     };
 
     SerialReceiver();
 
     void parse();
     CommandMessage lastReceivedCommandMessage() const;
-    FreeMessage lastReceivedFreeMessage() const;
+    Stop lastReceivedFreeMessage() const;
     MessageType lastReceivedMessageId() const;
 
 private:
@@ -70,5 +72,5 @@ private:
     uint32_t currMsgLen_;
     char currMsgData_[BUFFER_SIZE];  // buffer size defined by constant
     CommandMessage lastReceivedCommandMessage_;
-    FreeMessage lastReceivedFreeMessage_;
+    Stop lastReceivedStopMessage_;
 };
