@@ -85,26 +85,7 @@ void loop()
                     SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
 
                     // modify the cleaner system state based on the command message
-
-                    if (msg.G0.received)
-                    {
-                        // Move command, modify the state to the desired state
-                        cleaner_system.des_state_.jaw_rotation = msg.G0.a;  // jaw rotation
-                        cleaner_system.des_state_.jaw_pos      = msg.G0.c;  // jaw position
-                        cleaner_system.des_state_.clamp_pos    = msg.G0.y;  // clamp position
-                        msg.G0.received                        = false;  // reset the received
-                    }
-                    if (msg.G4.received)
-                    {
-                        // Dwell command, wait for a certain time
-                        delay(msg.G4.val);  // kinda sucks it's blocking but good enough for now
-                    }
-                    if (msg.G28.received)
-                    {
-                        // Home command, reset the system state to the default state
-                        cleaner_system.reset();
-                        cleaner_system.home();
-                    }
+                    cleaner_system.processCommand(msg);
                 }
                 break;
 

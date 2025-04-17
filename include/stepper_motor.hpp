@@ -42,8 +42,13 @@ public:
     void setRunCurrent(uint8_t currentLimit);
     void turnOff();
 
+
+    void setClampCurrent(float currentLimit) {clamp_current_ = currentLimit; };
+    void setRunCurrent(float currentLimit) {run_current_ = currentLimit; };
 private:
     uint8_t BrakePin;                // Pin used to break the motor
     TMC5160Stepper stepper_driver_;  // The wrapped driver instance
+    float run_current_;              // The current limit in A
+    float clamp_current_;            // The lower clamp current for the clamping motor in A
     bool BrakeOn = LOW;              // Define which direction for the pin to activate the break.
 };

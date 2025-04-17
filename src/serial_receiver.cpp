@@ -4,12 +4,14 @@
 
 #include <Arduino.h>
 
-SerialReceiver::CommandMessage::CommandMessage()  // Define default message
-    : G0(G0),
-      G4(G4),
-      G90(false),
-      M80(false),
-      M17(false)
+SerialReceiver::CommandMessage::CommandMessage()
+    : G0(),
+      G4(),
+      G28(),
+      G90(),
+      M80(),
+      M17(),
+      M906()  // Initialize all command messages to default values
 {
 }
 
@@ -17,24 +19,26 @@ SerialReceiver::CommandMessage::CommandMessage(
     gCommand G0,
     gCommand G4,
     gCommand G28,
-    bool G90,
-    bool M80,
-    bool M17)
+    gCommand G90,
+    mCommand M80,
+    mCommand M17,
+    mCommand M906)  // Define message with parameters
     : G0(G0),
       G4(G4),
       G28(G28),
       G90(G90),
       M80(M80),
-      M17(M17)
+      M17(M17),
+      M906(M906)
 {
 }
 
 SerialReceiver::CommandMessage::CommandMessage(char buffer[])
 {
     // received string from serial, parse to allowed Gcode and Mcode
-    char POS_STRTOK_FUCK_YOU[strlen(buffer)];
-    std::memcpy(POS_STRTOK_FUCK_YOU, buffer, strlen(buffer));
-    char *token = strtok(POS_STRTOK_FUCK_YOU, " ");
+    char POS_STRTOK_F_YOU[strlen(buffer)];
+    std::memcpy(POS_STRTOK_F_YOU, buffer, strlen(buffer));
+    char *token = strtok(POS_STRTOK_F_YOU, " ");
 
     switch (token[0])
     {
@@ -50,7 +54,7 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
                 case 0:
                 case 1:
                     G0.received = true;
-                    ProcessGCommand(&buffer[strlen(token) + 1], &G0);
+                    ProcessCommand(&buffer[strlen(token) + 1], &G0);
                     break;
                 case 4:
                     G4.received = true;
@@ -58,9 +62,12 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
                     break;
                 case 28:
                     G28.received = true;
-                    ProcessGCommand(&buffer[strlen(token) + 1], &G28);
+                    ProcessCommand(&buffer[strlen(token) + 1], &G28);
                     break;
-
+                case 90:
+                    G90.received = true;
+                    Serial.println("G90 received, I ain't implementing that\n");
+                    break;
                 default:
                     Serial.print("Unhandled Gcode type: G");
                     Serial.print(std::to_string(token[0]).c_str());
@@ -76,12 +83,16 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
             switch (mCmd)
             {
                 case 80:
-                    M80 = true;
+                    M80.received = true;
                     break;
                 case 17:
-                    M17 = true;
+                    M17.received = true;
                     break;
-                default:
+                case 906:
+                    M906.received = true;
+                    ProcessCommand(&buffer[strlen(token) + 1], &M906);
+                    break;
+                default:    
                     Serial.print("Unhandled M-code: M");
                     Serial.println(mCmd);
                     break;
@@ -91,8 +102,8 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
 }
 
 /** Param is the rest of the gCode command in the form of Y10.0 A10.0 C10.0 */
-
-void SerialReceiver::CommandMessage::ProcessGCommand(char *param, gCommand *command)
+template <typename commandType>
+void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *command)
 {
     char *token = strtok(param, " ");
     // Process the G0 command and extract parameters
@@ -216,8 +227,6 @@ void SerialReceiver::parse()
             break;
     };
 }
-
-bool SerialReceiver::CommandMessage::is_M_command() { return M80 || M17; }
 
 SerialReceiver::CommandMessage SerialReceiver::lastReceivedCommandMessage() const
 {

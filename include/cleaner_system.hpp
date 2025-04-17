@@ -3,6 +3,7 @@
 #include "TMCStepper.h"
 #include "stepper_motor.hpp"
 #include "AS5048A.h"
+#include "serial_receiver.hpp"
 class Cleaner
 {
 public:
@@ -11,6 +12,7 @@ public:
     int reset();
     int shutdown();
     void home();
+    void processCommand(SerialReceiver::CommandMessage command);
     struct State
     {
         float jaw_rotation;
@@ -37,7 +39,8 @@ private:
     constexpr static int SW_MISO = 19;  // Pin for software SPI MISO
     constexpr static int SW_SCK  = 18;  // Pin for software SPI SCK
 
-    constexpr static const float ENCODER_READ_RATE_HZ = 1000.0f; // << Change this to desired Hz
+    constexpr static const float ENCODER_READ_RATE_HZ = 1000.0f; // Change this to desired Hz
+    constexpr static const float HOMING_SPEED = 100.0f;          // Speed for homing in mm/s
 
     StepperMotor jaw_rotation_motor_;
     StepperMotor jaw_pos_motor_;
