@@ -62,7 +62,7 @@ public:
 
     void parse();
     CommandMessage lastReceivedCommandMessage() const;
-    Stop lastReceivedFreeMessage() const;
+    Stop lastReceivedStopMessage() const;
     MessageType lastReceivedMessageId() const;
 
 private:

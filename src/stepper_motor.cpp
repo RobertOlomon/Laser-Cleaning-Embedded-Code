@@ -1,43 +1,54 @@
 #include "stepper_motor.hpp"
 
-#include "TMC5160.h"
+#include "TMCStepper.h"
 
 // Constructor: initialize wrapped TMC5160 instance
 StepperMotor::StepperMotor(
     uint8_t CS_PIN,
-    TMC5160::PowerStageParameters powerStageParams_,
-    TMC5160::MotorParameters motorParams_)
-    : stepper_(CS_PIN),
-      powerStageParams_(powerStageParams_),
-      motorParams_(motorParams_)
+    float R_SENSE,
+    uint8_t SW_MOSI,
+    uint8_t SW_MISO,
+    uint8_t SW_SCK,
+    uint8_t BrakePin)
+    : stepper_driver_(CS_PIN, R_SENSE, SW_MOSI, SW_MISO, SW_SCK)
 {
+    // initalized the break if it has one
+    this->BrakePin = BrakePin;
+    if (BrakePin != 255)
+    {
+        pinMode(BrakePin, OUTPUT);
+        digitalWrite(BrakePin, !BrakeOn);
+    }
 }
 
 void StepperMotor::kill()
 {
-    digitalWrite(breakPin, LOW);
-    stepper_.stop();
+    // turn on the break and disable the driver
+    if (BrakePin)
+    {
+        pinMode(BrakePin, OUTPUT);
+        digitalWrite(BrakePin, BrakeOn);
+    }
+    stepper_driver_.toff(0);  // Disable driver in software
 }
-
-void StepperMotor::setRunCurrent(uint8_t currentLimit) { motorParams_.irun = currentLimit; }
 
 int StepperMotor::begin()
 {
-    if (stepper_.begin(powerStageParams_, motorParams_, TMC5160::NORMAL_MOTOR_DIRECTION) !=
-        EXIT_SUCCESS)
-    {
-        Serial.println("Failed to initialize stepper motor.");
-        return EXIT_FAILURE;
-    }
-    stepper_.setRampMode(TMC5160::POSITIONING_MODE);
-    stepper_.setRampSpeeds(0, 0.1, 100);
-    stepper_.setMaxSpeed(200);
-    stepper_.setAccelerations(250, 350, 500, 700);
+    stepper_driver_.begin();
+    stepper_driver_.toff(5);           // Enables driver in software
+    stepper_driver_.rms_current(600);  // Set motor RMS current
+    stepper_driver_.microsteps(16);    // Set microsteps to 1/16th
+    stepper_driver_.en_pwm_mode(1);    // Enable extremely quiet stepping
+    stepper_driver_.pwm_autoscale(1);  // Slowest value (1...15)
+
     return EXIT_SUCCESS;
 }
 
 void StepperMotor::turnOff()
 {
-    stepper_.disable();
-    digitalWrite(breakPin, LOW);
+    if (BrakePin = !255)
+    {
+        digitalWrite(BrakePin, !BrakeOn);
+    }
+    stepper_driver_.toff(0);
 }

@@ -1,69 +1,39 @@
 #include "cleaner_system.hpp"
 
-#include "TMC5160.h"
+#include "TMCStepper.h"
+#include "stepper_motor.hpp"
 
 Cleaner::Cleaner()
-    : jaw_power_params_(),
-      jaw_motor_params_(makeJawMotorParams()),
-      jaw_rotation_motor_(JAW_ROTATION_CS_PIN, jaw_power_params_, jaw_motor_params_),
-
-      jaw_pos_power_params_(),
-      jaw_pos_motor_params_(makeJawPosMotorParams()),
-      jaw_pos_motor_(JAW_POSITION_CS_PIN, jaw_pos_power_params_, jaw_pos_motor_params_),
-
-      clamp_power_params_(),
-      clamp_motor_params_(makeClampMotorParams()),
-      clamp_motor_(CLAMP_CS_PIN, clamp_power_params_, clamp_motor_params_)
+    : jaw_rotation_motor_(
+          JAW_ROTATION_CS_PIN,
+          StepperMotor::TMC5160_PLUS_RSENSE,
+          SW_MOSI,
+          SW_MISO,
+          SW_SCK),
+      jaw_pos_motor_(
+          JAW_POSITION_CS_PIN,
+          StepperMotor::TMC5160_PLUS_RSENSE,
+          SW_MOSI,
+          SW_MISO,
+          SW_SCK),
+      clamp_motor_(CLAMP_CS_PIN, StepperMotor::TMC5160_PLUS_RSENSE, SW_MOSI, SW_MISO, SW_SCK),
+      jaw_encoder_(ENCODER_CS_PIN)
 {
     reset();
-}
-
-TMC5160::MotorParameters Cleaner::makeJawMotorParams()
-{
-    TMC5160::MotorParameters p;
-    p.globalScaler   = 32;
-    p.irun           = 16;
-    p.ihold          = 0;
-    p.freewheeling   = TMC5160_Reg::FREEWHEEL_NORMAL;
-    p.pwmOfsInitial  = 30;
-    p.pwmGradInitial = 0;
-    return p;
-}
-
-TMC5160::MotorParameters Cleaner::makeJawPosMotorParams()
-{
-    TMC5160::MotorParameters p;
-    p.globalScaler   = 32;
-    p.irun           = 16;
-    p.ihold          = 0;
-    p.freewheeling   = TMC5160_Reg::FREEWHEEL_NORMAL;
-    p.pwmOfsInitial  = 30;
-    p.pwmGradInitial = 0;
-    return p;
-}
-
-TMC5160::MotorParameters Cleaner::makeClampMotorParams()
-{
-    TMC5160::MotorParameters p;
-    p.globalScaler   = 32;
-    p.irun           = 16;
-    p.ihold          = 0;
-    p.freewheeling   = TMC5160_Reg::FREEWHEEL_NORMAL;
-    p.pwmOfsInitial  = 30;
-    p.pwmGradInitial = 0;
-    return p;
+    jaw_rotation_motor_.setMaxSpeed(1000.0f);
+    jaw_rotation_motor_.setAcceleration(1000.0f);
+    jaw_pos_motor_.setMaxSpeed(1000.0f);
+    jaw_pos_motor_.setAcceleration(1000.0f);
+    clamp_motor_.setMaxSpeed(1000.0f);
+    clamp_motor_.setAcceleration(1000.0f);
+    jaw_encoder_.init();  // Initialize the encoder
 }
 
 Cleaner::~Cleaner() = default;
 
 void Cleaner::home()
 {
-    jaw_rotation_motor_.setCurrentPosition(0.0f); // Move to home position
-    int i = 0;
-    while(!digitalRead(LIMIT_SWITCH_PIN)){
-        jaw_rotation_motor_.setTargetPosition(10*i); // Move towards the limit switch
-
-    }
+    // No operation
 }
 
 int Cleaner::reset()
@@ -97,6 +67,13 @@ int Cleaner::reset()
     }
 
     return EXIT_SUCCESS;
+}
+
+Cleaner::State Cleaner::getRealState()
+{
+    jaw_encoder_.update();  // Update the encoder state
+    state_.jaw_rotation = jaw_encoder_.getAngle();
+    return state_;
 }
 
 int Cleaner::shutdown()

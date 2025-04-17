@@ -1,4 +1,7 @@
 #pragma once
+#include <optional>
+
+#include <AccelStepper.h>
 #include <Arduino.h>
 
 #include "TMCStepper.h"
@@ -9,21 +12,33 @@
  * interface.
  *
  */
-class StepperMotor : public TMC5160Stepper
+class StepperMotor : public AccelStepper
 {
 public:
+    static constexpr float TMC5160_PLUS_RSENSE = 0.022f;
+    static constexpr float TMC5160_PRO_RSENSE  = 0.075f;
+    struct MoterParams
+    {
+        float max_speed     = 1000.0f;  // Maximum speed in steps per second
+        float acceleration  = 1000.0f;  // Acceleration in steps per second^2
+        float current_limit = 2.0f;     // Current limit in A
+    };
+
     StepperMotor(
         uint8_t CS_PIN,
-        TMC5160::PowerStageParameters powerStageParams_,
-        TMC5160::MotorParameters motorParams_);
+        float R_SENSE,
+        uint8_t SW_MOSI,
+        uint8_t SW_MISO,
+        uint8_t SW_SCK,
+        uint8_t BrakePin = 255);
+
     int begin();
     void kill();
     void setRunCurrent(uint8_t currentLimit);
     void turnOff();
 
 private:
-    TMC5160Stepper stepper_;  // The wrapped driver instance
-    TMC5160::PowerStageParameters powerStageParams_;
-    TMC5160::MotorParameters motorParams_;
-    const int breakPin = 10;  // Replace with actual pin definition or move to constructor
+    uint8_t BrakePin;                // Pin used to break the motor
+    TMC5160Stepper stepper_driver_;  // The wrapped driver instance
+    bool BrakeOn = LOW;              // Define which direction for the pin to activate the break.
 };

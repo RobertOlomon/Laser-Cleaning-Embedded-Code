@@ -36,53 +36,56 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
     std::memcpy(POS_STRTOK_FUCK_YOU, buffer, strlen(buffer));
     char *token = strtok(POS_STRTOK_FUCK_YOU, " ");
 
-    if (token[0] == 'G')
+    switch (token[0])
     {
-        // Extract the command number (e.g., 0 or 4) by skipping G and seaching for int
-        int gCmd = atoi(token + 1);
-
-        switch (gCmd)
+        case 'G':
         {
-            // For the Gcode, both G0 and G1 are used in the same way here, so they are
-            // combined.
-            case 0:
-            case 1:
-                G0.received = true;
-                ProcessGCommand(&buffer[strlen(token) + 1], &G0);
-                break;
-            case 4:
-                G4.received = true;
-                G4.val      = atof(&buffer[strlen(token) + 1]);
-                break;
-            case 28:
-                G28.received = true;
-                ProcessGCommand(&buffer[strlen(token) + 1], &G28);
-                break;
+            // Extract the command number (e.g., 0 or 4) by skipping G and seaching for int
+            int gCmd = atoi(token + 1);
 
-            default:
-                Serial.print("Unhandled Gcode type: G");
-                Serial.print(std::to_string(token[0]).c_str());
-                Serial.print("\n");
-                break;
+            switch (gCmd)
+            {
+                // For the Gcode, both G0 and G1 are used in the same way here, so they are
+                // combined.
+                case 0:
+                case 1:
+                    G0.received = true;
+                    ProcessGCommand(&buffer[strlen(token) + 1], &G0);
+                    break;
+                case 4:
+                    G4.received = true;
+                    G4.val      = atof(&buffer[strlen(token) + 1]);
+                    break;
+                case 28:
+                    G28.received = true;
+                    ProcessGCommand(&buffer[strlen(token) + 1], &G28);
+                    break;
+
+                default:
+                    Serial.print("Unhandled Gcode type: G");
+                    Serial.print(std::to_string(token[0]).c_str());
+                    Serial.print("\n");
+                    break;
+            }
         }
-    }
-    else if (token[0] == 'M')
-    {
-        // For M commands, if they have no additional parameter you can process
-        // directly.
-        int mCmd = atoi(token + 1);
-        switch (mCmd)
+        case 'M':
         {
-            case 80:
-                M80 = true;
-                break;
-            case 17:
-                M17 = true;
-                break;
-            default:
-                Serial.print("Unhandled M-code: M");
-                Serial.println(mCmd);
-                break;
+            // For M commands, if they have no additional parameter you can process
+            // directly.
+            int mCmd = atoi(token + 1);
+            switch (mCmd)
+            {
+                case 80:
+                    M80 = true;
+                    break;
+                case 17:
+                    M17 = true;
+                    break;
+                default:
+                    Serial.print("Unhandled M-code: M");
+                    Serial.println(mCmd);
+                    break;
+            }
         }
     }
 }
@@ -221,7 +224,7 @@ SerialReceiver::CommandMessage SerialReceiver::lastReceivedCommandMessage() cons
     return lastReceivedCommandMessage_;
 }
 
-SerialReceiver::Stop SerialReceiver::lastReceivedFreeMessage() const
+SerialReceiver::Stop SerialReceiver::lastReceivedStopMessage() const
 {
     return lastReceivedStopMessage_;
 }
