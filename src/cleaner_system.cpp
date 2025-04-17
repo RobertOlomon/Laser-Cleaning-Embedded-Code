@@ -16,8 +16,7 @@ Cleaner::Cleaner()
           SW_MOSI,
           SW_MISO,
           SW_SCK),
-      clamp_motor_(CLAMP_CS_PIN, StepperMotor::TMC5160_PLUS_RSENSE, SW_MOSI, SW_MISO, SW_SCK),
-      jaw_encoder_(ENCODER_CS_PIN)
+      clamp_motor_(CLAMP_CS_PIN, StepperMotor::TMC5160_PLUS_RSENSE, SW_MOSI, SW_MISO, SW_SCK)
 {
     reset();
     jaw_rotation_motor_.setMaxSpeed(1000.0f);
@@ -26,7 +25,6 @@ Cleaner::Cleaner()
     jaw_pos_motor_.setAcceleration(1000.0f);
     clamp_motor_.setMaxSpeed(1000.0f);
     clamp_motor_.setAcceleration(1000.0f);
-    jaw_encoder_.init();  // Initialize the encoder
 }
 
 Cleaner::~Cleaner() = default;
@@ -71,8 +69,6 @@ int Cleaner::reset()
 
 Cleaner::State Cleaner::getRealState()
 {
-    jaw_encoder_.update();  // Update the encoder state
-    state_.jaw_rotation = jaw_encoder_.getAngle();
     return state_;
 }
 

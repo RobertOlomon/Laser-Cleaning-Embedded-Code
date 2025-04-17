@@ -1,6 +1,4 @@
 #pragma once
-#include <SimpleFOCDrivers.h>
-#include <encoders/as5048a/MagneticSensorAS5048A.h>
 
 #include "TMCStepper.h"
 #include "stepper_motor.hpp"
@@ -42,5 +40,4 @@ private:
     StepperMotor jaw_pos_motor_;
     StepperMotor clamp_motor_;
 
-    MagneticSensorAS5048A jaw_encoder_;
 };
