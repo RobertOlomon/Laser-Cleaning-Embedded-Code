@@ -20,6 +20,22 @@ StepperMotor::StepperMotor(
         digitalWrite(BrakePin, !BrakeOn);
     }
 }
+// Constructor: initialize wrapped TMC5160 instance
+StepperMotor::StepperMotor(
+    uint8_t CS_PIN,
+    float R_SENSE,
+    uint8_t BrakePin)
+    : stepper_driver_(CS_PIN, R_SENSE)
+{
+    // initalized the break if it has one
+    this->BrakePin = BrakePin;
+    if (BrakePin != 255)
+    {
+        pinMode(BrakePin, OUTPUT);
+        digitalWrite(BrakePin, !BrakeOn);
+    }
+}
+
 
 void StepperMotor::kill()
 {

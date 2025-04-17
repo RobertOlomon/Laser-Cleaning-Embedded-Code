@@ -23,6 +23,11 @@ public:
         float acceleration  = 1000.0f;  // Acceleration in steps per second^2
         float current_limit = 2.0f;     // Current limit in A
     };
+    
+    StepperMotor(
+        uint8_t CS_PIN,
+        float R_SENSE,
+        uint8_t BrakePin = 255);
 
     StepperMotor(
         uint8_t CS_PIN,

@@ -16,8 +16,10 @@ Cleaner::Cleaner()
           SW_MOSI,
           SW_MISO,
           SW_SCK),
-      clamp_motor_(CLAMP_CS_PIN, StepperMotor::TMC5160_PLUS_RSENSE, SW_MOSI, SW_MISO, SW_SCK)
+      clamp_motor_(CLAMP_CS_PIN, StepperMotor::TMC5160_PLUS_RSENSE), // Assume hardware SPI for now
+      encoder_(ENCODER_CS_PIN, false)
 {
+    encoder_.begin();
     reset();
     jaw_rotation_motor_.setMaxSpeed(1000.0f);
     jaw_rotation_motor_.setAcceleration(1000.0f);
@@ -69,6 +71,16 @@ int Cleaner::reset()
 
 Cleaner::State Cleaner::getRealState()
 {
+    static unsigned long last_read_time = 0;
+    static const unsigned long min_interval_us = 1e6 / ENCODER_READ_RATE_HZ;
+
+    unsigned long now = micros();
+    if (now - last_read_time >= min_interval_us)
+    {
+        state_.jaw_rotation = encoder_.getRotationInRadians();
+        last_read_time = now;
+    }
+
     return state_;
 }
 
