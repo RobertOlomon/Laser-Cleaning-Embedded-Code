@@ -265,7 +265,7 @@ uint16_t AS5048A::read(uint16_t registerAddress)
 	SPI.transfer16(command);
 	digitalWrite(this->_cs, HIGH);
 
-	// delay(this->esp32_delay);
+	// delay(this->esp32_delay); // remove the read delay
 
 	//Now read the response
 	digitalWrite(this->_cs, LOW);
@@ -330,7 +330,7 @@ uint16_t AS5048A::write(uint16_t registerAddress, uint16_t data)
 	digitalWrite(this->_cs, LOW);
 	SPI.transfer16(command);
 	digitalWrite(this->_cs, HIGH);
-// 
+
 	uint16_t dataToSend = 0x0000;
 	dataToSend |= data;
 

@@ -9,7 +9,8 @@ StepperMotor::StepperMotor(
     uint8_t SW_MOSI,
     uint8_t SW_MISO,
     uint8_t SW_SCK,
-    uint8_t BrakePin)
+    uint8_t BrakePin,
+    const char* name)
     : stepper_driver_(CS_PIN, R_SENSE, SW_MOSI, SW_MISO, SW_SCK)
 {
     // initalized the break if it has one
@@ -24,7 +25,8 @@ StepperMotor::StepperMotor(
 StepperMotor::StepperMotor(
     uint8_t CS_PIN,
     float R_SENSE,
-    uint8_t BrakePin)
+    uint8_t BrakePin,
+    const char* name)
     : stepper_driver_(CS_PIN, R_SENSE)
 {
     // initalized the break if it has one
@@ -67,4 +69,9 @@ void StepperMotor::turnOff()
         digitalWrite(BrakePin, !BrakeOn);
     }
     stepper_driver_.toff(0);
+}
+
+void StepperMotor::setRunCurrent(uint16_t currentLimit)
+{
+    stepper_driver_.rms_current(currentLimit);
 }

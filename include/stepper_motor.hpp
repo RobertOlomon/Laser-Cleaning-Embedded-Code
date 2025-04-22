@@ -27,7 +27,8 @@ public:
     StepperMotor(
         uint8_t CS_PIN,
         float R_SENSE,
-        uint8_t BrakePin = 255);
+        uint8_t BrakePin = 255,
+        const char* name = nullptr);
 
     StepperMotor(
         uint8_t CS_PIN,
@@ -35,20 +36,19 @@ public:
         uint8_t SW_MOSI,
         uint8_t SW_MISO,
         uint8_t SW_SCK,
-        uint8_t BrakePin = 255);
+        uint8_t BrakePin = 255, 
+        const char* name = nullptr);
 
     int begin();
     void kill();
-    void setRunCurrent(uint8_t currentLimit);
+    void setRunCurrent(uint16_t currentLimit); // set current limit in mA
     void turnOff();
 
+    char* getName() {return name_;};
 
-    void setClampCurrent(float currentLimit) {clamp_current_ = currentLimit; };
-    void setRunCurrent(float currentLimit) {run_current_ = currentLimit; };
 private:
     uint8_t BrakePin;                // Pin used to break the motor
     TMC5160Stepper stepper_driver_;  // The wrapped driver instance
-    float run_current_;              // The current limit in A
-    float clamp_current_;            // The lower clamp current for the clamping motor in A
     bool BrakeOn = LOW;              // Define which direction for the pin to activate the break.
+    char* name_ = nullptr;           // The name of the motor, used for debugging
 };

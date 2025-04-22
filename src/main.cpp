@@ -37,12 +37,12 @@ void ESTOP_ISR()
 void setup()
 {
     pinMode(ESTOP_PIN, INPUT_PULLUP);                // Set ESTOP_PIN as input with pull-up resistor
-    delay(100);  // Wait for the pin to stabilize
-    attachInterrupt(ESTOP_PIN, ESTOP_ISR, FALLING);  // Attach interrupt to ESTOP_PIN
+    attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), ESTOP_ISR, FALLING);  // Attach interrupt to ESTOP_PIN
 
     Serial.begin(BAUDERATE);
     Serial.println("Starting Cleaner System...");
     SPI.begin();
+
     pinMode(LED_BLUE, OUTPUT);   // Set LED pins as output
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_GREEN, OUTPUT);
@@ -53,9 +53,6 @@ void setup()
 
 void loop()
 {
-    // Get cleaner system state
-    Cleaner::State test = cleaner_system.getRealState();
-
     cleaner_operator_mode =
         static_cast<CleanerOperatorMode>(digitalRead(MODE_PIN));  // get system mode
 
@@ -66,7 +63,9 @@ void loop()
         case CleanerOperatorMode::MANUAL:
         {
             // get desired system state
-            digitalRead(JOG_PIN);
+            cleaner_system.getDesStateManual();
+            // run to the desired state
+            cleaner_system.run();
         }
         break;
 
@@ -75,7 +74,6 @@ void loop()
             // get desired system state
             // will either update the message or skip if no message is available
             receiver.parse();
-            Serial.println(receiver.lastReceivedMessageId());
 
             switch (receiver.lastReceivedMessageId())
             {
@@ -84,8 +82,11 @@ void loop()
                     // Check if the message is a command type
                     SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
 
-                    // modify the cleaner system state based on the command message
+                    // modify the cleaner system des_state based on the command message
                     cleaner_system.processCommand(msg);
+
+                    // run the cleaner system to the desired state
+                    cleaner_system.run();
                 }
                 break;
 
