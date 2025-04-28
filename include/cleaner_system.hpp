@@ -5,6 +5,8 @@
 #include "AS5048A.h"
 #include "serial_receiver.hpp"
 #include "discrete_filter.hpp"
+#include "RotaryEncoder.h"
+#include "PCF8575.h"
 class Cleaner
 {
 public:
@@ -42,6 +44,8 @@ public:
 
     AS5048A encoder_;
 private:
+    constexpr static char SERIAL_ACK = 'A';
+
     constexpr static int JAW_ROTATION_CS_PIN = -1;   // Pin for jaw rotation motor
     constexpr static int JAW_POSITION_CS_PIN = -1;  // Pin for jaw position motor
     constexpr static int CLAMP_CS_PIN        = -1;  // Pin for clamp motor
@@ -54,6 +58,15 @@ private:
     constexpr static int CLAMP_JOG_FORWARD_PIN = -1;
     constexpr static int CLAMP_JOG_BACKWARD_PIN = -1;
 
+    constexpr static int ENCODER_JAW_ROTATION_PIN1 = -1;
+    constexpr static int ENCODER_JAW_ROTATION_PIN2 = -1;
+
+    constexpr static int ENCODER_JAW_POSITION_PIN1 = -1;
+    constexpr static int ENCODER_JAW_POSITION_PIN2 = -1;
+
+    constexpr static int ENCODER_CLAMP_PIN1 = -1;
+    constexpr static int ENCODER_CLAMP_PIN2 = -1;
+    
 
 
     constexpr static int SW_MOSI = 23;  // Pin for software SPI MOSI
@@ -70,9 +83,15 @@ private:
     StepperMotor jaw_pos_motor_;
     StepperMotor clamp_motor_;
 
+    PCF8575 IOExtender_;
+
+    RotaryEncoder encoder_jaw_rotation_;
+    RotaryEncoder encoder_jaw_pos_;
+    RotaryEncoder encoder_clamp_;
+
     // handy array of all motors
     StepperMotor* motors[3];
-    
+
     std::array<float, 3> natural_coeffs_{};
     std::array<float, 3> forced_coeffs_{};
     DiscreteFilter<3> encoderFilter;

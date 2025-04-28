@@ -1,8 +1,10 @@
 #include <Arduino.h>
-#include "macros.hpp"
+
 #include "cleaner_system.hpp"
+#include "macros.hpp"
 #include "serial_receiver.hpp"
 #include "stepper_motor.hpp"
+
 
 enum CleanerOperatorMode
 {
@@ -10,13 +12,8 @@ enum CleanerOperatorMode
     AUTO   = 1,
 };
 
-constexpr int JOG_PIN     = 2;  // Pin for jog control
-constexpr int JOG_DIR_PIN = 3;  // Pin for jog direction control
 constexpr int MODE_PIN    = 4;  // Pin for mode control
 constexpr int ESTOP_PIN   = 5;  // Pin for emergency stop
-
-constexpr float DEFAULT_SPEED = 100.0f;
-constexpr float DEFAULT_ACCEL = 1000.0f;
 
 constexpr int BAUDERATE = 921600;
 
@@ -29,26 +26,33 @@ Cleaner cleaner_system;
 void ESTOP_ISR()
 {
     cleaner_system.shutdown();
-    analogWrite(LED_RED, 0);  // Turn on red LED to indicate emergency stop
-    analogWrite(LED_GREEN, 255);   // Turn off green LED
+    analogWrite(LED_RED, 0);      // Turn on red LED to indicate emergency stop
+    analogWrite(LED_GREEN, 255);  // Turn off green LED
     analogWrite(LED_BLUE, 255);
 }
 
+
 void setup()
 {
-    pinMode(ESTOP_PIN, INPUT_PULLUP);                // Set ESTOP_PIN as input with pull-up resistor
-    attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), ESTOP_ISR, FALLING);  // Attach interrupt to ESTOP_PIN
+    pinMode(ESTOP_PIN, INPUT_PULLUP);  // Set ESTOP_PIN as input with pull-up resistor
+    
+    noInterrupts();
+    attachInterrupt(
+        digitalPinToInterrupt(ESTOP_PIN),
+        ESTOP_ISR,
+        CHANGE);  // Attach interrupt to ESTOP_PIN
+    interrupts();
 
     Serial.begin(BAUDERATE);
     Serial.println("Starting Cleaner System...");
     SPI.begin();
 
-    pinMode(LED_BLUE, OUTPUT);   // Set LED pins as output
+    pinMode(LED_BLUE, OUTPUT);  // Set LED pins as output
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_GREEN, OUTPUT);
-    analogWrite(LED_BLUE, 255);   // Turn off blue LED
-    analogWrite(LED_RED, 255);    // Turn off red LED
-    analogWrite(LED_GREEN, 0);  // Turn on green LED to indicate system is starting
+    analogWrite(LED_BLUE, 255);  // Turn off blue LED
+    analogWrite(LED_RED, 255);   // Turn off red LED
+    analogWrite(LED_GREEN, 0);   // Turn on green LED to indicate system is starting
 }
 
 void loop()
@@ -56,7 +60,7 @@ void loop()
     cleaner_operator_mode =
         static_cast<CleanerOperatorMode>(digitalRead(MODE_PIN));  // get system mode
 
-    cleaner_operator_mode = CleanerOperatorMode::AUTO;            // for testing purposes
+    cleaner_operator_mode = CleanerOperatorMode::AUTO;  // for testing purposes
 
     switch (cleaner_operator_mode)
     {
@@ -71,7 +75,6 @@ void loop()
 
         case CleanerOperatorMode::AUTO:
         {
-            // get desired system state
             // will either update the message or skip if no message is available
             receiver.parse();
 
@@ -79,7 +82,7 @@ void loop()
             {
                 case SerialReceiver::MessageType::COMMAND:
                 {
-                    // Check if the message is a command type
+                    // If the message is a command type
                     SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
 
                     // modify the cleaner system des_state based on the command message
@@ -92,8 +95,9 @@ void loop()
 
                 case SerialReceiver::MessageType::STOP:
                 {
-                    // Check if the message is a stop type
-                    SerialReceiver::Stop msg = receiver.lastReceivedStopMessage();
+                    // If the message is a stop type
+                    SerialReceiver::Stop msg =
+                        receiver.lastReceivedStopMessage();  // read the message just cause?
                     cleaner_system.shutdown();
                     Serial.println("Shutting down cleaner system...");
                 }
@@ -103,7 +107,8 @@ void loop()
                     break;
             }
         }
-        break;
+        break; // case AUTO
+
         default:
             break;  // do nothing
     }

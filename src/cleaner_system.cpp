@@ -1,9 +1,9 @@
 #include "cleaner_system.hpp"
+#include "RotaryEncoder.h"
 
 #include "TMCStepper.h"
 #include "butterworth.hpp"
 #include "stepper_motor.hpp"
-
 
 Cleaner::Cleaner()
     : jaw_rotation_motor_(
@@ -30,19 +30,24 @@ Cleaner::Cleaner()
       encoder_(ENCODER_CS_PIN, false),
       natural_coeffs_{},
       forced_coeffs_{},
-      encoderFilter(natural_coeffs_, forced_coeffs_)
+      encoderFilter(natural_coeffs_, forced_coeffs_),
+      encoder_jaw_rotation_(ENCODER_JAW_ROTATION_PIN1, ENCODER_JAW_ROTATION_PIN2, IOExtender_),
+      encoder_jaw_pos_(ENCODER_JAW_POSITION_PIN1, ENCODER_JAW_POSITION_PIN2, IOExtender_),
+      encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, IOExtender_)
 {
+    Wire.begin();
+    IOExtender_.begin();
+    
     motors[0] = &jaw_rotation_motor_;
     motors[1] = &jaw_pos_motor_;
     motors[2] = &clamp_motor_;
-    
+
     Butterworth<2> encoderLowpass(500, 1.0f / ENCODER_READ_RATE_HZ);
     natural_coeffs_ = encoderLowpass.getNaturalResponseCoefficients();
     forced_coeffs_  = encoderLowpass.getForcedResponseCoefficients();
 
     encoder_.begin();
     reset();
-
 
     jaw_pos_motor_.setRunCurrent(0.5f * 1000);  // Set the run current to 0.5A
 
@@ -182,6 +187,60 @@ void Cleaner::processCommand(SerialReceiver::CommandMessage command)
         reset();
         home();
     }
+    if (command.G90.received)
+    {
+        // Absolute positioning command, not yet implemented
+        Serial.print("I ain't doin that\n");
+    }
+    if (command.M80.received)
+    {
+        // Set max speed command only if the speed command is not 0
+        // Kinda bad since it won't let you actually set the speed to 0
+        // TODO: fix this
+        if (command.M80.a != 0)
+        {
+            jaw_rotation_motor_.setMaxSpeed(command.M80.a);
+        }
+        if (command.M80.y != 0)
+        {
+            jaw_pos_motor_.setMaxSpeed(command.M80.y);
+        }
+        if (command.M80.c != 0)
+        {
+            clamp_motor_.setMaxSpeed(command.M80.c);
+        }
+    }
+    if (command.M17.received)
+    {
+        if (command.M17.a != 0)
+        {
+            jaw_rotation_motor_.setAcceleration(command.M80.a);
+        }
+        if (command.M17.y != 0)
+        {
+            jaw_pos_motor_.setAcceleration(command.M80.y);
+        }
+        if (command.M17.c != 0)
+        {
+            clamp_motor_.setAcceleration(command.M80.c);
+        }
+    }
+    if (command.M906.received)
+    {
+        if (command.M906.a != 0)
+        {
+            jaw_rotation_motor_.setRunCurrent(command.M906.a * 1000);  // set current limit in mA
+        }
+        if (command.M906.y != 0)
+        {
+            jaw_pos_motor_.setRunCurrent(command.M906.y * 1000);  // set current limit in mA
+        }
+        if (command.M906.c != 0)
+        {
+            clamp_motor_.setRunCurrent(command.M906.c * 1000);  // set current limit in mA
+        }
+    }
+    Serial.print(SERIAL_ACK);  // send the ack message back to the sender
 }
 
 int Cleaner::shutdown()

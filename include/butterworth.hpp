@@ -5,6 +5,14 @@
 #include <complex>
 #include <cstdint>
 
+enum FilterType : uint8_t
+{
+    LOWPASS = 0,
+    HIGHPASS,
+    BANDPASS,
+    BANDSTOP,
+};
+
 /**
  * used to transform poles from the laplace domain to the
  * Z domain for descrete time using the bilinear transform
@@ -13,7 +21,7 @@
  * @param [in] Ts the sample time
  * @return a complex number corresponding to the Z domain location
  */
-  std::complex<double> s2z(std::complex<double> s, double Ts)
+std::complex<double> s2z(std::complex<double> s, double Ts)
 {
     return (1.0 + (Ts / 2) * s) / (1.0 - (Ts / 2) * s);
 }
@@ -30,8 +38,7 @@
  * complex number is ignored
  */
 template <uint8_t ORDER>
-  std::array<double, ORDER + 1> expandPolynomial(
-    std::array<std::complex<double>, ORDER> zeros)
+std::array<double, ORDER + 1> expandPolynomial(std::array<std::complex<double>, ORDER> zeros)
 {
     std::array<std::complex<double>, ORDER + 1> coefficients{
         std::complex<double>(1.0, 0.0)};  // Start with 1
@@ -59,101 +66,161 @@ template <uint8_t ORDER>
     return stripped_coefficients;
 }
 
-//* @brief calculates the scalar to apply to the numerator to make the DC gain
-//* equal to 1
-//* @param [in] numerator the coefficients of the numerator polynomial
-//* @param [in] denominator the coefficients of the denominator polynomial
-//* @return the scalar to apply to the numerator polynomial
-
 template <uint8_t ORDER>
-  double calculateScalar(
-    std::array<double, ORDER + 1> numerator,
-    std::array<double, ORDER + 1> denominator)
+std::complex<double> evaluateFrequencyResponse(
+    const std::array<double, ORDER + 1>& b,
+    const std::array<double, ORDER + 1>& a,
+    double w,
+    double Ts)
 {
-    double denResult = 0;
-    double numResult = 0;
+    std::complex<double> j(0, 1);  // imaginary unit i = sqrt(-1)
+    std::complex<double> numerator(0, 0);
+    std::complex<double> denominator(0, 0);
 
-    for (size_t i = 0; i < ORDER + 1; i++)
+    double omega = w * Ts;  // omega is in terms of rad/sample
+
+    // Evaluate numerator: b0 + b1 * e^{-jω} + b2 * e^{-j2ω} + ...
+    for (size_t k = 0; k < b.size(); ++k)
     {
-        denResult += denominator[i];
-        numResult += numerator[i];
+        numerator += b[k] * std::exp(-j * omega * static_cast<double>(k));
     }
 
-    // den is over num in the result as it is in the form 1/(num/den) to apply a
-    // scalar for the gain
-    return static_cast<double>((denResult / numResult));
+    // Evaluate denominator: a0 + a1 * e^{-jω} + a2 * e^{-j2ω} + ...
+    for (size_t k = 0; k < a.size(); ++k)
+    {
+        denominator += a[k] * std::exp(-j * omega * static_cast<double>(k));
+    }
+
+    return numerator / denominator;
 }
+
 
 template <uint8_t ORDER>
 class Butterworth
 {
 public:
     /**
-     * Initializes a butterworth filter with a given order, cuttoff frequency, and
-     * sample time
-     *
-     * @note make sure to understand what the a given order affects before
-     * implementing, mainly the potential phase delays
-     *
-     * @param[in] wc the cutoff frequency, roughly the frequency where attenuation
-     * begins.
-     * @param[in] n the order of the Butterworth, higher orders mean a sharper
-     * droppoff in frequency.
-     * @param[in] Ts the sample time in seconds, for example at 500hz the value
-     * should be 0.02
+     * @param[in] wc   for LOW/HIGHPASS: cutoff ωc.
+     *                 for BANDPASS/BANDSTOP: lower edge ωl.
+     * @param[in] Ts   sample time.
+     * @param[in] type filter type.
+     * @param[in] wh   upper edge ωh (only used for band filters).
      */
-      Butterworth(double wc, double Ts)
+    Butterworth(double wc, double Ts, FilterType type = LOWPASS, double wh = 0.0)
         : naturalResponseCoefficients(),
           forcedResponseCoefficients()
     {
-        int n = ORDER;
-        // Warp frequency for bilinear transform
-        wc = (2 / Ts) * std::atan(wc * (Ts / 2));
+        const int n = ORDER;
 
-        // generate poles for butterworth filter
+        // For band filters we treat wc as ωl
+        double wl  = wc;
+        double whp = wh;
+
+        // pre-warp all edges for bilinear transform
+        wl  = (2.0 / Ts) * std::atan(wl * (Ts / 2.0));
+        whp = (2.0 / Ts) * std::atan(whp * (Ts / 2.0));
+
+        // generate N prototype poles on unit circle
         std::array<std::complex<double>, ORDER> poles;
-        for (int k = 0; k < static_cast<int>(n); ++k)
+        for (int k = 0; k < n; ++k)
         {
-            double theta              = M_PI * (2.0 * k + 1) / (2.0 * n) + M_PI / 2;
-            std::complex<double> pole = std::complex<double>(cos(theta),sin(theta));
-            poles[k]                  = pole;
+            double theta = M_PI * (2.0 * k + 1) / (2.0 * n) + M_PI / 2.0;
+            poles[k]     = std::complex<double>(std::cos(theta), std::sin(theta));
         }
 
-        // Move poles by the cutoff frequency
-        for (int j=0; j < ORDER; ++j)
+        // apply the appropriate s-domain transform to each pole
+        switch (type)
         {
-            poles[j] /= wc;
+            case LOWPASS:
+                for (int j = 0; j < n; ++j) poles[j] *= wl;
+                break;
+
+            case HIGHPASS:
+            {
+                for (int j = 0; j < n; ++j)
+                {
+                    poles[j] = wl / poles[j];
+                }
+                break;
+            }
+            case BANDPASS:
+            {
+                if (whp <= wl) throw std::invalid_argument("wh must be > wl for BANDPASS");
+                double B    = whp - wl;
+                double W0sq = whp * wl;
+                for (int j = 0; j < n; ++j)
+                {
+                    auto p = poles[j];
+                    // s → (s² + ωh·ωl) / (s·(ωh−ωl))
+                    poles[j] = (p * p + W0sq) / (p * B);
+                }
+                break;
+            }
+
+            case BANDSTOP:
+            {
+                if (whp <= wl) throw std::invalid_argument("wh must be > wl for BANDSTOP");
+                double B    = whp - wl;
+                double W0sq = whp * wl;
+                for (int j = 0; j < n; ++j)
+                {
+                    auto p = poles[j];
+                    // s → (s·(ωh−ωl)) / (s² + ωh·ωl)
+                    poles[j] = (p * B) / (p * p + W0sq);
+                }
+                break;
+            }
+
+            default:
+                throw std::invalid_argument("Unknown filter type");
         }
 
-        // Preform the z transform for each pole
+        // now map each analog pole into the z-plane
         std::array<std::complex<double>, ORDER> zPoles;
-        for (int i = 0; i < ORDER; ++i)
-        {
-            zPoles[i] = s2z(poles[i], Ts);
-        }
+        for (int i = 0; i < n; ++i) zPoles[i] = s2z(poles[i], Ts);
 
-        // zeros calculation, for a butterworth all zeros in the Z domain are -1
-        std::complex<double> zZero(-1, 0);
         std::array<std::complex<double>, ORDER> zZeros;
-        zZeros.fill(zZero);
-
-        // Calculate polynomial coefficients
-        auto forcedResponseCoefficients  = expandPolynomial<ORDER>(zZeros);
-        auto naturalResponseCoefficients = expandPolynomial<ORDER>(zPoles);
-
-        // Calculate and apply the scalar so the DC gain is 1
-        double scale_factor =
-            calculateScalar<ORDER>(forcedResponseCoefficients, naturalResponseCoefficients);
-
-        for (size_t i = 0; i < ORDER + 1; i++)
+        switch (type)
         {
-            forcedResponseCoefficients[i] *= scale_factor;
+            case LOWPASS:
+                // zeros: for Butterworth lowpass all z-zeros at z = –1
+                zZeros.fill(std::complex<double>(-1, 0));
+                break;
+            case HIGHPASS:
+                // zeros: for butterworth highpass all z-zeros are at z = 1
+                zZeros.fill(std::complex<double>(1, 0));
+                break;
+            default:
+                break;
         }
 
-        for (size_t i = 0; i < ORDER + 1; i++)
+        // get expanded polynomials
+        auto b = expandPolynomial<ORDER>(zZeros);
+        auto a = expandPolynomial<ORDER>(zPoles);
+
+        // scale so DC gain = 1
+        switch (type)
         {
-            this->naturalResponseCoefficients[ORDER - i] = naturalResponseCoefficients[i];
-            this->forcedResponseCoefficients[ORDER - i]  = forcedResponseCoefficients[i];
+            case LOWPASS:
+            {
+                double scale = 1 / std::abs(evaluateFrequencyResponse<ORDER>(b, a, 0, 1 / 500.0)); // DC Gain
+                for (auto& coef : b) coef *= scale;
+                break;
+            }
+            case HIGHPASS:
+            {
+                // std::complex<double> one = 1.0;
+                double scale = 1 / std::abs(evaluateFrequencyResponse<ORDER>(b, a, 500, 1 / 500.0));
+                for (auto& coef : b) coef *= scale;
+                break;
+            }
+        }
+
+        // store in member arrays (reverse order)
+        for (size_t i = 0; i < ORDER + 1; ++i)
+        {
+            naturalResponseCoefficients[ORDER - i] = a[i];
+            forcedResponseCoefficients[ORDER - i]  = b[i];
         }
     }
 
@@ -168,6 +235,5 @@ public:
 
 private:
     std::array<float, ORDER + 1> naturalResponseCoefficients;
-
     std::array<float, ORDER + 1> forcedResponseCoefficients;
 };
