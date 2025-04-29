@@ -5,6 +5,8 @@
 #include "butterworth.hpp"
 #include "stepper_motor.hpp"
 
+static Cleaner* instance_ = nullptr; // Pointer to the instance of Cleaner
+
 Cleaner::Cleaner()
     : jaw_rotation_motor_(
           JAW_ROTATION_CS_PIN,
@@ -34,20 +36,30 @@ Cleaner::Cleaner()
       encoder_jaw_rotation_(ENCODER_JAW_ROTATION_PIN1, ENCODER_JAW_ROTATION_PIN2, IOExtender_),
       encoder_jaw_pos_(ENCODER_JAW_POSITION_PIN1, ENCODER_JAW_POSITION_PIN2, IOExtender_),
       encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, IOExtender_)
-{
+      {
+    instance_ = this;  // Set the instance pointer to this object
+
     Wire.begin();
     IOExtender_.begin();
-    
+
+
     motors[0] = &jaw_rotation_motor_;
     motors[1] = &jaw_pos_motor_;
     motors[2] = &clamp_motor_;
 
-    Butterworth<2> encoderLowpass(500, 1.0f / ENCODER_READ_RATE_HZ);
+    Butterworth<2, LOWPASS> encoderLowpass(500, 1.0f / ENCODER_READ_RATE_HZ);
     natural_coeffs_ = encoderLowpass.getNaturalResponseCoefficients();
     forced_coeffs_  = encoderLowpass.getForcedResponseCoefficients();
 
     encoder_.begin();
     reset();
+
+    noInterrupts();
+    attachInterrupt(
+        digitalPinToInterrupt(IO_EXTENDER_INT),
+        updatePCF8575,
+        FALLING);  // Attach interrupt to ESTOP_PIN
+    interrupts();
 
     jaw_pos_motor_.setRunCurrent(0.5f * 1000);  // Set the run current to 0.5A
 
@@ -60,6 +72,38 @@ Cleaner::Cleaner()
 }
 
 Cleaner::~Cleaner() = default;
+
+// this is an interrupt to be ran whenever the int pin on the PCF goes
+void Cleaner::updatePCF8575(){
+    // update the encoders
+    if (instance_ != nullptr) {
+        instance_->encoder_clamp_.tick();
+        instance_->encoder_jaw_pos_.tick();
+        instance_->encoder_jaw_rotation_.tick();
+
+        static bool last_jaw_rotation_button_state = false;
+        static bool last_jaw_position_button_state = false;
+        static bool last_clamp_button_state = false;
+
+        bool current_jaw_rotation_button_state = instance_->IOExtender_.read(ENCODER_JAW_ROTATION_BUTTON_PIN);
+        bool current_jaw_position_button_state = instance_->IOExtender_.read(ENCODER_JAW_POSITION_BUTTON_PIN);
+        bool current_clamp_button_state = instance_->IOExtender_.read(ENCODER_CLAMP_BUTTON_PIN);
+
+        if (current_jaw_rotation_button_state && !last_jaw_rotation_button_state) {
+            instance_->ENCODER_CLAMP_SPEED_HIGH = !instance_->ENCODER_CLAMP_SPEED_HIGH;
+        }
+        if (current_jaw_position_button_state && !last_jaw_position_button_state) {
+            instance_->ENCODER_JAW_POSITION_SPEED_HIGH = !instance_->ENCODER_JAW_POSITION_SPEED_HIGH;
+        }
+        if (current_clamp_button_state && !last_clamp_button_state) {
+            instance_->ENCODER_JAW_ROTATION_SPEED_HIGH = !instance_->ENCODER_JAW_ROTATION_SPEED_HIGH;
+        }
+
+        last_jaw_rotation_button_state = current_jaw_rotation_button_state;
+        last_jaw_position_button_state = current_jaw_position_button_state;
+        last_clamp_button_state = current_clamp_button_state;
+    }
+}
 
 void Cleaner::run()
 {
@@ -134,35 +178,28 @@ Cleaner::State Cleaner::getRealState()
 
 Cleaner::State Cleaner::getDesStateManual()
 {
-    /* Set the des_state_ to avoid having strange leftover interactions */
-    des_state_ = state_;
 
-    // Should have the behavior that if both are pressed, nothing changes.
-    auto jog = [](bool forward, bool backward, float current, float error) -> float {
-        if (forward) current += error;
-        if (backward) current -= error;
-        return current;
-    };
+    des_state_.jaw_pos = encoder_jaw_pos_.getPosition() * ENCODER_JAW_POSITION_SENSITIVITY;
 
-    des_state_.jaw_pos =
-        jog(digitalRead(JAW_JOG_FORWARD_PIN),
-            digitalRead(JAW_JOG_BACKWARD_PIN),
-            state_.jaw_pos,
-            JAW_JOG_ERROR);
+    des_state_.jaw_rotation = encoder_jaw_rotation_.getPosition() * ENCODER_JAW_ROTATION_SENSITIVITY;
 
-    des_state_.jaw_rotation =
-        jog(digitalRead(JAW_ROTATION_JOG_FORWARD_PIN),
-            digitalRead(JAW_ROTATION_JOG_BACKWARD_PIN),
-            state_.jaw_rotation,
-            JAW_ROTATION_JOG_ERROR);
-
-    des_state_.clamp_pos =
-        jog(digitalRead(CLAMP_JOG_FORWARD_PIN),
-            digitalRead(CLAMP_JOG_BACKWARD_PIN),
-            state_.clamp_pos,
-            CLAMP_JOG_ERROR);
+    des_state_.clamp_pos = encoder_clamp_.getPosition() * ENCODER_CLAMP_SENSITIVITY;
 
     return des_state_;
+}
+
+void Cleaner::initializeManualMode(){
+    // Set the state to the current one to make everything in relative mode
+    des_state_ = state_;
+
+    // Reset the encoders to 0 so it doesn't freak out
+    encoder_jaw_rotation_.setPosition(0);
+    encoder_jaw_pos_.setPosition(0);
+    encoder_clamp_.setPosition(0);
+}
+
+void Cleaner::initializeAutoMode(){
+    // do nothing for now
 }
 
 void Cleaner::processCommand(SerialReceiver::CommandMessage command)

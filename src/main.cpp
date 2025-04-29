@@ -31,11 +31,12 @@ void ESTOP_ISR()
     analogWrite(LED_BLUE, 255);
 }
 
+static bool wasInManualMode = false;
 
 void setup()
 {
     pinMode(ESTOP_PIN, INPUT_PULLUP);  // Set ESTOP_PIN as input with pull-up resistor
-    
+
     noInterrupts();
     attachInterrupt(
         digitalPinToInterrupt(ESTOP_PIN),
@@ -66,6 +67,13 @@ void loop()
     {
         case CleanerOperatorMode::MANUAL:
         {
+
+            if (!wasInManualMode)
+            {
+                // Perform actions needed when switching to MANUAL mode
+                cleaner_system.initializeManualMode();
+                wasInManualMode = true;
+            }
             // get desired system state
             cleaner_system.getDesStateManual();
             // run to the desired state
@@ -75,6 +83,12 @@ void loop()
 
         case CleanerOperatorMode::AUTO:
         {
+            if (wasInManualMode)
+            {
+                // Perform actions needed when switching to AUTO mode
+                cleaner_system.initializeAutoMode();
+                wasInManualMode = false;
+            }
             // will either update the message or skip if no message is available
             receiver.parse();
 
