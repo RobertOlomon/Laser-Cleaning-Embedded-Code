@@ -5,14 +5,17 @@
 #include "RotaryEncoder.h"
 #include "TMCStepper.h"
 #include "discrete_filter.hpp"
+#include "pin_defs.hpp"
 #include "serial_receiver.hpp"
 #include "stepper_motor.hpp"
+
 
 class Cleaner
 {
 public:
     Cleaner();
     ~Cleaner();
+    int begin();
     int reset();
     int shutdown();
     void home();
@@ -21,7 +24,9 @@ public:
     void initializeManualMode();
     void initializeAutoMode();
 
-    static void updatePCF8575();
+    static void is_updatePCF8575_message();
+    void updatePCF8575();
+    void printDriverDebug();
     struct State
     {
         float jaw_rotation;
@@ -52,44 +57,25 @@ public:
 private:
     constexpr static char SERIAL_ACK = 'A';
 
-    constexpr static int JAW_ROTATION_CS_PIN = -1;  // Pin for jaw rotation motor
-    constexpr static int JAW_POSITION_CS_PIN = -1;  // Pin for jaw position motor
-    constexpr static int CLAMP_CS_PIN        = -1;  // Pin for clamp motor
-    constexpr static int LIMIT_SWITCH_PIN    = -1;  // Pin for limit switch
-    constexpr static int ENCODER_CS_PIN      = 10;  // Pin for encoder CS
-
     constexpr static int ENCODER_JAW_POSITION_SENSITIVITY =
         1.0f;  // Sensitivity for jaw position encoder
     constexpr static int ENCODER_JAW_ROTATION_SENSITIVITY =
         1.0f;                                               // Sensitivity for jaw rotation encoder
     constexpr static int ENCODER_CLAMP_SENSITIVITY = 1.0f;  // Sensitivity for clamp encoder
 
-    constexpr static int ENCODER_JAW_ROTATION_PIN1       = -1;
-    constexpr static int ENCODER_JAW_ROTATION_PIN2       = -1;
-    constexpr static int ENCODER_JAW_ROTATION_BUTTON_PIN = -1;
-    bool ENCODER_JAW_ROTATION_SPEED_HIGH                 = false;
-
-    constexpr static int ENCODER_JAW_POSITION_PIN1       = -1;
-    constexpr static int ENCODER_JAW_POSITION_PIN2       = -1;
-    constexpr static int ENCODER_JAW_POSITION_BUTTON_PIN = -1;
-    bool ENCODER_JAW_POSITION_SPEED_HIGH                 = false;
-
-    constexpr static int ENCODER_CLAMP_PIN1       = -1;
-    constexpr static int ENCODER_CLAMP_PIN2       = -1;
-    constexpr static int ENCODER_CLAMP_BUTTON_PIN = -1;
-    bool ENCODER_CLAMP_SPEED_HIGH                 = false;
-
-    constexpr static int IO_EXTENDER_INT = -1;
-
-    constexpr static int SW_MOSI = 23;  // Pin for software SPI MOSI
-    constexpr static int SW_MISO = 19;  // Pin for software SPI MISO
-    constexpr static int SW_SCK  = 18;  // Pin for software SPI SCK
-
     constexpr static const float JAW_JOG_ERROR          = 10.0f;
     constexpr static const float JAW_ROTATION_JOG_ERROR = 10.0f;
     constexpr static const float CLAMP_JOG_ERROR        = 10.0f;
     constexpr static const float ENCODER_READ_RATE_HZ   = 1000.0f;  // Change this to desired Hz
     constexpr static const float HOMING_SPEED           = 100.0f;   // Speed for homing in mm/s
+
+    bool ENCODER_CLAMP_SPEED_HIGH        = false;
+    bool ENCODER_JAW_POSITION_SPEED_HIGH = false;
+    bool ENCODER_JAW_ROTATION_SPEED_HIGH = false;
+
+    bool last_jaw_rotation_button_state;
+    bool last_jaw_position_button_state;
+    bool last_clamp_button_state;
 
     StepperMotor jaw_rotation_motor_;
     StepperMotor jaw_pos_motor_;

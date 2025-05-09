@@ -7,8 +7,7 @@
 
 /**
  * @file butterworth.hpp
- * @brief Implementation of Butterworth filter design and analysis in both analog and digital
- * domains.
+ * @brief Implementation of Butterworth filter design in the digital domain.
  *
  * This header file provides a comprehensive implementation of Butterworth filters,
  * including low-pass, high-pass, band-pass, and band-stop filters. The Butterworth

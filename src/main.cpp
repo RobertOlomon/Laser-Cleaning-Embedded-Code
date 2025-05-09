@@ -10,10 +10,11 @@ enum CleanerOperatorMode
 {
     MANUAL = 0,
     AUTO   = 1,
+    DEBUG
 };
 
-constexpr int MODE_PIN    = 4;  // Pin for mode control
-constexpr int ESTOP_PIN   = 5;  // Pin for emergency stop
+constexpr int MODE_PIN    = 255;  // Pin for mode control
+constexpr int ESTOP_PIN   = 255;  // Pin for emergency stop
 
 constexpr int BAUDERATE = 921600;
 
@@ -32,26 +33,26 @@ void ESTOP_ISR()
 }
 
 static bool wasInManualMode = false;
+static bool wasInDebugMode = false;
 
 void setup()
 {
-    pinMode(ESTOP_PIN, INPUT_PULLUP);  // Set ESTOP_PIN as input with pull-up resistor
+    // pinMode(ESTOP_PIN, INPUT_PULLUP);  // Set ESTOP_PIN as input with pull-up resistor
 
-    noInterrupts();
-    attachInterrupt(
-        digitalPinToInterrupt(ESTOP_PIN),
-        ESTOP_ISR,
-        CHANGE);  // Attach interrupt to ESTOP_PIN
-    interrupts();
+    // noInterrupts();
+    // attachInterrupt(
+    //     digitalPinToInterrupt(ESTOP_PIN),
+    //     ESTOP_ISR,
+    //     CHANGE);  // Attach interrupt to ESTOP_PIN
+    // interrupts();
 
     Serial.begin(BAUDERATE);
     Serial.println("Starting Cleaner System...");
-    SPI.begin();
 
     pinMode(LED_BLUE, OUTPUT);  // Set LED pins as output
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_GREEN, OUTPUT);
-    analogWrite(LED_BLUE, 255);  // Turn off blue LED
+    analogWrite(LED_BLUE, 128);  // Turn on blue LED
     analogWrite(LED_RED, 255);   // Turn off red LED
     analogWrite(LED_GREEN, 0);   // Turn on green LED to indicate system is starting
 }
@@ -61,7 +62,7 @@ void loop()
     cleaner_operator_mode =
         static_cast<CleanerOperatorMode>(digitalRead(MODE_PIN));  // get system mode
 
-    cleaner_operator_mode = CleanerOperatorMode::AUTO;  // for testing purposes
+    cleaner_operator_mode = CleanerOperatorMode::DEBUG;  // for testing purposes
 
     switch (cleaner_operator_mode)
     {
@@ -122,6 +123,21 @@ void loop()
             }
         }
         break; // case AUTO
+        case(CleanerOperatorMode::DEBUG):
+        {
+            if (!wasInDebugMode)
+            {
+                // Perform actions needed when switching to DEBUG mode
+                cleaner_system.initializeManualMode();
+                wasInDebugMode = true;
+            }
+            // Serial.println("Debugging mode...");
+            cleaner_system.des_state_.jaw_rotation = cos(millis() / 1000.0) * 2000;
+            cleaner_system.state_.jaw_rotation = 0;
+            cleaner_system.run();
+            cleaner_system.printDriverDebug();
+        }
+        break; // case DEBUG
 
         default:
             break;  // do nothing
