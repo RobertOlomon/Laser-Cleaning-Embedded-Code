@@ -1,8 +1,8 @@
 #pragma once
 
-constexpr static uint8_t ENCODER_JAW_ROTATION_PIN1       = 255;
-constexpr static uint8_t ENCODER_JAW_ROTATION_PIN2       = 255;
-constexpr static uint8_t ENCODER_JAW_ROTATION_BUTTON_PIN = 255;
+constexpr static uint8_t ENCODER_JAW_ROTATION_PIN1       = 13;
+constexpr static uint8_t ENCODER_JAW_ROTATION_PIN2       = 12;
+constexpr static uint8_t ENCODER_JAW_ROTATION_BUTTON_PIN = 14;
 
 constexpr static uint8_t ENCODER_JAW_POSITION_PIN1       = 255;
 constexpr static uint8_t ENCODER_JAW_POSITION_PIN2       = 255;
@@ -12,7 +12,7 @@ constexpr static uint8_t ENCODER_CLAMP_PIN1       = 255;
 constexpr static uint8_t ENCODER_CLAMP_PIN2       = 255;
 constexpr static uint8_t ENCODER_CLAMP_BUTTON_PIN = 255;
 
-constexpr static uint8_t IO_EXTENDER_INT = 255;
+constexpr static uint8_t IO_EXTENDER_INT = 6; // Pin for PCF8575 interrupt
 
 constexpr static uint8_t SW_MOSI = 255;  // Pin for software SPI MOSI
 constexpr static uint8_t SW_MISO = 255;  // Pin for software SPI MISO

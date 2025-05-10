@@ -1,16 +1,15 @@
 #include "cleaner_system.hpp"
 
+#include "BindArg.h"
 #include "RotaryEncoder.h"
 #include "TMCStepper.h"
 #include "butterworth.hpp"
 #include "pin_defs.hpp"
 #include "stepper_motor.hpp"
 
-volatile bool updatePCF8575_flag = false;  // Flag to indicate if the PCF8575 has been updated
-
 /* -------- static tables live in flash (constexpr) ------------------- */
 constexpr StepperMotor::StaticConfig jawRotationCfg{
-    /* pins */ {JAW_ROTATION_CS_PIN, 8, 9, 255},
+    /* pins */ {JAW_ROTATION_CS_PIN, JAW_ROTATION_STEP_PIN, JAW_ROTATION_DIR_PIN, 255},
     /* rSense */ StepperMotor::TMC5160_PLUS_RSENSE,
     /* name   */ "Jaw Rotation Motor"};
 
@@ -25,9 +24,9 @@ constexpr StepperMotor::StaticConfig clampCfg{
     "Clamp Motor"};
 
 /* reusable runtime presets */
-constexpr StepperMotor::MotionParams fastMotion{1000.0f, 1000.0f};
-constexpr StepperMotor::ElectricalParams defaultCurrent{1000};  // 1 A
-constexpr StepperMotor::ElectricalParams lowCurrent{500};       // 0.5 A
+constexpr StepperMotor::MotionParams fastMotion{50000, 100000};
+constexpr StepperMotor::ElectricalParams defaultCurrent{600,16};
+constexpr StepperMotor::ElectricalParams lowCurrent{500,16};
 
 Cleaner::Cleaner()
     : jaw_rotation_motor_(jawRotationCfg),
@@ -40,6 +39,7 @@ Cleaner::Cleaner()
       encoder_jaw_rotation_(ENCODER_JAW_ROTATION_PIN1, ENCODER_JAW_ROTATION_PIN2, IOExtender_),
       encoder_jaw_pos_(ENCODER_JAW_POSITION_PIN1, ENCODER_JAW_POSITION_PIN2, IOExtender_),
       encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, IOExtender_)
+
 {
     // Add motors to the array
     motors[0] = &jaw_rotation_motor_;
@@ -51,13 +51,6 @@ Cleaner::Cleaner()
     natural_coeffs_ = encoderLowpass.getNaturalResponseCoefficients();
     forced_coeffs_  = encoderLowpass.getForcedResponseCoefficients();
 
-    noInterrupts();
-    attachInterrupt(
-        digitalPinToInterrupt(IO_EXTENDER_INT),
-        is_updatePCF8575_message,
-        FALLING);  // Attach interrupt to ESTOP_PIN
-    interrupts();
-
     jaw_rotation_motor_.apply(fastMotion);
     jaw_pos_motor_.apply(fastMotion);
     clamp_motor_.apply(fastMotion);
@@ -66,10 +59,19 @@ Cleaner::Cleaner()
     jaw_pos_motor_.apply(lowCurrent);  // gentler on the position motor
     clamp_motor_.apply(defaultCurrent);
 
-    reset();
+    // JAW_ROTATION_DISTANCE = 1/(200.0f*jaw_rotation_motor_.getMicrosteps());
+    JAW_ROTATION_DISTANCE = 1.0f / (200.0f * 16.0f);
+    // JAW_ROTATION_DISTANCE = 100;
+    jaw_rotation_motor_.setRotationDistance(JAW_ROTATION_DISTANCE);
 }
 
 Cleaner::~Cleaner() = default;
+
+void Cleaner::is_updatePCF8575_message()
+{
+    // this is a message to be sent to the main loop
+    updatePCF8575_flag = true;
+}
 
 int Cleaner::begin()
 {
@@ -84,19 +86,18 @@ int Cleaner::begin()
     }
     // Initialize the communication bus
     SPI.begin();
-    Wire.begin(); // Initialize I2C bus
+    Wire.begin();  // Initialize I2C bus
     IOExtender_.begin();
 
     // Initialize the encoder
     encoder_.begin();
 
-    return EXIT_SUCCESS;
-}
+    // Register the interrupt for the PCF8575
+    pinMode(IO_EXTENDER_INT, INPUT_PULLUP);
+    // now the ISR service is up—this will succeed
+    attachInterrupt(IO_EXTENDER_INT, bindArgGateThisAllocate(&Cleaner::is_updatePCF8575_message, this), FALLING);
 
-void Cleaner::is_updatePCF8575_message()
-{
-    // this is an interrupt to be ran whenever the int pin on the PCF goes
-    updatePCF8575_flag = true;
+    return EXIT_SUCCESS;
 }
 
 // this is an interrupt to be ran whenever the int pin on the PCF goes
@@ -112,20 +113,21 @@ void Cleaner::updatePCF8575()
     bool current_jaw_position_button_state = IOExtender_.read(ENCODER_JAW_POSITION_BUTTON_PIN);
     bool current_clamp_button_state        = IOExtender_.read(ENCODER_CLAMP_BUTTON_PIN);
 
-    // Check if the button is currently pressed (state is high) and was not pressed previously
-    // (state was false). If this condition is met, toggle the corresponding speed variable to
+    // Check if the button is currently pressed (state is low) and if it was high last time
+    // If this condition is met, toggle the corresponding speed variable to
     // switch between high and low speed modes.
-    if (current_jaw_rotation_button_state && !last_jaw_rotation_button_state)
+    Serial.println(current_jaw_rotation_button_state);
+    if (!current_jaw_rotation_button_state && last_jaw_rotation_button_state)
     {
-        ENCODER_CLAMP_SPEED_HIGH = !ENCODER_CLAMP_SPEED_HIGH;
+        ENCODER_JAW_ROTATION_SPEED_HIGH = !ENCODER_JAW_ROTATION_SPEED_HIGH;
     }
-    if (current_jaw_position_button_state && !last_jaw_position_button_state)
+    if (!current_jaw_position_button_state && last_jaw_position_button_state)
     {
         ENCODER_JAW_POSITION_SPEED_HIGH = !ENCODER_JAW_POSITION_SPEED_HIGH;
     }
-    if (current_clamp_button_state && !last_clamp_button_state)
+    if (!current_clamp_button_state && last_clamp_button_state)
     {
-        ENCODER_JAW_ROTATION_SPEED_HIGH = !ENCODER_JAW_ROTATION_SPEED_HIGH;
+        ENCODER_CLAMP_SPEED_HIGH = !ENCODER_CLAMP_SPEED_HIGH;
     }
 
     // update the last button states
@@ -142,18 +144,14 @@ void Cleaner::run()
         shutdown();
         return;
     }
-    // update the flag when triggered
-    if (updatePCF8575_flag)
-    {
-        updatePCF8575();
-        updatePCF8575_flag = false;
-    }
 
     // seems kinda strange but I think this will work
     State error = des_state_ - state_;
     // jaw_rotation_motor_.moveTo(jaw_rotation_motor_.currentPosition() + error.jaw_rotation);
     // jaw_pos_motor_.moveTo(jaw_pos_motor_.currentPosition() + error.jaw_pos);
     // clamp_motor_.moveTo(clamp_motor_.currentPosition() + error.clamp_pos);
+
+    jaw_rotation_motor_.moveToUnits(des_state_.jaw_rotation);
 
     // run all motors
     for (const auto& motor : motors)
@@ -194,34 +192,47 @@ Cleaner::State Cleaner::getRealState()
         last_read_time      = now;
     }
 
-    // Get the values from the encoders
-    if (updatePCF8575_flag)
-    {
-        updatePCF8575_flag = false;
-        encoder_jaw_rotation_.tick();
-        encoder_jaw_pos_.tick();
-        encoder_clamp_.tick();
-    }
     // Get the values from accel stepper
-
-    state_.jaw_pos = jaw_pos_motor_.currentPosition();
+    // TODO: NOT DO THIS LATER IT OVERWRITES FOR DEBUGGING
+    state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
 
     return state_;
 }
 
-Cleaner::State Cleaner::getDesStateManual()
+
+Cleaner::State Cleaner::updateDesStateManual()
 {
-    des_state_.jaw_pos = encoder_jaw_pos_.getPosition() * ENCODER_JAW_POSITION_SENSITIVITY *
-                         (ENCODER_JAW_POSITION_SPEED_HIGH ? 1 : 0.5f);
+  if (updatePCF8575_flag)
+  {
+    updatePCF8575_flag = false;
+    updatePCF8575();
+  }
 
-    des_state_.jaw_rotation = encoder_jaw_rotation_.getPosition() *
-                              ENCODER_JAW_ROTATION_SENSITIVITY *
-                              (ENCODER_JAW_ROTATION_SPEED_HIGH ? 1 : 0.5f);
+  // 1) read raw counts
+  int cur_jaw_rot = encoder_jaw_rotation_.getPosition();
+  int cur_jaw_pos = encoder_jaw_pos_.getPosition();
+  int cur_clamp   = encoder_clamp_.getPosition();
 
-    des_state_.clamp_pos = encoder_clamp_.getPosition() * ENCODER_CLAMP_SENSITIVITY *
-                           (ENCODER_CLAMP_SPEED_HIGH ? 1 : 0.5f);
+  // 2) compute deltas
+  int  delta_rot = cur_jaw_rot - last_enc_jaw_rot_;
+  int  delta_pos = cur_jaw_pos - last_enc_jaw_pos_;
+  int  delta_cl  = cur_clamp   - last_enc_clamp_;
 
-    return des_state_;
+  // 3) apply to desired state
+  float rot_factor = ENCODER_JAW_ROTATION_SPEED_HIGH ? 1.0f : 0.1f;
+  float pos_factor = ENCODER_JAW_POSITION_SPEED_HIGH ? 1.0f : 0.5f;
+  float clp_factor = ENCODER_CLAMP_SPEED_HIGH       ? 1.0f : 0.5f;
+
+  des_state_.jaw_rotation += delta_rot * ENCODER_JAW_ROTATION_SENSITIVITY * rot_factor;
+  des_state_.jaw_pos      += delta_pos * ENCODER_JAW_POSITION_SENSITIVITY * pos_factor;
+  des_state_.clamp_pos    += delta_cl  * ENCODER_CLAMP_SENSITIVITY       * clp_factor;
+
+  // 4) remember raw values for next time
+  last_enc_jaw_rot_ = cur_jaw_rot;
+  last_enc_jaw_pos_ = cur_jaw_pos;
+  last_enc_clamp_   = cur_clamp;
+
+  return des_state_;
 }
 
 void Cleaner::initializeManualMode()

@@ -45,6 +45,7 @@ void setup()
     //     ESTOP_ISR,
     //     CHANGE);  // Attach interrupt to ESTOP_PIN
     // interrupts();
+    
 
     Serial.begin(BAUDERATE);
     Serial.println("Starting Cleaner System...");
@@ -76,7 +77,7 @@ void loop()
                 wasInManualMode = true;
             }
             // get desired system state
-            cleaner_system.getDesStateManual();
+            cleaner_system.updateDesStateManual();
             // run to the desired state
             cleaner_system.run();
         }
@@ -132,10 +133,22 @@ void loop()
                 wasInDebugMode = true;
             }
             // Serial.println("Debugging mode...");
-            cleaner_system.des_state_.jaw_rotation = cos(millis() / 1000.0) * 2000;
-            cleaner_system.state_.jaw_rotation = 0;
+            // cleaner_system.des_state_.jaw_rotation = cos(millis() / 1000.0) * 2000;
+            // cleaner_system.state_.jaw_rotation = 0;
+            // cleaner_system.printDriverDebug();
+            cleaner_system.updateDesStateManual();
+            cleaner_system.getRealState();
+            // Serial.println(cleaner_system.updateDesStateManual().jaw_rotation);
             cleaner_system.run();
-            cleaner_system.printDriverDebug();
+
+            // Serial.print("Jaw rotation: ");
+            // Serial.println(cleaner_system.des_state_.jaw_rotation);
+            // PrintHzRateDebug();
+            // Serial.print("Current position: ");
+            // Serial.println(cleaner_system.jaw_rotation_motor_.currentPosition());
+
+            // Serial.print("Rotation Distance:");
+            // Serial.println(cleaner_system.JAW_ROTATION_DISTANCE);
         }
         break; // case DEBUG
 

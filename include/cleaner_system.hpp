@@ -9,7 +9,6 @@
 #include "serial_receiver.hpp"
 #include "stepper_motor.hpp"
 
-
 class Cleaner
 {
 public:
@@ -24,7 +23,7 @@ public:
     void initializeManualMode();
     void initializeAutoMode();
 
-    static void is_updatePCF8575_message();
+    void is_updatePCF8575_message();
     void updatePCF8575();
     void printDriverDebug();
     struct State
@@ -45,7 +44,7 @@ public:
         }
     };
 
-    State getDesStateManual();
+    State updateDesStateManual();
 
     State getRealState();
 
@@ -54,14 +53,15 @@ public:
 
     AS5048A encoder_;
 
-private:
+    bool updatePCF8575_flag;
+
     constexpr static char SERIAL_ACK = 'A';
 
-    constexpr static int ENCODER_JAW_POSITION_SENSITIVITY =
+    constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY =
+        0.1f;  // Sensitivity for jaw rotation encoder
+    constexpr static float ENCODER_JAW_POSITION_SENSITIVITY =
         1.0f;  // Sensitivity for jaw position encoder
-    constexpr static int ENCODER_JAW_ROTATION_SENSITIVITY =
-        1.0f;                                               // Sensitivity for jaw rotation encoder
-    constexpr static int ENCODER_CLAMP_SENSITIVITY = 1.0f;  // Sensitivity for clamp encoder
+    constexpr static float ENCODER_CLAMP_SENSITIVITY = 1.0f;  // Sensitivity for clamp encoder
 
     constexpr static const float JAW_JOG_ERROR          = 10.0f;
     constexpr static const float JAW_ROTATION_JOG_ERROR = 10.0f;
@@ -76,6 +76,12 @@ private:
     bool last_jaw_rotation_button_state;
     bool last_jaw_position_button_state;
     bool last_clamp_button_state;
+
+    float JAW_ROTATION_DISTANCE = 1.0f;  // mm per step
+
+    long last_enc_jaw_rot_{0};
+    long last_enc_jaw_pos_{0};
+    long last_enc_clamp_{0};
 
     StepperMotor jaw_rotation_motor_;
     StepperMotor jaw_pos_motor_;

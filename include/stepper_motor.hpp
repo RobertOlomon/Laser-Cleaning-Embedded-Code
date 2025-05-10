@@ -91,7 +91,7 @@ public:
         uint8_t microsteps = 16;          ///< microsteps per full step (1, 2, 4, 8, 16, 32)
 
         constexpr ElectricalParams() : runCurrent_mA(1000.0f) {}  // default
-        constexpr ElectricalParams(float runCurrent_mA_) : runCurrent_mA(runCurrent_mA_) {}
+        constexpr ElectricalParams(float runCurrent_mA, uint8_t microsteps) : runCurrent_mA(runCurrent_mA), microsteps(microsteps) {}
     };
 
     struct PhysicalParams
@@ -109,10 +109,12 @@ public:
     void apply(const ElectricalParams& p);
 
     float currentPositionUnits() { return currentPosition() * rotationDistance_; }
-    void setPosUnitScale(float u) { rotationDistance_ = u; }
+    void setRotationDistance(float u) { rotationDistance_ = u; }
+    void moveToUnits(float pos) {
+        moveTo(pos / rotationDistance_); }
 
     const char* getName() const { return cfg_.name; }
-
+    int getMicrosteps() const { return elec_.microsteps; }
     bool runStepper();
     int begin();
     void kill();
@@ -121,7 +123,7 @@ public:
     void turnOff();
     void printDriverDebug() {Serial.println(stepper_driver_.DRV_STATUS(),BIN); }
 
-private:
+// private:
     StaticConfig cfg_;
     MotionParams motion_;
     ElectricalParams elec_;

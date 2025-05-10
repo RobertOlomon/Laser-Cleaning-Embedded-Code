@@ -33,17 +33,17 @@ int StepperMotor::begin()
     stepper_driver_.toff(5);           // Enables driver in software
     stepper_driver_.rms_current(elec_.runCurrent_mA);  // Set motor RMS current
     stepper_driver_.microsteps(elec_.microsteps);    // Set microsteps
-    stepper_driver_.en_pwm_mode(1);    // Enable extremely quiet stepping
-    stepper_driver_.pwm_autoscale(1);  // Slowest value (1...15)
 
     return EXIT_SUCCESS;
 }
 
 void StepperMotor::apply(const MotionParams& p) {
+    motion_ = p;
     setMaxSpeed(p.maxSpeed);
     setAcceleration(p.acceleration);
 };
 void StepperMotor::apply(const ElectricalParams& p){
+    elec_ = p;
     setRunCurrent(p.runCurrent_mA);
     stepper_driver_.microsteps(p.microsteps);  // Set microsteps to 1/16th
     steps_to_rotation_ = p.microsteps * 200.0f;  // 200 steps per revolution
