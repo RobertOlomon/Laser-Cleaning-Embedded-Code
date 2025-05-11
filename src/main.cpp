@@ -5,19 +5,14 @@
 #include "serial_receiver.hpp"
 #include "stepper_motor.hpp"
 
-
-enum CleanerOperatorMode
-{
-    MANUAL = 0,
-    AUTO   = 1,
-    DEBUG
-};
-
 constexpr int BAUDERATE = 921600;
 
 SerialReceiver receiver;
 
 Cleaner cleaner_system;
+
+static bool wasInManualMode = false;
+static bool wasInDebugMode = false;
 
 void ESTOP_ISR()
 {
@@ -27,19 +22,23 @@ void ESTOP_ISR()
     analogWrite(LED_BLUE, 255);
 }
 
-static bool wasInManualMode = false;
-static bool wasInDebugMode = false;
+inline void runOnSwitch(bool& flag, bool trigger_when, Cleaner& system, void (Cleaner::*func)()) {
+    if (flag == trigger_when) {
+        (system.*func)();
+        flag = !flag;
+    }
+}
 
 void setup()
 {
-    // pinMode(ESTOP_PIN, INPUT_PULLUP);  // Set ESTOP_PIN as input with pull-up resistor
+    pinMode(ESTOP_PIN, INPUT_PULLUP);  // Set ESTOP_PIN as input with pull-up resistor
 
-    // noInterrupts();
-    // attachInterrupt(
-    //     digitalPinToInterrupt(ESTOP_PIN),
-    //     ESTOP_ISR,
-    //     CHANGE);  // Attach interrupt to ESTOP_PIN
-    // interrupts();
+    noInterrupts();
+    attachInterrupt(
+        digitalPinToInterrupt(ESTOP_PIN),
+        ESTOP_ISR,
+        CHANGE);  // Attach interrupt to ESTOP_PIN
+    interrupts();
 
     Serial.begin(BAUDERATE);
     Serial.println("Starting Cleaner System...");
@@ -54,37 +53,24 @@ void setup()
 
 void loop()
 {
-    CleanerOperatorMode cleaner_operator_mode =
-        static_cast<CleanerOperatorMode>(digitalRead(MODE_PIN));  // get system mode
+    Cleaner::CleanerOperatorMode cleaner_operator_mode =
+        static_cast<Cleaner::CleanerOperatorMode>(digitalRead(MODE_PIN));  // get system mode
 
-    cleaner_operator_mode = CleanerOperatorMode::DEBUG;  // for testing purposes
+    cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;  // for testing purposes
 
     switch (cleaner_operator_mode)
     {
-        case CleanerOperatorMode::MANUAL:
+        case Cleaner::CleanerOperatorMode::MANUAL:
         {
-
-            if (!wasInManualMode)
-            {
-                // Perform actions needed when switching to MANUAL mode
-                cleaner_system.initializeManualMode();
-                wasInManualMode = true;
-            }
-            // get desired system state
+            runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
             cleaner_system.updateDesStateManual();
-            // run to the desired state
             cleaner_system.run();
         }
-        break;
+        break; // case MANUAL
 
-        case CleanerOperatorMode::AUTO:
+        case Cleaner::CleanerOperatorMode::AUTO:
         {
-            if (wasInManualMode)
-            {
-                // Perform actions needed when switching to AUTO mode
-                cleaner_system.initializeAutoMode();
-                wasInManualMode = false;
-            }
+            runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
             // will either update the message or skip if no message is available
             receiver.parse();
 
@@ -92,13 +78,8 @@ void loop()
             {
                 case SerialReceiver::MessageType::COMMAND:
                 {
-                    // If the message is a command type
                     SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
-
-                    // modify the cleaner system des_state based on the command message
                     cleaner_system.processCommand(msg);
-
-                    // run the cleaner system to the desired state
                     cleaner_system.run();
                 }
                 break;
@@ -116,30 +97,11 @@ void loop()
             }
         }
         break; // case AUTO
-        case(CleanerOperatorMode::DEBUG):
+        case(Cleaner::CleanerOperatorMode::DEBUG):
         {
-            if (!wasInDebugMode)
-            {
-                // Perform actions needed when switching to DEBUG mode
-                cleaner_system.initializeManualMode();
-                wasInDebugMode = true;
-            }
-            // Serial.println("Debugging mode...");
-            // cleaner_system.des_state_.jaw_rotation = cos(millis() / 1000.0) * 2000;
-            // cleaner_system.state_.jaw_rotation = 0;
-            // cleaner_system.printDriverDebug();
+            runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
             cleaner_system.updateDesStateManual();
-            // Serial.println(cleaner_system.updateDesStateManual().jaw_rotation);
             cleaner_system.run();
-
-            // Serial.print("Jaw rotation: ");
-            // Serial.println(cleaner_system.des_state_.jaw_rotation);
-            // PrintHzRateDebug();
-            // Serial.print("Current position: ");
-            // Serial.println(cleaner_system.jaw_rotation_motor_.currentPosition());
-
-            // Serial.print("Rotation Distance:");
-            // Serial.println(cleaner_system.JAW_ROTATION_DISTANCE);
         }
         break; // case DEBUG
 

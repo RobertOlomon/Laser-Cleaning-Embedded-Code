@@ -54,6 +54,13 @@ public:
                 clamp_pos - other.clamp_pos,
                 is_Estopped || other.is_Estopped};
         }
+        bool operator>(const State& other) const{
+            return (jaw_pos > other.jaw_pos) && (jaw_rotation > other.jaw_rotation) && (clamp_pos > other.clamp_pos);
+        }
+
+        State() : jaw_rotation(0), jaw_pos(0), clamp_pos(0), is_Estopped(false) {}
+        State(float jaw_rotation, float jaw_pos, float clamp_pos, bool is_Estopped) :
+        jaw_rotation(jaw_rotation), jaw_pos(jaw_pos), clamp_pos(clamp_pos), is_Estopped(is_Estopped) {}
     };
 
     State updateDesStateManual();

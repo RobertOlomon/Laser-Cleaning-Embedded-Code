@@ -33,10 +33,10 @@ int StepperMotor::begin()
     if (ESTOP_VSAMPLE_PIN != 255)
     {
         pinMode(ESTOP_VSAMPLE_PIN, INPUT);
-
-        if (analogRead(ESTOP_VSAMPLE_PIN) < 1024/2)
+        constexpr int ESTOP_VSAMPLE_THRESHOLD = 1023/2;
+        if (analogRead(ESTOP_VSAMPLE_PIN) < ESTOP_VSAMPLE_THRESHOLD)
         {
-            Serial.println("E-STOP engaged, not starting motor.");
+            Serial.println("Driver voltage low, E-STOP likely engaged, not starting motor.");
             return EXIT_FAILURE;
         }
     }

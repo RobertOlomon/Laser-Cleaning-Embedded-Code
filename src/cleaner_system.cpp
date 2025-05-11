@@ -44,6 +44,8 @@ Cleaner::Cleaner()
     clamp_motor_.apply(JawRotationElectrical);
 
     jaw_rotation_motor_.apply(JawRotationPhysical);
+
+    reset();
 }
 
 Cleaner::~Cleaner() = default;
@@ -142,6 +144,10 @@ void Cleaner::run()
         }
 
         last_read_time = now;
+        State errortol{1e-3, 1e-1, 1e-1, false};
+        if (error > errortol){
+            Serial.print(SERIAL_ACK);
+        }
     }
 }
 
