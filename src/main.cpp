@@ -13,14 +13,9 @@ enum CleanerOperatorMode
     DEBUG
 };
 
-constexpr int MODE_PIN    = 255;  // Pin for mode control
-constexpr int ESTOP_PIN   = 255;  // Pin for emergency stop
-
 constexpr int BAUDERATE = 921600;
 
 SerialReceiver receiver;
-
-CleanerOperatorMode cleaner_operator_mode = CleanerOperatorMode::MANUAL;
 
 Cleaner cleaner_system;
 
@@ -45,7 +40,6 @@ void setup()
     //     ESTOP_ISR,
     //     CHANGE);  // Attach interrupt to ESTOP_PIN
     // interrupts();
-    
 
     Serial.begin(BAUDERATE);
     Serial.println("Starting Cleaner System...");
@@ -60,7 +54,7 @@ void setup()
 
 void loop()
 {
-    cleaner_operator_mode =
+    CleanerOperatorMode cleaner_operator_mode =
         static_cast<CleanerOperatorMode>(digitalRead(MODE_PIN));  // get system mode
 
     cleaner_operator_mode = CleanerOperatorMode::DEBUG;  // for testing purposes
@@ -108,14 +102,12 @@ void loop()
                     cleaner_system.run();
                 }
                 break;
-
                 case SerialReceiver::MessageType::STOP:
                 {
-                    // If the message is a stop type
+                    // If the message is a stop type, this is not the emergency stop
                     SerialReceiver::Stop msg =
                         receiver.lastReceivedStopMessage();  // read the message just cause?
-                    cleaner_system.shutdown();
-                    Serial.println("Shutting down cleaner system...");
+                    cleaner_system.stop();
                 }
                 break;
 
@@ -137,7 +129,6 @@ void loop()
             // cleaner_system.state_.jaw_rotation = 0;
             // cleaner_system.printDriverDebug();
             cleaner_system.updateDesStateManual();
-            cleaner_system.getRealState();
             // Serial.println(cleaner_system.updateDesStateManual().jaw_rotation);
             cleaner_system.run();
 

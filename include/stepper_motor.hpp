@@ -26,7 +26,6 @@ public:
     static constexpr float TMC5160_PLUS_RSENSE = 0.022f;
     static constexpr float TMC5160_PRO_RSENSE  = 0.075f;
 
-    /* ---------- never changes after construction ---------- */
     struct Pins
     {
         uint8_t cs;           ///< Chip‑select (always required)
@@ -96,37 +95,40 @@ public:
 
     struct PhysicalParams
     {
-        float rotationDistance = 1.0f;  ///< scale factor for position units (e.g., mm/step)
+        float stepDistance = 1.0f;  ///< scale factor for position units (e.g., mm/step)
 
-        constexpr PhysicalParams() : rotationDistance(1.0f) {}  // default
-        constexpr PhysicalParams(float rotationDistance_) : rotationDistance(rotationDistance_) {}
+        constexpr PhysicalParams() : stepDistance(1.0f) {}  // default
+        constexpr PhysicalParams(float stepDistance_) : stepDistance(stepDistance_) {}
     };
 
     explicit StepperMotor(const StaticConfig& cfg);
 
-    /* cohesive setters — keep related parameters together */
-    void apply(const MotionParams& p);
-    void apply(const ElectricalParams& p);
-
-    float currentPositionUnits() { return currentPosition() * rotationDistance_; }
-    void setRotationDistance(float u) { rotationDistance_ = u; }
-    void moveToUnits(float pos) {
-        moveTo(pos / rotationDistance_); }
-
-    const char* getName() const { return cfg_.name; }
-    int getMicrosteps() const { return elec_.microsteps; }
-    bool runStepper();
     int begin();
     void kill();
-    void setDesStepperLocation();
-    void setRunCurrent(uint16_t currentLimit);  // set current limit in mA
-    void turnOff();
+
+    // Setters
+    void apply(const MotionParams& p);
+    void apply(const ElectricalParams& p);
+    void apply(const PhysicalParams& p);
+
+    float currentPositionUnits() { return currentPosition() * phys_.stepDistance; }
+    void moveToUnits(float pos) { moveTo(pos / phys_.stepDistance); }
+
+    // getters
+    const char* getName() const { return cfg_.name; }
+    int getMicrosteps() const { return elec_.microsteps; }
+
     void printDriverDebug() {Serial.println(stepper_driver_.DRV_STATUS(),BIN); }
 
-// private:
+    MotionParams getMotionParams() const { return motion_; }
+    ElectricalParams getElectricalParams() const { return elec_; }
+    PhysicalParams getPhysicalParams() const { return phys_; }
+
+private:
     StaticConfig cfg_;
     MotionParams motion_;
     ElectricalParams elec_;
+    PhysicalParams phys_;
 
     /* driver instance (soft‑SPI vs HW‑SPI picked at run‑time) */
     uint8_t BrakePin;                // Pin used to brake the motor
@@ -134,6 +136,4 @@ public:
 
     bool BrakeOn = LOW;      // Define which direction for the pin to activate the break.
     char* name_  = nullptr;  // The name of the motor, used for debugging
-    float rotationDistance_;     // map for current position to units of distance
-    float steps_to_rotation_; 
 };
