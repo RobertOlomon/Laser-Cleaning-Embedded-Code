@@ -75,7 +75,7 @@ int Cleaner::begin()
 
     // Register the interrupt for the PCF8575
     pinMode(IO_EXTENDER_INT, INPUT_PULLUP);
-    // now the ISR service is up—this will succeed
+    detachInterrupt(IO_EXTENDER_INT);
     attachInterrupt(
         IO_EXTENDER_INT,
         bindArgGateThisAllocate(&Cleaner::is_updatePCF8575_message, this),
