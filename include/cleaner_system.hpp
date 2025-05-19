@@ -45,6 +45,15 @@ public:
         float clamp_pos;
         bool is_Estopped;
 
+        State() : jaw_rotation(0), jaw_pos(0), clamp_pos(0), is_Estopped(false) {}
+        State(float jaw_rotation, float jaw_pos, float clamp_pos, bool is_Estopped)
+            : jaw_rotation(jaw_rotation),
+              jaw_pos(jaw_pos),
+              clamp_pos(clamp_pos),
+              is_Estopped(is_Estopped)
+        {
+        }
+
         // subtraction operator, is_Estopped is or
         State operator-(const State& other) const
         {
@@ -54,23 +63,44 @@ public:
                 clamp_pos - other.clamp_pos,
                 is_Estopped || other.is_Estopped};
         }
-        bool operator>(const State& other) const{
-            return (jaw_pos > other.jaw_pos) && (jaw_rotation > other.jaw_rotation) && (clamp_pos > other.clamp_pos);
+        bool operator>(const State& other) const
+        {
+            return (jaw_pos > other.jaw_pos) && (jaw_rotation > other.jaw_rotation) &&
+                   (clamp_pos > other.clamp_pos);
         }
 
-        State() : jaw_rotation(0), jaw_pos(0), clamp_pos(0), is_Estopped(false) {}
-        State(float jaw_rotation, float jaw_pos, float clamp_pos, bool is_Estopped) :
-        jaw_rotation(jaw_rotation), jaw_pos(jaw_pos), clamp_pos(clamp_pos), is_Estopped(is_Estopped) {}
+        // Print method
+        void print(const char* label = "State") const
+        {
+            Serial.print(label);
+            Serial.println(":");
+
+            Serial.print("  Jaw Rotation: ");
+            Serial.println(jaw_rotation, 3);
+
+            Serial.print("  Jaw Position: ");
+            Serial.println(jaw_pos, 3);
+
+            Serial.print("  Clamp Position: ");
+            Serial.println(clamp_pos, 3);
+
+            Serial.print("  Emergency Stop: ");
+            Serial.println(is_Estopped ? "YES" : "NO");
+
+            Serial.println();  // blank line
+        }
     };
 
     State updateDesStateManual();
 
     State updateRealState();
 
-    // StepperMotor* getJawRotationMotor() { return &jaw_rotation_motor_; }
-    // StepperMotor* getJawPosMotor() { return &jaw_pos_motor_; }
-    // StepperMotor* getClampMotor() { return &clamp_motor_; }
-    // RotaryEncoder* getJawRotationEncoder() { return &encoder_jaw_rotation_; }
+    PCF8575 getIOExpander() { return IOExtender_; };
+
+    StepperMotor getJawRotationMotor() { return jaw_rotation_motor_; }
+    StepperMotor getJawPosMotor() { return jaw_pos_motor_; }
+    StepperMotor getClampMotor() { return clamp_motor_; }
+    RotaryEncoder getJawRotationEncoder() { return encoder_jaw_rotation_; }
 
 private:
     struct ToggleButtonState
@@ -110,9 +140,11 @@ private:
     State state_;
     State des_state_;
 
-    AS5048A encoder_;
-
     bool updatePCF8575_flag;
+
+    float last_enc_jaw_rot_;
+    float last_enc_jaw_pos_;
+    float last_enc_clamp_;
 
     constexpr static char SERIAL_ACK = 'A';
 
@@ -132,6 +164,10 @@ private:
     bool ENCODER_JAW_POSITION_SPEED_HIGH = false;
     bool ENCODER_JAW_ROTATION_SPEED_HIGH = false;
 
+    PCF8575 IOExtender_;  // Must be defined before the rotary encoders
+
+    AS5048A encoder_;
+
     RotaryEncoder encoder_jaw_rotation_;
     RotaryEncoder encoder_jaw_pos_;
     RotaryEncoder encoder_clamp_;
@@ -140,17 +176,11 @@ private:
     StepperMotor jaw_pos_motor_;
     StepperMotor clamp_motor_;
 
-    PCF8575 IOExtender_;
-
     // handy array of all motors
     StepperMotor* motors[3];
 
     // Filters and Controllers
-    std::array<float, 3> encoder_natural_coeffs_{};
-    std::array<float, 3> encoder_forced_coeffs_{};
     DiscreteFilter<3> encoderLowpassFilter;
 
-    std::array<float, 3> natural_coeffs_jaw_rotation_PID{};
-    std::array<float, 3> forced_coeffs_jaw_rotation_PID{};
     DiscreteFilter<3> JawRotationPID;
 };

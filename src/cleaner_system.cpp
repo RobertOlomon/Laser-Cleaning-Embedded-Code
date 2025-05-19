@@ -13,8 +13,8 @@ Cleaner::Cleaner()
       jaw_pos_motor_(jawPosCfg),
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
       encoder_(ENCODER_CS_PIN, false),
-      encoderLowpassFilter(encoder_natural_coeffs_, encoder_forced_coeffs_),
-      JawRotationPID(natural_coeffs_jaw_rotation_PID, forced_coeffs_jaw_rotation_PID),
+      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(100, 1.0f / RUN_RATE_HZ)),
+      JawRotationPID(controller::PIDControllerCoefficients(.1f, .01f, .01f, 1.0f / RUN_RATE_HZ)),
       encoder_jaw_rotation_(ENCODER_JAW_ROTATION_PIN1, ENCODER_JAW_ROTATION_PIN2, IOExtender_),
       encoder_jaw_pos_(ENCODER_JAW_POSITION_PIN1, ENCODER_JAW_POSITION_PIN2, IOExtender_),
       encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, IOExtender_)
@@ -24,16 +24,6 @@ Cleaner::Cleaner()
     motors[0] = &jaw_rotation_motor_;
     motors[1] = &jaw_pos_motor_;
     motors[2] = &clamp_motor_;
-
-    // Create and set the lowpass filter for the encoder
-    Butterworth<2, LOWPASS> encoderLowpass(500, 1.0f / RUN_RATE_HZ);
-    encoder_natural_coeffs_ = encoderLowpass.getNaturalResponseCoefficients();
-    encoder_forced_coeffs_  = encoderLowpass.getForcedResponseCoefficients();
-
-    // Create and set the PID filter for the jaw rotation
-    PIDControllerCoefficients jawRotationPID(0.1f, 0.01f, 0.01f, 1.0f / RUN_RATE_HZ);
-    natural_coeffs_jaw_rotation_PID = jawRotationPID.getNaturalResponseCoefficients();
-    forced_coeffs_jaw_rotation_PID  = jawRotationPID.getForcedResponseCoefficients();
 
     jaw_rotation_motor_.apply(JawRotationMotion);
     jaw_pos_motor_.apply(JawRotationMotion);
@@ -83,11 +73,9 @@ int Cleaner::begin()
         bindArgGateThisAllocate(&Cleaner::is_updatePCF8575_message, this),
         FALLING);
 
-
     // Initialize the pins
     pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
     pinMode(ESTOP_PIN, INPUT_PULLUP);
-
 
     return EXIT_SUCCESS;
 }
@@ -129,9 +117,9 @@ void Cleaner::run()
 
         // seems kinda strange but I think this will work
         State error = des_state_ - state_;
-        // jaw_rotation_motor_.moveTo(jaw_rotation_motor_.currentPosition() + error.jaw_rotation);
-        // jaw_pos_motor_.moveTo(jaw_pos_motor_.currentPosition() + error.jaw_pos);
-        // clamp_motor_.moveTo(clamp_motor_.currentPosition() + error.clamp_pos);
+        jaw_rotation_motor_.moveTo(jaw_rotation_motor_.currentPosition() + error.jaw_rotation);
+        jaw_pos_motor_.moveTo(jaw_pos_motor_.currentPosition() + error.jaw_pos);
+        clamp_motor_.moveTo(clamp_motor_.currentPosition() + error.clamp_pos);
 
         float jaw_rotation_speed = JawRotationPID.filterData(error.jaw_rotation) /
                                    jaw_rotation_motor_.getPhysicalParams().stepDistance;
@@ -145,7 +133,8 @@ void Cleaner::run()
 
         last_read_time = now;
         State errortol{1e-3, 1e-1, 1e-1, false};
-        if (error > errortol){
+        if (error > errortol)
+        {
             Serial.print(SERIAL_ACK);
         }
     }
@@ -153,7 +142,7 @@ void Cleaner::run()
 
 void Cleaner::home()
 {
-    reset(); // Reset the state to default values
+    reset();  // Reset the state to default values
     while (!digitalRead(LIMIT_SWITCH_PIN))
     {
         // While going, check for no estop just in case
@@ -187,7 +176,8 @@ void Cleaner::stop()
 
 Cleaner::State Cleaner::updateRealState()
 {
-    if (!digitalRead(ESTOP_PIN)){
+    if (!digitalRead(ESTOP_PIN))
+    {
         state_.is_Estopped = true;
         // oh no oh crap
         shutdown();
@@ -207,18 +197,25 @@ Cleaner::State Cleaner::updateRealState()
 
 Cleaner::State Cleaner::updateDesStateManual()
 {
+    // due to lack of gpio, need, and use, don't use the interrupt for the PCF, just constantly poll
+    updatePCF8575_flag = true;
     if (updatePCF8575_flag)
     {
         updatePCF8575_flag = false;
         updatePCF8575();
     }
 
-    /************** Rotary Encoder ***************/
-    int delta_rot = encoder_jaw_rotation_.getRPM();
-    int delta_pos = encoder_jaw_pos_.getRPM();
-    int delta_cl  = encoder_clamp_.getRPM();
+    // 1) read raw counts
+    int cur_jaw_rot = encoder_jaw_rotation_.getPosition();
+    int cur_jaw_pos = encoder_jaw_pos_.getPosition();
+    int cur_clamp   = encoder_clamp_.getPosition();
 
-    // apply to desired state
+    // 2) compute deltas
+    int delta_rot = cur_jaw_rot - last_enc_jaw_rot_;
+    int delta_pos = cur_jaw_pos - last_enc_jaw_pos_;
+    int delta_cl  = cur_clamp - last_enc_clamp_;
+
+    // 3) apply to desired state
     float rot_factor = ENCODER_JAW_ROTATION_SPEED_HIGH ? 1.0f : 0.1f;
     float pos_factor = ENCODER_JAW_POSITION_SPEED_HIGH ? 1.0f : 0.5f;
     float clp_factor = ENCODER_CLAMP_SPEED_HIGH ? 1.0f : 0.5f;
@@ -226,6 +223,11 @@ Cleaner::State Cleaner::updateDesStateManual()
     des_state_.jaw_rotation += delta_rot * ENCODER_JAW_ROTATION_SENSITIVITY * rot_factor;
     des_state_.jaw_pos += delta_pos * ENCODER_JAW_POSITION_SENSITIVITY * pos_factor;
     des_state_.clamp_pos += delta_cl * ENCODER_CLAMP_SENSITIVITY * clp_factor;
+
+    // 4) remember raw values for next time
+    last_enc_jaw_rot_ = cur_jaw_rot;
+    last_enc_jaw_pos_ = cur_jaw_pos;
+    last_enc_clamp_   = cur_clamp;
 
     return des_state_;
 }

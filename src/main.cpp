@@ -16,7 +16,7 @@ static bool wasInDebugMode = false;
 
 void ESTOP_ISR()
 {
-    cleaner_system.shutdown();
+    // cleaner_system.shutdown();
     analogWrite(LED_RED, 0);      // Turn on red LED to indicate emergency stop
     analogWrite(LED_GREEN, 255);  // Turn off green LED
     analogWrite(LED_BLUE, 255);
@@ -62,46 +62,51 @@ void loop()
     {
         case Cleaner::CleanerOperatorMode::MANUAL:
         {
-            runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            cleaner_system.updateDesStateManual();
-            cleaner_system.run();
+            // runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
+            // cleaner_system.updateDesStateManual();
+            // cleaner_system.run();
         }
         break; // case MANUAL
 
         case Cleaner::CleanerOperatorMode::AUTO:
         {
-            runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
-            // will either update the message or skip if no message is available
-            receiver.parse();
+        //     runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
+        //     // will either update the message or skip if no message is available
+        //     receiver.parse();
 
-            switch (receiver.lastReceivedMessageId())
-            {
-                case SerialReceiver::MessageType::COMMAND:
-                {
-                    SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
-                    cleaner_system.processCommand(msg);
-                    cleaner_system.run();
-                }
-                break;
-                case SerialReceiver::MessageType::STOP:
-                {
-                    // If the message is a stop type, this is not the emergency stop
-                    SerialReceiver::Stop msg =
-                        receiver.lastReceivedStopMessage();  // read the message just cause?
-                    cleaner_system.stop();
-                }
-                break;
+        //     switch (receiver.lastReceivedMessageId())
+        //     {
+        //         case SerialReceiver::MessageType::COMMAND:
+        //         {
+        //             SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
+        //             cleaner_system.processCommand(msg);
+        //             cleaner_system.run();
+        //         }
+        //         break;
+        //         case SerialReceiver::MessageType::STOP:
+        //         {
+        //             // If the message is a stop type, this is not the emergency stop
+        //             SerialReceiver::Stop msg =
+        //                 receiver.lastReceivedStopMessage();  // read the message just cause?
+        //             cleaner_system.stop();
+        //         }
+        //         break;
 
-                default:
-                    break;
-            }
+        //         default:
+        //             break;
+        //     }
         }
         break; // case AUTO
         case(Cleaner::CleanerOperatorMode::DEBUG):
         {
             runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            cleaner_system.updateDesStateManual();
-            cleaner_system.run();
+            auto State = cleaner_system.updateDesStateManual();
+            // cleaner_system.run();
+            // uint16_t debug = cleaner_system.getIOExpander().read(ENCODER_JAW_POSITION_BUTTON_PIN);
+            // uint16_t debug = cleaner_system.getIOExpander().read16();
+            // Serial.println(debug,BIN);
+            PRINT_EVERY(.5,State.print());
+
         }
         break; // case DEBUG
 

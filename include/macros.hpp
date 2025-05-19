@@ -18,3 +18,14 @@
         } \
     } \
 } while (0)
+
+
+#define PRINT_EVERY(seconds, block)                  \
+    do {                                             \
+        static unsigned long _lastPrintTime = 0;     \
+        unsigned long _now = millis();               \
+        if (_now - _lastPrintTime >= (seconds * 1000)) { \
+            _lastPrintTime = _now;                   \
+            block;                                   \
+        }                                            \
+    } while (0)

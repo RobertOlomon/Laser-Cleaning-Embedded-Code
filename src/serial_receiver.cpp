@@ -36,8 +36,8 @@ SerialReceiver::CommandMessage::CommandMessage(
 SerialReceiver::CommandMessage::CommandMessage(char buffer[])
 {
     // received string from serial, parse to allowed Gcode and Mcode
-    char POS_STRTOK_F_YOU[strlen(buffer)];
-    std::memcpy(POS_STRTOK_F_YOU, buffer, strlen(buffer));
+    char POS_STRTOK_F_YOU[strlen(buffer)+1];
+    std::memcpy(POS_STRTOK_F_YOU, buffer, strlen(buffer)+1);
     char *token = strtok(POS_STRTOK_F_YOU, " ");
 
     switch (token[0])
@@ -75,6 +75,7 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
                     break;
             }
         }
+        break;
         case 'M':
         {
             // For M commands, if they have no additional parameter you can process
@@ -92,12 +93,13 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
                     M906.received = true;
                     ProcessCommand(&buffer[strlen(token) + 1], &M906);
                     break;
-                default:    
+                default:
                     Serial.print("Unhandled M-code: M");
                     Serial.println(mCmd);
                     break;
             }
         }
+        break;
     }
 }
 
@@ -169,7 +171,7 @@ SerialReceiver::SerialReceiver()
  * 4 bytes - Message length
  * n bytes - Message data
  *
- * It modyfies the lastReceivedCommandMessage_ and lastReceivedStopMessage_
+ * It modifies the lastReceivedCommandMessage_ and lastReceivedStopMessage_
  * based on the message type. and updates the lastReceivedMsgId_ with the
  * message type. The function updates the state machine and processes messages
  * of type COMMAND.

@@ -3,23 +3,22 @@
 /* -------------------------------------------------------------------------- */
 /*                           PCF8676 PIN DEFINITIONS                          */
 /* -------------------------------------------------------------------------- */
-constexpr static uint8_t ENCODER_JAW_ROTATION_PIN1       = 13;
-constexpr static uint8_t ENCODER_JAW_ROTATION_PIN2       = 12;
-constexpr static uint8_t ENCODER_JAW_ROTATION_BUTTON_PIN = 14;
+constexpr static uint8_t ENCODER_JAW_ROTATION_PIN1       = 5;
+constexpr static uint8_t ENCODER_JAW_ROTATION_PIN2       = 6;
+constexpr static uint8_t ENCODER_JAW_ROTATION_BUTTON_PIN = 7;
 constexpr static uint8_t ENCODER_JAW_ROTATION_SPEED_LED  = 255;
 
-constexpr static uint8_t ENCODER_JAW_POSITION_PIN1       = 255;
-constexpr static uint8_t ENCODER_JAW_POSITION_PIN2       = 255;
-constexpr static uint8_t ENCODER_JAW_POSITION_BUTTON_PIN = 255;
+constexpr static uint8_t ENCODER_JAW_POSITION_PIN1       = 8;
+constexpr static uint8_t ENCODER_JAW_POSITION_PIN2       = 9;
+constexpr static uint8_t ENCODER_JAW_POSITION_BUTTON_PIN = 10;
 constexpr static uint8_t ENCODER_JAW_POSITION_SPEED_LED  = 255;
 
-constexpr static uint8_t ENCODER_CLAMP_PIN1       = 255;
-constexpr static uint8_t ENCODER_CLAMP_PIN2       = 255;
-constexpr static uint8_t ENCODER_CLAMP_BUTTON_PIN = 255;
+constexpr static uint8_t ENCODER_CLAMP_PIN1       = 2;
+constexpr static uint8_t ENCODER_CLAMP_PIN2       = 3;
+constexpr static uint8_t ENCODER_CLAMP_BUTTON_PIN = 4;
 constexpr static uint8_t ENCODER_CLAMP_SPEED_LED  = 255;
 
-constexpr static uint8_t IO_EXTENDER_INT = 6;  // Pin for PCF8575 interrupt
-
+constexpr static uint8_t IO_EXTENDER_INT = D6;  // Pin for PCF8575 interrupt
 /* -------------------------------------------------------------------------- */
 /*                                 SPI DEFINITIONS                            */
 /* -------------------------------------------------------------------------- */
