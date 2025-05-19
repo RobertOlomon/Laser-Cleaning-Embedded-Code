@@ -51,7 +51,7 @@ class CommandMessage(Message):
         return 0x01
     
     def length(self) -> int:
-        return 8*5
+        return len(self.Command.encode('utf-8')) * 4
     
     def encode(self) -> bytes:
         data = struct.pack(f"<{self.length()}s", self.Command.encode('utf-8'))
@@ -61,7 +61,8 @@ if __name__ == "__main__":
     # Example usage
     transmitter = Transmitter(port="COM9", baud_rate=921600, write_timeout=1, timeout=1)
     
-    general_msg = CommandMessage("G0 X1")
+    general_msg = CommandMessage("G0 X1\0")
+    print(general_msg.length())
     transmitter.send_msg(general_msg)
     
     while True:

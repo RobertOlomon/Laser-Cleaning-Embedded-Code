@@ -20,6 +20,7 @@
 
 #include "Arduino.h"
 #include "PCF8575.h"
+#include <functional>
 
 class RotaryEncoder
 {
@@ -36,8 +37,10 @@ public:
     TWO03 = 3  // 2 steps, Latch at position 0 and 3 
   };
 
+  using ReadFunction = std::function<int(int)>;
+
   // ----- Constructor -----
-  RotaryEncoder(int pin1, int pin2, PCF8575 &ioExtender, LatchMode mode = LatchMode::FOUR0);
+  RotaryEncoder(int pin1, int pin2, ReadFunction reader, LatchMode mode = LatchMode::FOUR0);
 
   // retrieve the current position
   long getPosition();
@@ -72,6 +75,8 @@ private:
 
   unsigned long _positionExtTime;     // The time the last position change was detected.
   unsigned long _positionExtTimePrev; // The time the previous position change was detected.
+
+  ReadFunction _readPin;
 };
 
 #endif

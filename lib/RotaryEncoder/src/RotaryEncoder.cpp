@@ -39,7 +39,8 @@ const int8_t KNOBDIR[] = {
 
 // ----- Initialization and Default Values -----
 
-RotaryEncoder::RotaryEncoder(int pin1, int pin2, PCF8575 &ioExtender, LatchMode mode)
+RotaryEncoder::RotaryEncoder(int pin1, int pin2, ReadFunction reader, LatchMode mode)
+  : _readPin(reader)
 {
   // Remember Hardware Setup
   _pin1 = pin1;
@@ -53,8 +54,8 @@ RotaryEncoder::RotaryEncoder(int pin1, int pin2, PCF8575 &ioExtender, LatchMode 
   // pinMode(pin2, INPUT_PULLUP);
 
   // when not started in motion, the current state of the encoder should be 3
-  int sig1 = ioExtender.read(_pin1);
-  int sig2 = ioExtender.read(_pin2);
+  int sig1 = _readPin(_pin1);
+  int sig2 = _readPin(_pin2);
   _oldState = sig1 | (sig2 << 1);
 
   // start with position 0;
@@ -113,8 +114,8 @@ void RotaryEncoder::setPosition(long newPosition)
 
 void RotaryEncoder::tick(void)
 {
-  int sig1 = ioExtender.read(_pin1);
-  int sig2 = ioExtender.read(_pin2);
+  int sig1 = _readPin(_pin1);
+  int sig2 = _readPin(_pin2);
   int8_t thisState = sig1 | (sig2 << 1);
 
   if (_oldState != thisState) {

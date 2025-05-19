@@ -29,3 +29,10 @@
             block;                                   \
         }                                            \
     } while (0)
+
+inline void runOnSwitch(bool& flag, bool trigger_when, Cleaner& system, void (Cleaner::*func)()) {
+    if (flag == trigger_when) {
+        (system.*func)();
+        flag = !flag;
+    }
+}

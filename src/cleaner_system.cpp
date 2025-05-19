@@ -15,10 +15,12 @@ Cleaner::Cleaner()
       encoder_(ENCODER_CS_PIN, false),
       encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(100, 1.0f / RUN_RATE_HZ)),
       JawRotationPID(controller::PIDControllerCoefficients(.1f, .01f, .01f, 1.0f / RUN_RATE_HZ)),
-      encoder_jaw_rotation_(ENCODER_JAW_ROTATION_PIN1, ENCODER_JAW_ROTATION_PIN2, IOExtender_),
-      encoder_jaw_pos_(ENCODER_JAW_POSITION_PIN1, ENCODER_JAW_POSITION_PIN2, IOExtender_),
-      encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, IOExtender_)
-
+      encoder_jaw_rotation_(ENCODER_JAW_ROTATION_PIN1, ENCODER_JAW_ROTATION_PIN2,
+          [&](int pin) { return IOExtender_.readNoUpdate(pin); }),
+      encoder_jaw_pos_(ENCODER_JAW_POSITION_PIN1, ENCODER_JAW_POSITION_PIN2,
+          [&](int pin) { return IOExtender_.readNoUpdate(pin); }),
+      encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2,
+          [&](int pin) { return IOExtender_.readNoUpdate(pin); })
 {
     // Add motors to the array
     motors[0] = &jaw_rotation_motor_;
@@ -65,6 +67,7 @@ int Cleaner::begin()
     // Initialize the encoder
     encoder_.begin();
 
+    if (IO_EXTENDER_INT != 255){
     // Register the interrupt for the PCF8575
     pinMode(IO_EXTENDER_INT, INPUT_PULLUP);
     detachInterrupt(IO_EXTENDER_INT);
@@ -72,7 +75,7 @@ int Cleaner::begin()
         IO_EXTENDER_INT,
         bindArgGateThisAllocate(&Cleaner::is_updatePCF8575_message, this),
         FALLING);
-
+    }
     // Initialize the pins
     pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
     pinMode(ESTOP_PIN, INPUT_PULLUP);
@@ -83,6 +86,7 @@ int Cleaner::begin()
 // This function is called in the main loop whenever the interrupt is triggered
 void Cleaner::updatePCF8575()
 {
+    IOExtender_.update();
     // update the encoders
     encoder_clamp_.tick();
     encoder_jaw_pos_.tick();
@@ -90,18 +94,20 @@ void Cleaner::updatePCF8575()
 
     // read current state
 
-    ENCODER_BUTTONS[0].current = IOExtender_.read(ENCODER_JAW_ROTATION_BUTTON_PIN);
-    ENCODER_BUTTONS[1].current = IOExtender_.read(ENCODER_JAW_POSITION_BUTTON_PIN);
-    ENCODER_BUTTONS[2].current = IOExtender_.read(ENCODER_CLAMP_BUTTON_PIN);
+    ENCODER_BUTTONS[0].current = IOExtender_.readNoUpdate(ENCODER_JAW_ROTATION_BUTTON_PIN);
+    ENCODER_BUTTONS[1].current = IOExtender_.readNoUpdate(ENCODER_JAW_POSITION_BUTTON_PIN);
+    ENCODER_BUTTONS[2].current = IOExtender_.readNoUpdate(ENCODER_CLAMP_BUTTON_PIN);
 
     for (auto& button : ENCODER_BUTTONS)
     {
         toggleButton(button);
     }
 
-    IOExtender_.write(ENCODER_JAW_ROTATION_SPEED_LED, ENCODER_JAW_ROTATION_SPEED_HIGH ? HIGH : LOW);
-    IOExtender_.write(ENCODER_JAW_POSITION_SPEED_LED, ENCODER_JAW_POSITION_SPEED_HIGH ? HIGH : LOW);
-    IOExtender_.write(ENCODER_CLAMP_SPEED_LED, ENCODER_CLAMP_SPEED_HIGH ? HIGH : LOW);
+    IOExtender_.writeNoUpdate(ENCODER_JAW_ROTATION_SPEED_LED, ENCODER_JAW_ROTATION_SPEED_HIGH ? HIGH : LOW);
+    IOExtender_.writeNoUpdate(ENCODER_JAW_POSITION_SPEED_LED, ENCODER_JAW_POSITION_SPEED_HIGH ? HIGH : LOW);
+    IOExtender_.writeNoUpdate(ENCODER_CLAMP_SPEED_LED, ENCODER_CLAMP_SPEED_HIGH ? HIGH : LOW);
+
+    IOExtender_.update();
 }
 
 void Cleaner::run()

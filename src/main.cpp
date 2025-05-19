@@ -22,13 +22,6 @@ void ESTOP_ISR()
     analogWrite(LED_BLUE, 255);
 }
 
-inline void runOnSwitch(bool& flag, bool trigger_when, Cleaner& system, void (Cleaner::*func)()) {
-    if (flag == trigger_when) {
-        (system.*func)();
-        flag = !flag;
-    }
-}
-
 void setup()
 {
     pinMode(ESTOP_PIN, INPUT_PULLUP);  // Set ESTOP_PIN as input with pull-up resistor
@@ -54,7 +47,7 @@ void setup()
 void loop()
 {
     Cleaner::CleanerOperatorMode cleaner_operator_mode =
-        static_cast<Cleaner::CleanerOperatorMode>(digitalRead(MODE_PIN));  // get system mode
+        static_cast<Cleaner::CleanerOperatorMode>(cleaner_system.getIOExpander().readButton(MODE_PIN));  // get system mode
 
     cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;  // for testing purposes
 
@@ -62,39 +55,39 @@ void loop()
     {
         case Cleaner::CleanerOperatorMode::MANUAL:
         {
-            // runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            // cleaner_system.updateDesStateManual();
-            // cleaner_system.run();
+            runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
+            cleaner_system.updateDesStateManual();
+            cleaner_system.run();
         }
         break; // case MANUAL
 
         case Cleaner::CleanerOperatorMode::AUTO:
         {
-        //     runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
-        //     // will either update the message or skip if no message is available
-        //     receiver.parse();
+            runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
+            // will either update the message or skip if no message is available
+            receiver.parse();
 
-        //     switch (receiver.lastReceivedMessageId())
-        //     {
-        //         case SerialReceiver::MessageType::COMMAND:
-        //         {
-        //             SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
-        //             cleaner_system.processCommand(msg);
-        //             cleaner_system.run();
-        //         }
-        //         break;
-        //         case SerialReceiver::MessageType::STOP:
-        //         {
-        //             // If the message is a stop type, this is not the emergency stop
-        //             SerialReceiver::Stop msg =
-        //                 receiver.lastReceivedStopMessage();  // read the message just cause?
-        //             cleaner_system.stop();
-        //         }
-        //         break;
+            switch (receiver.lastReceivedMessageId())
+            {
+                case SerialReceiver::MessageType::COMMAND:
+                {
+                    SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
+                    cleaner_system.processCommand(msg);
+                    cleaner_system.run();
+                }
+                break;
+                case SerialReceiver::MessageType::STOP:
+                {
+                    // If the message is a stop type, this is not the emergency stop
+                    SerialReceiver::Stop msg =
+                        receiver.lastReceivedStopMessage();  // read the message just cause?
+                    cleaner_system.stop();
+                }
+                break;
 
-        //         default:
-        //             break;
-        //     }
+                default:
+                    break;
+            }
         }
         break; // case AUTO
         case(Cleaner::CleanerOperatorMode::DEBUG):

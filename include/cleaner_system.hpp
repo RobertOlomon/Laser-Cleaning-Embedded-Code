@@ -146,7 +146,7 @@ private:
     float last_enc_jaw_pos_;
     float last_enc_clamp_;
 
-    constexpr static char SERIAL_ACK = 'A';
+    constexpr static char SERIAL_ACK = '\r';
 
     constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY =
         0.1f;  // Sensitivity for jaw rotation encoder
