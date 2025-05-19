@@ -13,8 +13,6 @@
             /* elapsed is microseconds for 1000 loops → Hz = 1000 / (elapsed/1e6) */ \
             float hz = (1000.0f * 1e6f) / (float)elapsed; \
             Serial.println(hz); \
-        } else { \
-            Serial.println("inf"); \
         } \
     } \
 } while (0)
