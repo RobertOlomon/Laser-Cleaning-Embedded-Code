@@ -113,6 +113,7 @@ public:
 
     float currentPositionUnits() { return currentPosition() * phys_.stepDistance; }
     void moveToUnits(float pos) { moveTo(pos / phys_.stepDistance); }
+    void setSpeedUnits(float speed) {setSpeed(speed / phys_.stepDistance); }
 
     // getters
     const char* getName() const { return cfg_.name; }

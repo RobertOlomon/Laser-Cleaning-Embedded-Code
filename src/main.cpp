@@ -47,7 +47,7 @@ void setup()
 void loop()
 {
     Cleaner::CleanerOperatorMode cleaner_operator_mode =
-        static_cast<Cleaner::CleanerOperatorMode>(cleaner_system.getIOExpander().readButton(MODE_PIN));  // get system mode
+        static_cast<Cleaner::CleanerOperatorMode>(!cleaner_system.getIOExpander().readButton(MODE_PIN));  // get system mode
 
     cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;  // for testing purposes
 
@@ -97,8 +97,18 @@ void loop()
             // cleaner_system.run();
             // uint16_t debug = cleaner_system.getIOExpander().read(ENCODER_JAW_POSITION_BUTTON_PIN);
             // uint16_t debug = cleaner_system.getIOExpander().read16();
+            // uint16_t debug2 = cleaner_system.getIOExpander().isConnected();
+            // Serial.println(debug2);
+            // uint16_t debug = cleaner_system.getIOExpander().read16();
             // Serial.println(debug,BIN);
-            PRINT_EVERY(.5,State.print());
+            PRINT_EVERY(.2,State.print());
+            // cleaner_system.getIOExpander().write(1,LOW);
+            // cleaner_system.getIOExpander().write(1,255);
+
+            // Serial.print("Mode");
+            // Serial.println(cleaner_system.getIOExpander().read(MODE_PIN));
+            // Serial.print("Brake");
+            // Serial.println(cleaner_system.getIOExpander().read(ROLLER_BRAKE_PIN));
 
         }
         break; // case DEBUG

@@ -33,9 +33,9 @@ public:
     struct mCommand
     {
         bool received = false;
-        float y       = 0.0f;  // slide
+        float y       = 0.0f;  // jaw position
         float a       = 0.0f;  // jaw rotation
-        float c       = 0.0f;  // jaw position
+        float c       = 0.0f;  // clamp position
         float val     = 0.0f;  // value for non-axis commands
     };
 
@@ -59,6 +59,7 @@ public:
 
         template <typename commandType>
         void ProcessCommand(char* param, commandType *commandName);
+        void ProcessHomeCommand(char *param, gCommand *command);
 
     };
 
@@ -71,7 +72,7 @@ public:
     };
 
     SerialReceiver();
-
+    
     void parse();
     CommandMessage lastReceivedCommandMessage() const;
     Stop lastReceivedStopMessage() const;

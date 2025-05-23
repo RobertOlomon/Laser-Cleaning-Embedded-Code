@@ -1,8 +1,12 @@
+
 #include "serial_receiver.hpp"
 
 #include <cstring>
 
+#ifdef ARDUINO
 #include <Arduino.h>
+#else
+#endif
 
 SerialReceiver::CommandMessage::CommandMessage()
     : G0(),
@@ -33,6 +37,22 @@ SerialReceiver::CommandMessage::CommandMessage(
 {
 }
 
+/**
+ * @brief Constructs a CommandMessage object by parsing a buffer containing G-code or M-code commands.
+ *
+ * This constructor takes a character buffer as input, which represents a G-code or M-code command string.
+ * It parses the buffer to identify the command type (G or M) and its associated parameters. The parsed
+ * data is stored in the respective command fields (e.g., G0, G4, M80, etc.) of the CommandMessage object.
+ *
+ * The parsing logic handles:
+ * - G-code commands (e.g., G0, G4, G28, G90) and their parameters (e.g., Y, A, C).
+ * - M-code commands (e.g., M80, M17, M906) and their parameters.
+ *
+ * @param buffer A null-terminated character array containing the G-code or M-code command string.
+ *
+ * @note The constructor uses `strtok` to tokenize the input buffer and processes each token to extract
+ *       the command type and parameters. Unhandled commands or parameters are logged using `Serial.print`.
+ */
 SerialReceiver::CommandMessage::CommandMessage(char buffer[])
 {
     // received string from serial, parse to allowed Gcode and Mcode
@@ -58,11 +78,11 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
                     break;
                 case 4:
                     G4.received = true;
-                    G4.val      = atof(&buffer[strlen(token) + 1]);
+                    G4.val      = atof(&buffer[strlen(token) + 2]); // + 2 to skip the letter
                     break;
                 case 28:
                     G28.received = true;
-                    ProcessCommand(&buffer[strlen(token) + 1], &G28);
+                    ProcessHomeCommand(&buffer[strlen(token) + 1], &G28);
                     break;
                 case 90:
                     G90.received = true;
@@ -79,15 +99,17 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
         case 'M':
         {
             // For M commands, if they have no additional parameter you can process
-            // directly.
+            // directly
             int mCmd = atoi(token + 1);
             switch (mCmd)
             {
                 case 80:
                     M80.received = true;
+                    ProcessCommand(&buffer[strlen(token) + 1], &M80);
                     break;
                 case 17:
                     M17.received = true;
+                    ProcessCommand(&buffer[strlen(token) + 1], &M17);
                     break;
                 case 906:
                     M906.received = true;
@@ -108,7 +130,7 @@ template <typename commandType>
 void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *command)
 {
     char *token = strtok(param, " ");
-    // Process the G0 command and extract parameters
+    // Process the command and extract parameters
     while (token != NULL)
     {
         // Check for Y, A, C parameters
@@ -127,6 +149,36 @@ void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *co
                 Serial.print("Unhandled Gcode parameter: ");
                 Serial.print(std::to_string(token[0]).c_str());
                 Serial.print("\n");
+                break;
+        }
+        token = strtok(NULL, " ");
+    }
+}
+
+// Special code for the home command because of it's strangeness, it's a hack but I don't wanna refactor stuff
+void SerialReceiver::CommandMessage::ProcessHomeCommand(char *param, gCommand *command)
+{
+    char *token = strtok(param, " ");
+    // Process the command and extract parameters
+    while (token != NULL)
+    {
+        // Check for Y, A, C parameters
+        switch (token[0])
+        {
+            case 'Y':
+                command->y = 1.0f;
+                break;
+            case 'A':
+                command->a = 1.0f;
+                break;
+            case 'C':
+                command->c = 1.0f;
+                break;
+            default:
+                // Should be when no axis are specified, means home all
+                command->y = 1.0f;
+                command->a = 1.0f;
+                command->c = 1.0f;
                 break;
         }
         token = strtok(NULL, " ");

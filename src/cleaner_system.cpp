@@ -15,12 +15,17 @@ Cleaner::Cleaner()
       encoder_(ENCODER_CS_PIN, false),
       encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(100, 1.0f / RUN_RATE_HZ)),
       JawRotationPID(controller::PIDControllerCoefficients(.1f, .01f, .01f, 1.0f / RUN_RATE_HZ)),
-      encoder_jaw_rotation_(ENCODER_JAW_ROTATION_PIN1, ENCODER_JAW_ROTATION_PIN2,
+      encoder_jaw_rotation_(
+          ENCODER_JAW_ROTATION_PIN1,
+          ENCODER_JAW_ROTATION_PIN2,
           [&](int pin) { return IOExtender_.readNoUpdate(pin); }),
-      encoder_jaw_pos_(ENCODER_JAW_POSITION_PIN1, ENCODER_JAW_POSITION_PIN2,
+      encoder_jaw_pos_(
+          ENCODER_JAW_POSITION_PIN1,
+          ENCODER_JAW_POSITION_PIN2,
           [&](int pin) { return IOExtender_.readNoUpdate(pin); }),
-      encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2,
-          [&](int pin) { return IOExtender_.readNoUpdate(pin); })
+      encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, [&](int pin) {
+          return IOExtender_.readNoUpdate(pin);
+      })
 {
     // Add motors to the array
     motors[0] = &jaw_rotation_motor_;
@@ -67,17 +72,18 @@ int Cleaner::begin()
     // Initialize the encoder
     encoder_.begin();
 
-    if (IO_EXTENDER_INT != 255){
-    // Register the interrupt for the PCF8575
-    pinMode(IO_EXTENDER_INT, INPUT_PULLUP);
-    detachInterrupt(IO_EXTENDER_INT);
-    attachInterrupt(
-        IO_EXTENDER_INT,
-        bindArgGateThisAllocate(&Cleaner::is_updatePCF8575_message, this),
-        FALLING);
+    if (IO_EXTENDER_INT != 255)
+    {
+        // Register the interrupt for the PCF8575
+        pinMode(IO_EXTENDER_INT, INPUT_PULLUP);
+        detachInterrupt(IO_EXTENDER_INT);
+        attachInterrupt(
+            IO_EXTENDER_INT,
+            bindArgGateThisAllocate(&Cleaner::is_updatePCF8575_message, this),
+            FALLING);
     }
     // Initialize the pins
-    pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
+    pinMode(LIMIT_SWITCH_PIN_JAW_ROTATION, INPUT_PULLUP);
     pinMode(ESTOP_PIN, INPUT_PULLUP);
 
     return EXIT_SUCCESS;
@@ -103,9 +109,15 @@ void Cleaner::updatePCF8575()
         toggleButton(button);
     }
 
-    IOExtender_.writeNoUpdate(ENCODER_JAW_ROTATION_SPEED_LED, ENCODER_JAW_ROTATION_SPEED_HIGH ? HIGH : LOW);
-    IOExtender_.writeNoUpdate(ENCODER_JAW_POSITION_SPEED_LED, ENCODER_JAW_POSITION_SPEED_HIGH ? HIGH : LOW);
-    IOExtender_.writeNoUpdate(ENCODER_CLAMP_SPEED_LED, ENCODER_CLAMP_SPEED_HIGH ? HIGH : LOW);
+    des_state_.is_Brake = IOExtender_.readNoUpdate(ROLLER_BRAKE_PIN) == LOW;
+
+    IOExtender_.writeNoUpdate(
+        ENCODER_JAW_ROTATION_SPEED_LED,
+        ENCODER_JAW_ROTATION_SPEED_HIGH ? LOW : HIGH);
+    IOExtender_.writeNoUpdate(
+        ENCODER_JAW_POSITION_SPEED_LED,
+        ENCODER_JAW_POSITION_SPEED_HIGH ? LOW : HIGH);
+    IOExtender_.writeNoUpdate(ENCODER_CLAMP_SPEED_LED, ENCODER_CLAMP_SPEED_HIGH ? LOW : HIGH);
 
     IOExtender_.update();
 }
@@ -137,8 +149,14 @@ void Cleaner::run()
             motor->runSpeed();
         }
 
+        if (error.is_Brake)
+        {   
+            // Invert what's currently on the brake
+            digitalWrite(ROLLER_BRAKE_PIN, !digitalRead(ROLLER_BRAKE_PIN));
+        }
+
         last_read_time = now;
-        State errortol{1e-3, 1e-1, 1e-1, false};
+        State errortol{1e-3, 1e-1, 1e-1, false, false};
         if (error > errortol)
         {
             Serial.print(SERIAL_ACK);
@@ -146,19 +164,35 @@ void Cleaner::run()
     }
 }
 
-void Cleaner::home()
+// use on command, not allowed to modify
+void Cleaner::home(SerialReceiver::CommandMessage command)
 {
-    reset();  // Reset the state to default values
-    while (!digitalRead(LIMIT_SWITCH_PIN))
+    // reset the states based on what is received
+    if (command.M80.a > 0)
     {
-        // While going, check for no estop just in case
-        updateRealState();
-
-        jaw_rotation_motor_.setSpeed(HOMING_SPEED / clamp_motor_.getPhysicalParams().stepDistance);
-        jaw_rotation_motor_.runSpeed();
+        state_.jaw_rotation     = 0.0f;
+        des_state_.jaw_rotation = 0.0f;
+        // enter a loop until we hit the limit switch
+        while (!digitalRead(LIMIT_SWITCH_PIN_JAW_ROTATION))
+        {
+            jaw_rotation_motor_.setSpeedUnits(HOMING_SPEED);
+            jaw_rotation_motor_.runSpeed();
+        }
+        encoder_.setZeroPosition(encoder_.getRawRotation());
+        state_.jaw_rotation = 0.0f;
     }
-    encoder_.setZeroPosition(encoder_.getRawRotation());
-    state_.jaw_rotation = 0.0f;
+
+    if (command.M80.y > 0)
+    {
+        state_.jaw_pos     = 0.0f;
+        des_state_.jaw_pos = 0.0f;
+    }
+
+    if (command.M80.c > 0)
+    {
+        state_.clamp_pos     = 0.0f;
+        des_state_.clamp_pos = 0.0f;
+    }
 }
 
 int Cleaner::reset()
@@ -194,8 +228,10 @@ Cleaner::State Cleaner::updateRealState()
     state_.jaw_pos      = jaw_pos_motor_.currentPositionUnits();
     state_.clamp_pos    = clamp_motor_.currentPositionUnits();
 
+    state_.is_Brake = digitalRead(ROLLER_BRAKE_PIN);
+
     // Get the values from accel stepper
-    // TODO: NOT DO THIS LATER IT OVERWRITES FOR DEBUGGING
+    // TODO: NOT DO THIS LATER IT OVERWRITES THE ENCODER FOR DEBUGGING
     state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
 
     return state_;
@@ -256,21 +292,22 @@ void Cleaner::processCommand(SerialReceiver::CommandMessage command)
     if (command.G0.received)
     {
         // Move command, modify the state to the desired state
+        command.G0.received     = false;         // reset the received
         des_state_.jaw_rotation = command.G0.a;  // jaw rotation
         des_state_.jaw_pos      = command.G0.c;  // jaw position
         des_state_.clamp_pos    = command.G0.y;  // clamp position
-        command.G0.received     = false;         // reset the received
     }
     if (command.G4.received)
     {
         // Dwell command, wait for a certain time
-        delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
         command.G4.received = false;  // reset the received
+        delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
     }
     if (command.G28.received)
     {
         // Home command
-        home();
+        command.G28.received = false;
+        home(command);
     }
     if (command.G90.received)
     {

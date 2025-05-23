@@ -25,6 +25,7 @@ void StepperMotor::kill()
         digitalWrite(BrakePin, BrakeOn);
     }
     stepper_driver_.toff(0);  // Disable driver in software
+    stop();
 }
 
 int StepperMotor::begin()

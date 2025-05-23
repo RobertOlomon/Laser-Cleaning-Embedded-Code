@@ -19,7 +19,7 @@ public:
     int begin();
     int reset();
     int shutdown();
-    void home();
+    void home(SerialReceiver::CommandMessage command);
     void processCommand(SerialReceiver::CommandMessage command);
     void run();
     void initializeManualMode();
@@ -44,25 +44,30 @@ public:
         float jaw_pos;
         float clamp_pos;
         bool is_Estopped;
+        bool is_Brake;
 
-        State() : jaw_rotation(0), jaw_pos(0), clamp_pos(0), is_Estopped(false) {}
-        State(float jaw_rotation, float jaw_pos, float clamp_pos, bool is_Estopped)
+        State() : jaw_rotation(0), jaw_pos(0), clamp_pos(0), is_Estopped(false), is_Brake(false) {}
+        State(float jaw_rotation, float jaw_pos, float clamp_pos, bool is_Estopped, bool is_Brake)
             : jaw_rotation(jaw_rotation),
               jaw_pos(jaw_pos),
               clamp_pos(clamp_pos),
-              is_Estopped(is_Estopped)
+              is_Estopped(is_Estopped),
+              is_Brake(is_Brake)
         {
         }
 
         // subtraction operator, is_Estopped is or
+        // Brake returns if they're not equal
         State operator-(const State& other) const
         {
             return {
                 jaw_pos - other.jaw_pos,
                 jaw_rotation - other.jaw_rotation,
                 clamp_pos - other.clamp_pos,
-                is_Estopped || other.is_Estopped};
+                is_Estopped || other.is_Estopped,
+                is_Brake    != other.is_Brake};
         }
+        // is only greater when all states are greater
         bool operator>(const State& other) const
         {
             return (jaw_pos > other.jaw_pos) && (jaw_rotation > other.jaw_rotation) &&
@@ -86,6 +91,9 @@ public:
 
             Serial.print("  Emergency Stop: ");
             Serial.println(is_Estopped ? "YES" : "NO");
+
+            Serial.print("  Brake: ");
+            Serial.println(is_Brake ? "YES" : "NO");
 
             Serial.println();  // blank line
         }
