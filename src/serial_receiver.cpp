@@ -3,10 +3,10 @@
 
 #include <cstring>
 
-#ifdef ARDUINO
+// #ifdef ARDUINO
 #include <Arduino.h>
-#else
-#endif
+// #else
+// #endif
 
 SerialReceiver::CommandMessage::CommandMessage()
     : G0(),

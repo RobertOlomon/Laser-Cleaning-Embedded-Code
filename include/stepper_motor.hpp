@@ -87,10 +87,14 @@ public:
     struct ElectricalParams
     {
         float runCurrent_mA = 1000.0f;  ///< RMS current in mA
-        uint8_t microsteps = 16;          ///< microsteps per full step (1, 2, 4, 8, 16, 32)
+        uint16_t microsteps  = 16;       ///< microsteps per full step (1, 2, 4, 8, 16, 32)
 
         constexpr ElectricalParams() : runCurrent_mA(1000.0f) {}  // default
-        constexpr ElectricalParams(float runCurrent_mA, uint8_t microsteps) : runCurrent_mA(runCurrent_mA), microsteps(microsteps) {}
+        constexpr ElectricalParams(float runCurrent_mA, uint16_t microsteps)
+            : runCurrent_mA(runCurrent_mA),
+              microsteps(microsteps)
+        {
+        }
     };
 
     struct PhysicalParams
@@ -113,13 +117,13 @@ public:
 
     float currentPositionUnits() { return currentPosition() * phys_.stepDistance; }
     void moveToUnits(float pos) { moveTo(pos / phys_.stepDistance); }
-    void setSpeedUnits(float speed) {setSpeed(speed / phys_.stepDistance); }
+    void setSpeedUnits(float speed) { setSpeed(speed / phys_.stepDistance); }
 
     // getters
     const char* getName() const { return cfg_.name; }
     int getMicrosteps() const { return elec_.microsteps; }
 
-    void printDriverDebug() {Serial.println(stepper_driver_.DRV_STATUS(),BIN); }
+    void printDriverDebug() { Serial.println(stepper_driver_.DRV_STATUS(), BIN); }
 
     MotionParams getMotionParams() const { return motion_; }
     ElectricalParams getElectricalParams() const { return elec_; }

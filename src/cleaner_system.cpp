@@ -5,6 +5,7 @@
 #include "TMCStepper.h"
 #include "butterworth.hpp"
 #include "cleaner_system_constants.hpp"
+#include "macros.hpp"
 #include "pin_defs.hpp"
 #include "stepper_motor.hpp"
 
@@ -13,8 +14,10 @@ Cleaner::Cleaner()
       jaw_pos_motor_(jawPosCfg),
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
       encoder_(ENCODER_CS_PIN, false),
-      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(100, 1.0f / RUN_RATE_HZ)),
-      JawRotationPID(controller::PIDControllerCoefficients(.1f, .01f, .01f, 1.0f / RUN_RATE_HZ)),
+      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(100.0f, 1.0f / RUN_RATE_HZ)),
+      JawRotationPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, -0.01f, 1.0f / RUN_RATE_HZ)),
+      ClampPID(controller::PIDControllerCoefficients(1e1f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       encoder_jaw_rotation_(
           ENCODER_JAW_ROTATION_PIN1,
           ENCODER_JAW_ROTATION_PIN2,
@@ -33,26 +36,27 @@ Cleaner::Cleaner()
     motors[2] = &clamp_motor_;
 
     jaw_rotation_motor_.apply(JawRotationMotion);
-    jaw_pos_motor_.apply(JawRotationMotion);
+    jaw_pos_motor_.apply(JawPositionMotion);
     clamp_motor_.apply(JawRotationMotion);
 
     jaw_rotation_motor_.apply(JawRotationElectrical);
-    jaw_pos_motor_.apply(lowCurrent);  // gentler on the position motor
+    jaw_pos_motor_.apply(JawPositionElectrical);  // gentler on the position motor
     clamp_motor_.apply(JawRotationElectrical);
 
     jaw_rotation_motor_.apply(JawRotationPhysical);
+    jaw_pos_motor_.apply(JawPositionPhysical);
+    clamp_motor_.apply(JawRotationPhysical);
 
     reset();
 }
 
 Cleaner::~Cleaner() = default;
 
-void Cleaner::is_updatePCF8575_message()
+void Cleaner::PCFMessageRec()
 {
     // this is a message to be sent to the main loop
     updatePCF8575_flag = true;
 }
-
 int Cleaner::begin()
 {
     // Initialize the motors
@@ -67,10 +71,11 @@ int Cleaner::begin()
     // Initialize the communication bus
     SPI.begin();
     Wire.begin();  // Initialize I2C bus
+    Wire.setClock(400000);
     IOExtender_.begin();
 
     // Initialize the encoder
-    encoder_.begin();
+    // encoder_.begin();
 
     if (IO_EXTENDER_INT != 255)
     {
@@ -79,7 +84,7 @@ int Cleaner::begin()
         detachInterrupt(IO_EXTENDER_INT);
         attachInterrupt(
             IO_EXTENDER_INT,
-            bindArgGateThisAllocate(&Cleaner::is_updatePCF8575_message, this),
+            bindArgGateThisAllocate(&Cleaner::PCFMessageRec, this),
             FALLING);
     }
     // Initialize the pins
@@ -92,7 +97,6 @@ int Cleaner::begin()
 // This function is called in the main loop whenever the interrupt is triggered
 void Cleaner::updatePCF8575()
 {
-    IOExtender_.update();
     // update the encoders
     encoder_clamp_.tick();
     encoder_jaw_pos_.tick();
@@ -135,33 +139,41 @@ void Cleaner::run()
 
         // seems kinda strange but I think this will work
         State error = des_state_ - state_;
-        jaw_rotation_motor_.moveTo(jaw_rotation_motor_.currentPosition() + error.jaw_rotation);
-        jaw_pos_motor_.moveTo(jaw_pos_motor_.currentPosition() + error.jaw_pos);
-        clamp_motor_.moveTo(clamp_motor_.currentPosition() + error.clamp_pos);
+        // jaw_rotation_motor_.moveTo(jaw_rotation_motor_.currentPosition() + error.jaw_rotation);
+        // jaw_pos_motor_.moveTo(jaw_pos_motor_.currentPosition() + error.jaw_pos);
+        // clamp_motor_.moveTo(clamp_motor_.currentPosition() + error.clamp_pos);
 
-        float jaw_rotation_speed = JawRotationPID.filterData(error.jaw_rotation) /
-                                   jaw_rotation_motor_.getPhysicalParams().stepDistance;
-        jaw_rotation_motor_.setSpeed(jaw_rotation_speed);
+        float jaw_rotation_speed = JawRotationPID.filterData(error.jaw_rotation);
+        jaw_rotation_motor_.setSpeedUnits(jaw_rotation_speed);
 
-        // run all motors
-        for (const auto& motor : motors)
-        {
-            motor->runSpeed();
-        }
+        float jaw_pos_speed = JawPositionPID.filterData(error.jaw_pos);
+        jaw_pos_motor_.setSpeedUnits(jaw_pos_speed);
+        DO_EVERY(.1, Serial.println(jaw_pos_speed));
+
+        float clamp_speed = ClampPID.filterData(error.clamp_pos);
+        clamp_motor_.setSpeedUnits(clamp_speed);
 
         if (error.is_Brake)
-        {   
+        {
             // Invert what's currently on the brake
             digitalWrite(ROLLER_BRAKE_PIN, !digitalRead(ROLLER_BRAKE_PIN));
         }
 
         last_read_time = now;
         State errortol{1e-3, 1e-1, 1e-1, false, false};
-        if (error > errortol)
-        {
-            Serial.print(SERIAL_ACK);
-        }
+        // DO_EVERY(.1, error.print());
+
+        // if (error < errortol)
+        // {
+        //     Serial.print(SERIAL_ACK);
+        // }
     }
+    // run all motors
+    for (const auto& motor : motors)
+    {
+        motor->runSpeed();
+    }
+    // PrintHzRateDebug();
 }
 
 // use on command, not allowed to modify
@@ -216,7 +228,7 @@ void Cleaner::stop()
 
 Cleaner::State Cleaner::updateRealState()
 {
-    if (!digitalRead(ESTOP_PIN))
+    if (ESTOP_PIN != 255 && !digitalRead(ESTOP_PIN))
     {
         state_.is_Estopped = true;
         // oh no oh crap
@@ -224,9 +236,9 @@ Cleaner::State Cleaner::updateRealState()
         return state_;
     }
 
-    state_.jaw_rotation = encoderLowpassFilter.filterData(encoder_.getRotationInRadians());
-    state_.jaw_pos      = jaw_pos_motor_.currentPositionUnits();
-    state_.clamp_pos    = clamp_motor_.currentPositionUnits();
+    // state_.jaw_rotation = encoderLowpassFilter.filterData(encoder_.getRotationInRadians());
+    state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
+    state_.clamp_pos = clamp_motor_.currentPositionUnits();
 
     state_.is_Brake = digitalRead(ROLLER_BRAKE_PIN);
 
@@ -239,8 +251,6 @@ Cleaner::State Cleaner::updateRealState()
 
 Cleaner::State Cleaner::updateDesStateManual()
 {
-    // due to lack of gpio, need, and use, don't use the interrupt for the PCF, just constantly poll
-    updatePCF8575_flag = true;
     if (updatePCF8575_flag)
     {
         updatePCF8575_flag = false;
@@ -259,7 +269,7 @@ Cleaner::State Cleaner::updateDesStateManual()
 
     // 3) apply to desired state
     float rot_factor = ENCODER_JAW_ROTATION_SPEED_HIGH ? 1.0f : 0.1f;
-    float pos_factor = ENCODER_JAW_POSITION_SPEED_HIGH ? 1.0f : 0.5f;
+    float pos_factor = ENCODER_JAW_POSITION_SPEED_HIGH ? 1.0f : 0.1f;
     float clp_factor = ENCODER_CLAMP_SPEED_HIGH ? 1.0f : 0.5f;
 
     des_state_.jaw_rotation += delta_rot * ENCODER_JAW_ROTATION_SENSITIVITY * rot_factor;

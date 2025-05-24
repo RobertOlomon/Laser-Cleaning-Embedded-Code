@@ -12,7 +12,7 @@ SerialReceiver receiver;
 Cleaner cleaner_system;
 
 static bool wasInManualMode = false;
-static bool wasInDebugMode = false;
+static bool wasInDebugMode  = false;
 
 void ESTOP_ISR()
 {
@@ -21,6 +21,8 @@ void ESTOP_ISR()
     analogWrite(LED_GREEN, 255);  // Turn off green LED
     analogWrite(LED_BLUE, 255);
 }
+
+Cleaner::CleanerOperatorMode cleaner_operator_mode;
 
 void setup()
 {
@@ -42,14 +44,13 @@ void setup()
     analogWrite(LED_BLUE, 128);  // Turn on blue LED
     analogWrite(LED_RED, 255);   // Turn off red LED
     analogWrite(LED_GREEN, 0);   // Turn on green LED to indicate system is starting
+    cleaner_operator_mode = Cleaner::CleanerOperatorMode::MANUAL;
 }
 
 void loop()
 {
-    Cleaner::CleanerOperatorMode cleaner_operator_mode =
-        static_cast<Cleaner::CleanerOperatorMode>(!cleaner_system.getIOExpander().readButton(MODE_PIN));  // get system mode
 
-    cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;  // for testing purposes
+    // cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;  // for testing purposes
 
     switch (cleaner_operator_mode)
     {
@@ -59,59 +60,45 @@ void loop()
             cleaner_system.updateDesStateManual();
             cleaner_system.run();
         }
-        break; // case MANUAL
+        break;  // case MANUAL
 
         case Cleaner::CleanerOperatorMode::AUTO:
         {
-            runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
-            // will either update the message or skip if no message is available
-            receiver.parse();
+            // runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
+            // // will either update the message or skip if no message is available
+            // receiver.parse();
 
-            switch (receiver.lastReceivedMessageId())
-            {
-                case SerialReceiver::MessageType::COMMAND:
-                {
-                    SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
-                    cleaner_system.processCommand(msg);
-                    cleaner_system.run();
-                }
-                break;
-                case SerialReceiver::MessageType::STOP:
-                {
-                    // If the message is a stop type, this is not the emergency stop
-                    SerialReceiver::Stop msg =
-                        receiver.lastReceivedStopMessage();  // read the message just cause?
-                    cleaner_system.stop();
-                }
-                break;
+            // switch (receiver.lastReceivedMessageId())
+            // {
+            //     case SerialReceiver::MessageType::COMMAND:
+            //     {
+            //         SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
+            //         cleaner_system.processCommand(msg);
+            //         cleaner_system.run();
+            //     }
+            //     break;
+            //     case SerialReceiver::MessageType::STOP:
+            //     {
+            //         // If the message is a stop type, this is not the emergency stop
+            //         SerialReceiver::Stop msg =
+            //             receiver.lastReceivedStopMessage();  // read the message just cause?
+            //         cleaner_system.stop();
+            //     }
+            //     break;
 
-                default:
-                    break;
-            }
+            //     default:
+            //         break;
+            // }
         }
-        break; // case AUTO
-        case(Cleaner::CleanerOperatorMode::DEBUG):
+        break;  // case AUTO
+        case (Cleaner::CleanerOperatorMode::DEBUG):
         {
-            runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            auto State = cleaner_system.updateDesStateManual();
+            // runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
+            // auto State = cleaner_system.updateDesStateManual();
             // cleaner_system.run();
-            // uint16_t debug = cleaner_system.getIOExpander().read(ENCODER_JAW_POSITION_BUTTON_PIN);
-            // uint16_t debug = cleaner_system.getIOExpander().read16();
-            // uint16_t debug2 = cleaner_system.getIOExpander().isConnected();
-            // Serial.println(debug2);
-            // uint16_t debug = cleaner_system.getIOExpander().read16();
-            // Serial.println(debug,BIN);
-            PRINT_EVERY(.2,State.print());
-            // cleaner_system.getIOExpander().write(1,LOW);
-            // cleaner_system.getIOExpander().write(1,255);
-
-            // Serial.print("Mode");
-            // Serial.println(cleaner_system.getIOExpander().read(MODE_PIN));
-            // Serial.print("Brake");
-            // Serial.println(cleaner_system.getIOExpander().read(ROLLER_BRAKE_PIN));
-
+            // State.print();
         }
-        break; // case DEBUG
+        break;  // case DEBUG
 
         default:
             break;  // do nothing

@@ -27,7 +27,7 @@ public:
 
     void stop();
 
-    void is_updatePCF8575_message();
+    void PCFMessageRec();
     void updatePCF8575();
     void printDriverDebug();
 
@@ -61,17 +61,22 @@ public:
         State operator-(const State& other) const
         {
             return {
-                jaw_pos - other.jaw_pos,
                 jaw_rotation - other.jaw_rotation,
+                jaw_pos - other.jaw_pos,
                 clamp_pos - other.clamp_pos,
                 is_Estopped || other.is_Estopped,
-                is_Brake    != other.is_Brake};
+                is_Brake != other.is_Brake};
         }
         // is only greater when all states are greater
         bool operator>(const State& other) const
         {
             return (jaw_pos > other.jaw_pos) && (jaw_rotation > other.jaw_rotation) &&
                    (clamp_pos > other.clamp_pos);
+        }
+        bool operator<(const State& other) const
+        {
+            return (jaw_pos < other.jaw_pos) && (jaw_rotation < other.jaw_rotation) &&
+                   (clamp_pos < other.clamp_pos);
         }
 
         // Print method
@@ -100,10 +105,11 @@ public:
     };
 
     State updateDesStateManual();
-
+    bool updatePCF8575_flag = false;
+    
     State updateRealState();
 
-    PCF8575 getIOExpander() { return IOExtender_; };
+    PCF8575 getIOExpander() { return IOExtender_; }
 
     StepperMotor getJawRotationMotor() { return jaw_rotation_motor_; }
     StepperMotor getJawPosMotor() { return jaw_pos_motor_; }
@@ -148,13 +154,12 @@ private:
     State state_;
     State des_state_;
 
-    bool updatePCF8575_flag;
 
     float last_enc_jaw_rot_;
     float last_enc_jaw_pos_;
     float last_enc_clamp_;
 
-    constexpr static char SERIAL_ACK = '\r';
+    constexpr static const char* SERIAL_ACK = "At Pos\r";
 
     constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY =
         0.1f;  // Sensitivity for jaw rotation encoder
@@ -191,4 +196,6 @@ private:
     DiscreteFilter<3> encoderLowpassFilter;
 
     DiscreteFilter<3> JawRotationPID;
+    DiscreteFilter<3> JawPositionPID;
+    DiscreteFilter<3> ClampPID;
 };

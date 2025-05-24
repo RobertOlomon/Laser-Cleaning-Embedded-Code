@@ -18,7 +18,7 @@
 } while (0)
 
 
-#define PRINT_EVERY(seconds, block)                  \
+#define DO_EVERY(seconds, block)                  \
     do {                                             \
         static unsigned long _lastPrintTime = 0;     \
         unsigned long _now = millis();               \

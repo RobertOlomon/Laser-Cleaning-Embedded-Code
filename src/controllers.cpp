@@ -21,17 +21,17 @@ Coefficients<3, float> PIDControllerCoefficients(float kp, float ki, float kd, f
     Coefficients<3, float> coefficients;
     std::array<float, 3> forced_coeffs_;
     std::array<float, 3> natural_coeffs_;
-    // Forced coefficients (denominator)
+    // Natural coefficients (numerator)
     float a0       = 1.0f;
     float a1       = 0.0f;
     float a2       = -1.0f;
-    forced_coeffs_ = {a0, a1, a2};
-
-    // Natural coefficients (numerator)
+    natural_coeffs_ = {a0, a1, a2};
+    
+    // Forced coefficients (denominator)
     float b0        = kp + ki * ts / 2.0f + 2.0f * kd / ts;
     float b1        = ki * ts - 4.0f * kd / ts;
     float b2        = -kp - ki * ts / 2.0f + 2.0f * kd / ts;
-    natural_coeffs_ = {b0, b1, b2};
+    forced_coeffs_ = {b0, b1, b2};
 
     coefficients.forcedResponseCoefficients  = forced_coeffs_;
     coefficients.naturalResponseCoefficients = natural_coeffs_;
@@ -51,16 +51,16 @@ Coefficients<2, float> PhaseLagLeadCoefficients(float k, float z, float p, float
     std::array<float, 2> forced_coeffs_;
     std::array<float, 2> natural_coeffs_;
 
-    // Calculate the coefficients for the PID controller
+    // Calculate the coefficients for the Lag-Lead controller
     float a0 = 1.0f;
     float a1 = (p * ts - 2.0f) / (p * ts + 2.0f);
 
-    forced_coeffs_ = {a0, a1};
+    natural_coeffs_ = {a0, a1};
 
     float b0 = k * (z * ts + 2.0f) / (p * ts + 2.0f);
     float b1 = k * (z * ts - 2.0f) / (p * ts + 2.0f);
 
-    natural_coeffs_ = {b0, b1};
+    forced_coeffs_ = {b0, b1};
 
     coefficients.forcedResponseCoefficients  = forced_coeffs_;
     coefficients.naturalResponseCoefficients = natural_coeffs_;
