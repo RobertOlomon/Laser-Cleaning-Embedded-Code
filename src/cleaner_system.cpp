@@ -16,8 +16,8 @@ Cleaner::Cleaner()
       encoder_(ENCODER_CS_PIN, false),
       encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(100.0f, 1.0f / RUN_RATE_HZ)),
       JawRotationPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
-      JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, -0.01f, 1.0f / RUN_RATE_HZ)),
-      ClampPID(controller::PIDControllerCoefficients(1e1f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      ClampPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       encoder_jaw_rotation_(
           ENCODER_JAW_ROTATION_PIN1,
           ENCODER_JAW_ROTATION_PIN2,
@@ -161,7 +161,7 @@ void Cleaner::run()
 
         last_read_time = now;
         State errortol{1e-3, 1e-1, 1e-1, false, false};
-        // DO_EVERY(.1, error.print());
+        DO_EVERY(.1, state_.print("Real State: "));
 
         // if (error < errortol)
         // {
