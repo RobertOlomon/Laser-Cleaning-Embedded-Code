@@ -21,6 +21,8 @@ private:
     int32_t revCount = 0;     // signed # of full 360° turns since start-up
     uint16_t prevRaw;  // previous raw sample (initialised on first call)
 
+	bool prevRawinitialized = false;  // flag to check if prevRaw has been initialized
+
     SPISettings settings;
 
     uint8_t spiCalcEvenParity(uint16_t);

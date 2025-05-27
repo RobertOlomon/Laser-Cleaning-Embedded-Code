@@ -97,9 +97,10 @@ int32_t AS5048A::getRotationUnwrapped()
     // 1. Read the current 14-bit angle
     const uint16_t raw = getRawRotation();
 
-    // 2. Initialise the first time we are called
-    // if (_prevRaw == 0) _prevRaw = raw;
-
+	if (!prevRawinitialized){
+		prevRawinitialized = true;
+		prevRaw = raw;  // Initialize prevRaw with the first read value
+	}
     // 3. Detect wrap-around
     int16_t delta = raw - prevRaw;
 
@@ -109,15 +110,6 @@ int32_t AS5048A::getRotationUnwrapped()
         ++revCount;
 
     prevRaw = raw;  // store for next time
-
-	Serial.print("Raw: ");
-	Serial.println(raw);
-	Serial.print("Rev Count: ");
-	Serial.println(revCount);
-	Serial.print("Prev Raw: ");
-	Serial.println(prevRaw);
-	Serial.print("Delta: ");
-	Serial.println(delta);
 
     // 4. Convert to continuous counts and subtract the user-defined zero
     const int32_t continuous = (revCount * FULL_SCALE) + raw;
@@ -164,7 +156,7 @@ double AS5048A::getRotationInRadians()
 
 double AS5048A::getRotationUnwrappedInRadians()
 {
-    int16_t rotation = getRotationUnwrapped();
+    int32_t rotation = getRotationUnwrapped();
     double radians   = PI * (rotation + AS5048A_MAX_VALUE) / AS5048A_MAX_VALUE;
     return radians;
 }
