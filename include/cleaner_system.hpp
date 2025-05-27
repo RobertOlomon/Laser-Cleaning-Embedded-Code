@@ -106,7 +106,10 @@ public:
     };
 
     State updateDesStateManual();
+    void updateModeAuto();
     bool updatePCF8575_flag = false;
+
+    bool isAutoMode() const { return AutoMode; }
 
     State updateRealState();
 
@@ -164,7 +167,7 @@ private:
     constexpr static const char* SERIAL_ACK = "At Pos\r";
 
     constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY =
-        M_TWOPI / 10.0f;  // Sensitivity for jaw rotation encoder
+        M_TWOPI / 100.0f;  // Sensitivity for jaw rotation encoder
     constexpr static float ENCODER_JAW_POSITION_SENSITIVITY =
         1.0f;  // Sensitivity for jaw position encoder
     constexpr static float ENCODER_CLAMP_SENSITIVITY = 1.0f;  // Sensitivity for clamp encoder
@@ -175,6 +178,8 @@ private:
     bool ENCODER_CLAMP_SPEED_HIGH        = false;
     bool ENCODER_JAW_POSITION_SPEED_HIGH = false;
     bool ENCODER_JAW_ROTATION_SPEED_HIGH = false;
+
+    bool AutoMode = false;  // True if the cleaner is in auto mode, false if in manual mode
 
     PCF8575 IOExtender_;  // Must be defined before the rotary encoders
 

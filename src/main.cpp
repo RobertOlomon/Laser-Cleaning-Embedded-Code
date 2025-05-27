@@ -46,12 +46,12 @@ void setup()
     analogWrite(LED_GREEN, 0);   // Turn on green LED to indicate system is starting
     cleaner_operator_mode = Cleaner::CleanerOperatorMode::MANUAL;
     delay(1000);  // Wait for a second so the drivers don't kill themselves
+    cleaner_system.begin();
 }
 
 void loop()
 {
-
-    // cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;  // for testing purposes
+    cleaner_operator_mode = static_cast<Cleaner::CleanerOperatorMode>(cleaner_system.isAutoMode());
 
     switch (cleaner_operator_mode)
     {
@@ -60,61 +60,39 @@ void loop()
             runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
             cleaner_system.updateDesStateManual();
             cleaner_system.run();
-            DO_EVERY(.1, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians()));
-            // DO_EVERY(0.1,
-            //     {
-            //         cleaner_system.getJawRotationMotor().dumpDRV(
-            //             cleaner_system.getJawRotationMotor().driver(),
-            //             "Rotation Motor"
-            //         );
-            //         cleaner_system.getJawPosMotor().dumpDRV(
-            //             cleaner_system.getJawPosMotor().driver(),
-            //             "Jaw Position Motor"
-            //         );
-            //         Serial.println();
-            //     }
-            // );
         }
         break;  // case MANUAL
 
         case Cleaner::CleanerOperatorMode::AUTO:
         {
-            // runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
-            // // will either update the message or skip if no message is available
-            // receiver.parse();
+            runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
+            cleaner_system.updateModeAuto();  // Update the pcf to get if we need to switch
+            // will either update the message or skip if no message is available
+            receiver.parse();
+            
+            switch (receiver.lastReceivedMessageId())
+            {
+                case SerialReceiver::MessageType::COMMAND:
+                {
+                    SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
+                    cleaner_system.processCommand(msg);
+                    cleaner_system.run();
+                }
+                break;
+                case SerialReceiver::MessageType::STOP:
+                {
+                    // If the message is a stop type, this is not the emergency stop
+                    SerialReceiver::Stop msg =
+                        receiver.lastReceivedStopMessage();  // read the message just cause?
+                    cleaner_system.stop();
+                }
+                break;
 
-            // switch (receiver.lastReceivedMessageId())
-            // {
-            //     case SerialReceiver::MessageType::COMMAND:
-            //     {
-            //         SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
-            //         cleaner_system.processCommand(msg);
-            //         cleaner_system.run();
-            //     }
-            //     break;
-            //     case SerialReceiver::MessageType::STOP:
-            //     {
-            //         // If the message is a stop type, this is not the emergency stop
-            //         SerialReceiver::Stop msg =
-            //             receiver.lastReceivedStopMessage();  // read the message just cause?
-            //         cleaner_system.stop();
-            //     }
-            //     break;
-
-            //     default:
-            //         break;
-            // }
+                default:
+                    break;
+            }
         }
         break;  // case AUTO
-        case (Cleaner::CleanerOperatorMode::DEBUG):
-        {
-            // runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            // auto State = cleaner_system.updateDesStateManual();
-            // cleaner_system.run();
-            // State.print();
-        }
-        break;  // case DEBUG
-
         default:
             break;  // do nothing
     }

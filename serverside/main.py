@@ -61,8 +61,7 @@ if __name__ == "__main__":
     # Example usage
     transmitter = Transmitter(port="COM9", baud_rate=921600, write_timeout=1, timeout=1)
     
-    general_msg = CommandMessage("G0 X1\0")
-    print(general_msg.length())
+    general_msg = CommandMessage("G0 A1\0")
     transmitter.send_msg(general_msg)
     
     while True:

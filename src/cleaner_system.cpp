@@ -14,7 +14,7 @@ Cleaner::Cleaner()
       jaw_pos_motor_(jawPosCfg),
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
       encoder_(ENCODER_CS_PIN, false),
-      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(100.0f, 1.0f / RUN_RATE_HZ)),
+      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(50.0f, 1.0f / RUN_RATE_HZ)),
       JawRotationPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       ClampPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
@@ -122,6 +122,8 @@ void Cleaner::updatePCF8575()
         ENCODER_JAW_POSITION_SPEED_LED,
         ENCODER_JAW_POSITION_SPEED_HIGH ? LOW : HIGH);
     IOExtender_.writeNoUpdate(ENCODER_CLAMP_SPEED_LED, ENCODER_CLAMP_SPEED_HIGH ? LOW : HIGH);
+
+    AutoMode = IOExtender_.readNoUpdate(MODE_PIN) == LOW;
 
     IOExtender_.update();
 }
@@ -235,8 +237,9 @@ Cleaner::State Cleaner::updateRealState()
         return state_;
     }
 
-    // state_.jaw_rotation = encoderLowpassFilter.filterData(encoder_.getRotationInRadians());
-    state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
+    state_.jaw_rotation = encoderLowpassFilter.filterData(-encoder_.getRotationUnwrappedInRadians());
+    // state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
+    // state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
     state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
     state_.clamp_pos = clamp_motor_.currentPositionUnits();
 
@@ -264,7 +267,7 @@ Cleaner::State Cleaner::updateDesStateManual()
     int delta_cl  = cur_clamp - last_enc_clamp_;
 
     // 3) apply to desired state
-    float rot_factor = ENCODER_JAW_ROTATION_SPEED_HIGH ? 1.0f : 0.005f;
+    float rot_factor = ENCODER_JAW_ROTATION_SPEED_HIGH ? 1.0f : 0.05f;
     float pos_factor = ENCODER_JAW_POSITION_SPEED_HIGH ? 1.0f : 0.1f;
     float clp_factor = ENCODER_CLAMP_SPEED_HIGH ? 1.0f : 0.1f;
 
@@ -280,18 +283,29 @@ Cleaner::State Cleaner::updateDesStateManual()
     return des_state_;
 }
 
+// Used to see if we need to switch modes
+void Cleaner::updateModeAuto()
+{
+    if (updatePCF8575_flag)
+    {
+        updatePCF8575_flag = false;
+        updatePCF8575();
+    }
+}
+
 void Cleaner::initializeManualMode()
 {
+    updateRealState();  // Update the real state to get the current position
+    updateDesStateManual();
+
     // Set the state to the current one to make everything relative to when switching
     des_state_ = state_;
-    Serial.println("Initializing manual mode...");
-
-    begin();  // Initialize the motors and communication bus
+    des_state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
+    encoderLowpassFilter.fill(des_state_.jaw_rotation);
 }
 
 void Cleaner::initializeAutoMode()
 {
-    begin();  // Initialize the motors and communication bus
 }
 
 void Cleaner::processCommand(SerialReceiver::CommandMessage command)
