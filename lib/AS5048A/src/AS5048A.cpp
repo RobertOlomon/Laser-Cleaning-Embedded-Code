@@ -95,7 +95,13 @@ int16_t AS5048A::getRotation() { return getRotationUnwrapped() - (revCount * FUL
 int32_t AS5048A::getRotationUnwrapped()
 {
     // 1. Read the current 14-bit angle
-    const uint16_t raw = getRawRotation();
+    uint16_t raw = getRawRotation();
+
+	// Hack because reading seems to be inconsistent
+	if (!raw)
+	{
+		raw = prevRaw;  // If the read value is zero, use the previous value
+	}
 
 	if (!prevRawinitialized){
 		prevRawinitialized = true;
@@ -286,8 +292,6 @@ uint16_t AS5048A::read(uint16_t registerAddress)
     digitalWrite(this->_cs, LOW);
     SPI.transfer16(command);
     digitalWrite(this->_cs, HIGH);
-
-    // delay(this->esp32_delay); // remove the read delay
 
     // Now read the response
     digitalWrite(this->_cs, LOW);

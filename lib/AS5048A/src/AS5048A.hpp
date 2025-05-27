@@ -19,7 +19,7 @@ private:
     uint8_t esp32_delay;
 
     int32_t revCount = 0;     // signed # of full 360° turns since start-up
-    uint16_t prevRaw;  // previous raw sample (initialised on first call)
+    uint16_t prevRaw = 0;  // previous raw sample (initialised on first call)
 
 	bool prevRawinitialized = false;  // flag to check if prevRaw has been initialized
 
