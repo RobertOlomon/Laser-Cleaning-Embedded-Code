@@ -60,6 +60,10 @@ void loop()
             runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
             cleaner_system.updateDesStateManual();
             cleaner_system.run();
+            DO_EVERY(.1, cleaner_system.getEncoder().getRotationUnwrapped());
+            // DO_EVERY(.1, Serial.println(cleaner_system.getEncoder().getRevolutions()));
+            // DO_EVERY(.2, Serial.println(cleaner_system.getEncoder().getRotationInDegrees()));
+            // DO_EVERY(.2, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians()));
             // DO_EVERY(0.1,
             //     {
             //         cleaner_system.getJawRotationMotor().dumpDRV(

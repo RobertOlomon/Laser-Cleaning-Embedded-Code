@@ -2,7 +2,8 @@
 
 #include <vector>
 
-#include "AS5048A.h"
+#include "AS5048A.hpp"
+
 #include "PCF8575.h"
 #include "RotaryEncoder.h"
 #include "TMCStepper.h"
@@ -11,6 +12,7 @@
 #include "pin_defs.hpp"
 #include "serial_receiver.hpp"
 #include "stepper_motor.hpp"
+
 class Cleaner
 {
 public:
@@ -115,6 +117,8 @@ public:
     StepperMotor getClampMotor() { return clamp_motor_; }
     RotaryEncoder getJawRotationEncoder() { return encoder_jaw_rotation_; }
 
+    AS5048A& getEncoder() { return encoder_; }
+
 private:
     struct ToggleButtonState
     {
@@ -165,11 +169,8 @@ private:
         1.0f;  // Sensitivity for jaw position encoder
     constexpr static float ENCODER_CLAMP_SENSITIVITY = 1.0f;  // Sensitivity for clamp encoder
 
-    constexpr static const float JAW_JOG_ERROR          = 10.0f;
-    constexpr static const float JAW_ROTATION_JOG_ERROR = 10.0f;
-    constexpr static const float CLAMP_JOG_ERROR        = 10.0f;
-    constexpr static const float RUN_RATE_HZ            = 1000.0f;  // Change this to desired Hz
-    constexpr static const float HOMING_SPEED           = 100.0f;   // Speed for homing in mm/s
+    constexpr static const float RUN_RATE_HZ  = 1000.0f;  // Change this to desired Hz
+    constexpr static const float HOMING_SPEED = 100.0f;   // Speed for homing in mm/s
 
     bool ENCODER_CLAMP_SPEED_HIGH        = false;
     bool ENCODER_JAW_POSITION_SPEED_HIGH = false;

@@ -34,7 +34,7 @@ constexpr static uint8_t HW_SCK  = D13;
 constexpr static uint8_t JAW_ROTATION_CS_PIN = D6;   // Pin for jaw rotation motor
 constexpr static uint8_t JAW_POSITION_CS_PIN = D9;   // Pin for jaw position motor
 constexpr static uint8_t CLAMP_CS_PIN        = 255;  // Pin for clamp motor
-constexpr static uint8_t ENCODER_CS_PIN      = 255;  // Pin for encoder CS
+constexpr static uint8_t ENCODER_CS_PIN      = A0;   // Pin for encoder CS
 
 /* -------------------------------------------------------------------------- */
 /*                           MOTOR PIN DEFINITIONS                            */

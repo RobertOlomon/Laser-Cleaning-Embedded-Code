@@ -1,23 +1,27 @@
-// #include "AccelStepper.h"
-// #include "pin_defs.hpp"
+// #include <AS5048A.h>
 
-// // Define a stepper and the pins it will use
-// AccelStepper stepper(AccelStepper::DRIVER, JAW_ROTATION_STEP_PIN ,JAW_ROTATION_DIR_PIN);
+// AS5048A angleSensor(A0, true);
 
 // void setup()
-// {  
-//   // Change these to suit your stepper if you want
-//   stepper.setMaxSpeed(1000);
-//   stepper.setAcceleration(20);
-//   stepper.moveTo(500);
+// {
+//     Serial.begin(19200);
+//     angleSensor.begin();
 // }
 
 // void loop()
 // {
-//     // If at the end of travel go to the other end
-//     if (stepper.distanceToGo() == 0)
-//       stepper.moveTo(-stepper.currentPosition());
-//     stepper.run();
-//     // delay(5);
-//     // Serial.println("WHAT IS HAPPENING!?!?!?");
+//     delay(1000);
+
+//     float val = angleSensor.getRotationInDegrees();
+//     Serial.print("\nGot rotation of: ");
+//     Serial.println(val);
+//     Serial.print("State: ");
+//     delay(1);
+//     angleSensor.printState();
+//     Serial.print("Errors: ");
+//     Serial.println(angleSensor.getErrors());
+//     delay(30);
+//     uint8_t gauss = angleSensor.getGain();
+//     Serial.print("Gauss: ");
+//     Serial.println(gauss);
 // }

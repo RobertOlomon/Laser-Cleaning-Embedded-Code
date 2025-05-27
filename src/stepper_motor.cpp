@@ -3,7 +3,6 @@
 #include "TMCStepper.h"
 #include "pin_defs.hpp"
 
-
 StepperMotor::StepperMotor(const StepperMotor::StaticConfig& cfg)
     : AccelStepper(AccelStepper::DRIVER, cfg.pins.step, cfg.pins.dir),
       cfg_(cfg),
@@ -34,7 +33,7 @@ int StepperMotor::begin()
     if (ESTOP_VSAMPLE_PIN != 255)
     {
         pinMode(ESTOP_VSAMPLE_PIN, INPUT);
-        constexpr int ESTOP_VSAMPLE_THRESHOLD = 1023/2;
+        constexpr int ESTOP_VSAMPLE_THRESHOLD = 1023 / 2;
         if (analogRead(ESTOP_VSAMPLE_PIN) < ESTOP_VSAMPLE_THRESHOLD)
         {
             Serial.println("Driver voltage low, E-STOP likely engaged, not starting motor.");
@@ -43,32 +42,27 @@ int StepperMotor::begin()
     }
 
     stepper_driver_.begin();
-    stepper_driver_.toff(5);           // Enables driver in software
+    stepper_driver_.toff(5);                           // Enables driver in software
     stepper_driver_.rms_current(elec_.runCurrent_mA);  // Set motor RMS current
-    stepper_driver_.microsteps(elec_.microsteps);    // Set microsteps
-    // stepper_driver_.shortfilter(3);  // Set short filter to 3us
-    // stepper_driver_.s2vs_level(15);
-    // stepper_driver_.diss2vs(true);  // Disable short to ground protection
-    // stepper_driver_.en_pwm_mode(true);       // Toggle stealthChop on
-    // stepper_driver_.pwm_autoscale(true);     // Needed for stealthChop
-    //driver.en_spreadCycle(false);   // Toggle spreadCycle on TMC2208/2209/2224
-
+    stepper_driver_.microsteps(elec_.microsteps);      // Set microsteps
+    // End the SPI call because the stupid fricken libray doesn't do it for you
+    digitalWrite(cfg_.pins.cs, HIGH);
 
     return EXIT_SUCCESS;
 }
 
-void StepperMotor::apply(const MotionParams& p) {
+void StepperMotor::apply(const MotionParams& p)
+{
     motion_ = p;
     setMaxSpeed(p.maxSpeed);
     setAcceleration(p.acceleration);
 };
 
-void StepperMotor::apply(const ElectricalParams& p){
+void StepperMotor::apply(const ElectricalParams& p)
+{
     elec_ = p;
     stepper_driver_.rms_current(elec_.runCurrent_mA);
-    stepper_driver_.microsteps(p.microsteps); 
+    stepper_driver_.microsteps(p.microsteps);
 };
 
-void StepperMotor::apply(const PhysicalParams& p) {
-    phys_ = p;
-};
+void StepperMotor::apply(const PhysicalParams& p) { phys_ = p; };

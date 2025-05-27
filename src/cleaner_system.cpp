@@ -60,11 +60,11 @@ void Cleaner::PCFMessageRec()
 int Cleaner::begin()
 {
     // Initialize the communication bus
-    SPI.begin();
     Wire.begin();  // Initialize I2C bus
     Wire.setClock(400000);
-    IOExtender_.begin();
 
+    IOExtender_.begin();
+    
     // Initialize the motors
     for (auto* motor : motors)
     {
@@ -75,7 +75,7 @@ int Cleaner::begin()
         }
     }
     // Initialize the encoder
-    // encoder_.begin();
+    encoder_.begin();
 
     if (IO_EXTENDER_INT != 255)
     {
@@ -189,7 +189,7 @@ void Cleaner::home(SerialReceiver::CommandMessage command)
             jaw_rotation_motor_.setSpeedUnits(HOMING_SPEED);
             jaw_rotation_motor_.runSpeed();
         }
-        encoder_.setZeroPosition(encoder_.getRawRotation());
+        // encoder_.setZeroPosition(encoder_.getRawRotation());
         state_.jaw_rotation = 0.0f;
     }
 
@@ -236,14 +236,11 @@ Cleaner::State Cleaner::updateRealState()
     }
 
     // state_.jaw_rotation = encoderLowpassFilter.filterData(encoder_.getRotationInRadians());
+    state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
     state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
     state_.clamp_pos = clamp_motor_.currentPositionUnits();
 
     state_.is_Brake = digitalRead(ROLLER_BRAKE_PIN);
-
-    // Get the values from accel stepper
-    // TODO: NOT DO THIS LATER IT OVERWRITES THE ENCODER FOR DEBUGGING
-    state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
 
     return state_;
 }
