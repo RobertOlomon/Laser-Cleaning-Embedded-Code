@@ -31,7 +31,9 @@ constexpr StepperMotor::PhysicalParams JawPositionPhysical{
 constexpr StepperMotor::PhysicalParams clampPhysical{M_TWOPI / 200 / clampElectrical.microsteps};  // 200 steps per revolution
 
 /* Motion Presets */
-constexpr StepperMotor::MotionParams JawRotationMotion{10000, 10000};
+constexpr StepperMotor::MotionParams JawRotationMotion{
+    400 * JawRotationElectrical.microsteps,
+    10 * JawRotationElectrical.microsteps};
 constexpr StepperMotor::MotionParams JawPositionMotion{
     800 * JawPositionElectrical.microsteps,
     20 * JawPositionElectrical.microsteps};

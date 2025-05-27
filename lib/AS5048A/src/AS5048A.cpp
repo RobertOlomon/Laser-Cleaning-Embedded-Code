@@ -106,6 +106,7 @@ int32_t AS5048A::getRotationUnwrapped()
 	if (!prevRawinitialized){
 		prevRawinitialized = true;
 		prevRaw = raw;  // Initialize prevRaw with the first read value
+		revCount = -1;  // Reset revolution count on first read
 	}
     // 3. Detect wrap-around
     int16_t delta = raw - prevRaw;

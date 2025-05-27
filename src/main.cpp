@@ -44,6 +44,8 @@ void setup()
     analogWrite(LED_BLUE, 128);  // Turn on blue LED
     analogWrite(LED_RED, 255);   // Turn off red LED
     analogWrite(LED_GREEN, 0);   // Turn on green LED to indicate system is starting
+
+
     cleaner_operator_mode = Cleaner::CleanerOperatorMode::MANUAL;
     delay(1000);  // Wait for a second so the drivers don't kill themselves
     cleaner_system.begin();
@@ -69,7 +71,6 @@ void loop()
             cleaner_system.updateModeAuto();  // Update the pcf to get if we need to switch
             // will either update the message or skip if no message is available
             receiver.parse();
-            
             switch (receiver.lastReceivedMessageId())
             {
                 case SerialReceiver::MessageType::COMMAND:
