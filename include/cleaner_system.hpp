@@ -105,7 +105,7 @@ public:
 
     State updateDesStateManual();
     bool updatePCF8575_flag = false;
-    
+
     State updateRealState();
 
     PCF8575 getIOExpander() { return IOExtender_; }
@@ -153,7 +153,6 @@ private:
     State state_;
     State des_state_;
 
-
     float last_enc_jaw_rot_;
     float last_enc_jaw_pos_;
     float last_enc_clamp_;
@@ -161,7 +160,7 @@ private:
     constexpr static const char* SERIAL_ACK = "At Pos\r";
 
     constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY =
-        0.1f;  // Sensitivity for jaw rotation encoder
+        M_TWOPI / 10.0f;  // Sensitivity for jaw rotation encoder
     constexpr static float ENCODER_JAW_POSITION_SENSITIVITY =
         1.0f;  // Sensitivity for jaw position encoder
     constexpr static float ENCODER_CLAMP_SENSITIVITY = 1.0f;  // Sensitivity for clamp encoder

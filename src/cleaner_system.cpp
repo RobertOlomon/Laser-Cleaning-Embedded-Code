@@ -143,9 +143,6 @@ void Cleaner::run()
 
         // seems kinda strange but I think this will work
         State error = des_state_ - state_;
-        // jaw_rotation_motor_.moveTo(jaw_rotation_motor_.currentPosition() + error.jaw_rotation);
-        // jaw_pos_motor_.moveTo(jaw_pos_motor_.currentPosition() + error.jaw_pos);
-        // clamp_motor_.moveTo(clamp_motor_.currentPosition() + error.clamp_pos);
 
         float jaw_rotation_speed = JawRotationPID.filterData(error.jaw_rotation);
         jaw_rotation_motor_.setSpeedUnits(jaw_rotation_speed);
@@ -270,9 +267,9 @@ Cleaner::State Cleaner::updateDesStateManual()
     int delta_cl  = cur_clamp - last_enc_clamp_;
 
     // 3) apply to desired state
-    float rot_factor = ENCODER_JAW_ROTATION_SPEED_HIGH ? 1.0f : 0.1f;
+    float rot_factor = ENCODER_JAW_ROTATION_SPEED_HIGH ? 1.0f : 0.005f;
     float pos_factor = ENCODER_JAW_POSITION_SPEED_HIGH ? 1.0f : 0.1f;
-    float clp_factor = ENCODER_CLAMP_SPEED_HIGH ? 1.0f : 0.5f;
+    float clp_factor = ENCODER_CLAMP_SPEED_HIGH ? 1.0f : 0.1f;
 
     des_state_.jaw_rotation += delta_rot * ENCODER_JAW_ROTATION_SENSITIVITY * rot_factor;
     des_state_.jaw_pos += delta_pos * ENCODER_JAW_POSITION_SENSITIVITY * pos_factor;
