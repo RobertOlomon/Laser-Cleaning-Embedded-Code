@@ -87,7 +87,7 @@ public:
     struct ElectricalParams
     {
         float runCurrent_mA = 1000.0f;  ///< RMS current in mA
-        uint16_t microsteps  = 16;       ///< microsteps per full step (1, 2, 4, 8, 16, 32)
+        uint16_t microsteps = 16;       ///< microsteps per full step (1, 2, 4, 8, 16, 32)
 
         constexpr ElectricalParams() : runCurrent_mA(1000.0f) {}  // default
         constexpr ElectricalParams(float runCurrent_mA, uint16_t microsteps)
@@ -123,11 +123,39 @@ public:
     const char* getName() const { return cfg_.name; }
     int getMicrosteps() const { return elec_.microsteps; }
 
-    void printDriverDebug() { Serial.println(stepper_driver_.DRV_STATUS(), BIN); }
+    TMC5160Stepper& driver() { return stepper_driver_; }
 
     MotionParams getMotionParams() const { return motion_; }
     ElectricalParams getElectricalParams() const { return elec_; }
     PhysicalParams getPhysicalParams() const { return phys_; }
+
+    void dumpDRV(TMC5160Stepper& drv, const char* name)
+    {
+        uint32_t s = drv.DRV_STATUS();
+
+        Serial.printf("%s 0x%08lX  ", name, s);
+        Serial.printf("SGR: %d ", drv.sg_result());  // StallGuard value
+        Serial.printf("FS: %d ", drv.fsactive());    // FS value
+        Serial.printf("CS: %d ", drv.cs_actual());   // Current sense
+        Serial.printf("SG: %d ", drv.stallguard());  // StallGuard
+        Serial.printf("OT: %d ", drv.ot());          // Overtemperature
+        Serial.printf("OTPW: %d ", drv.otpw());      // Overtemperature prewarning
+        Serial.printf("S2GA: %d ", drv.s2ga());      // Short to ground A
+        Serial.printf("S2GB: %d ", drv.s2gb());      // Short to ground B
+        Serial.printf("OLA: %d ", drv.ola());        // Overload A
+        Serial.printf("OLB: %d ", drv.olb());        // Overload B
+        Serial.printf("STST: %d ", drv.stst());      // Stepper state
+        Serial.printf(s & (1 << 12) ? "2vsa: 0 " : "2vsa: 1 ");
+
+        // 1.  Read GSTAT – it latches the reason for the last internal reset
+        uint8_t gstat = drv.GSTAT();  // bits: 0-reset, 1-drv_err, 2-uv_cp
+        Serial.printf("Reset: %d ", drv.reset());        // reset status
+        Serial.printf("DRV_ERR: %d ", drv.drv_err());  // driver error
+        Serial.printf("UV_CP: %d ", drv.uv_cp());      // undervoltage condition
+
+
+        Serial.println();
+    }
 
 private:
     StaticConfig cfg_;

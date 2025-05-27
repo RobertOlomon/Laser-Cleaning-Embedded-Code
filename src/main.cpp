@@ -45,6 +45,7 @@ void setup()
     analogWrite(LED_RED, 255);   // Turn off red LED
     analogWrite(LED_GREEN, 0);   // Turn on green LED to indicate system is starting
     cleaner_operator_mode = Cleaner::CleanerOperatorMode::MANUAL;
+    delay(1000);  // Wait for a second so the drivers don't kill themselves
 }
 
 void loop()
@@ -59,6 +60,19 @@ void loop()
             runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
             cleaner_system.updateDesStateManual();
             cleaner_system.run();
+            DO_EVERY(0.1,
+                {
+                    cleaner_system.getJawRotationMotor().dumpDRV(
+                        cleaner_system.getJawRotationMotor().driver(),
+                        "Rotation Motor"
+                    );
+                    cleaner_system.getJawPosMotor().dumpDRV(
+                        cleaner_system.getJawPosMotor().driver(),
+                        "Jaw Position Motor"
+                    );
+                    Serial.println();
+                }
+            );
         }
         break;  // case MANUAL
 

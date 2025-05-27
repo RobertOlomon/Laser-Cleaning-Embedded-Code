@@ -46,6 +46,13 @@ int StepperMotor::begin()
     stepper_driver_.toff(5);           // Enables driver in software
     stepper_driver_.rms_current(elec_.runCurrent_mA);  // Set motor RMS current
     stepper_driver_.microsteps(elec_.microsteps);    // Set microsteps
+    // stepper_driver_.shortfilter(3);  // Set short filter to 3us
+    // stepper_driver_.s2vs_level(15);
+    // stepper_driver_.diss2vs(true);  // Disable short to ground protection
+    // stepper_driver_.en_pwm_mode(true);       // Toggle stealthChop on
+    // stepper_driver_.pwm_autoscale(true);     // Needed for stealthChop
+    //driver.en_spreadCycle(false);   // Toggle spreadCycle on TMC2208/2209/2224
+
 
     return EXIT_SUCCESS;
 }

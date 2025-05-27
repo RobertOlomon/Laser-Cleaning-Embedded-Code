@@ -32,20 +32,20 @@ Cleaner::Cleaner()
 {
     // Add motors to the array
     motors[0] = &jaw_rotation_motor_;
-    motors[1] = &jaw_pos_motor_;
-    motors[2] = &clamp_motor_;
+    motors[1] = &clamp_motor_;
+    motors[2] = &jaw_pos_motor_;
 
     jaw_rotation_motor_.apply(JawRotationMotion);
     jaw_pos_motor_.apply(JawPositionMotion);
-    clamp_motor_.apply(JawRotationMotion);
+    clamp_motor_.apply(ClampMotion);
 
     jaw_rotation_motor_.apply(JawRotationElectrical);
     jaw_pos_motor_.apply(JawPositionElectrical);  // gentler on the position motor
-    clamp_motor_.apply(JawRotationElectrical);
+    clamp_motor_.apply(clampElectrical);
 
     jaw_rotation_motor_.apply(JawRotationPhysical);
     jaw_pos_motor_.apply(JawPositionPhysical);
-    clamp_motor_.apply(JawRotationPhysical);
+    clamp_motor_.apply(clampPhysical);
 
     reset();
 }
@@ -59,6 +59,12 @@ void Cleaner::PCFMessageRec()
 }
 int Cleaner::begin()
 {
+    // Initialize the communication bus
+    SPI.begin();
+    Wire.begin();  // Initialize I2C bus
+    Wire.setClock(400000);
+    IOExtender_.begin();
+
     // Initialize the motors
     for (auto* motor : motors)
     {
@@ -68,12 +74,6 @@ int Cleaner::begin()
             return EXIT_FAILURE;
         }
     }
-    // Initialize the communication bus
-    SPI.begin();
-    Wire.begin();  // Initialize I2C bus
-    Wire.setClock(400000);
-    IOExtender_.begin();
-
     // Initialize the encoder
     // encoder_.begin();
 
@@ -128,6 +128,10 @@ void Cleaner::updatePCF8575()
 
 void Cleaner::run()
 {
+    if (state_.is_Estopped)
+    {
+        return;
+    }
     // Runs at a fixed rate of RUN_RATE_HZ
     static unsigned long last_read_time        = 0;
     static const unsigned long min_interval_us = 1e6 / RUN_RATE_HZ;
@@ -148,7 +152,6 @@ void Cleaner::run()
 
         float jaw_pos_speed = JawPositionPID.filterData(error.jaw_pos);
         jaw_pos_motor_.setSpeedUnits(jaw_pos_speed);
-        DO_EVERY(.1, Serial.println(jaw_pos_speed));
 
         float clamp_speed = ClampPID.filterData(error.clamp_pos);
         clamp_motor_.setSpeedUnits(clamp_speed);
@@ -161,7 +164,6 @@ void Cleaner::run()
 
         last_read_time = now;
         State errortol{1e-3, 1e-1, 1e-1, false, false};
-        DO_EVERY(.1, state_.print("Real State: "));
 
         // if (error < errortol)
         // {
@@ -172,8 +174,8 @@ void Cleaner::run()
     for (const auto& motor : motors)
     {
         motor->runSpeed();
+        // motor->dumpDRV(motor->driver(), motor->getName());
     }
-    // PrintHzRateDebug();
 }
 
 // use on command, not allowed to modify
@@ -288,6 +290,7 @@ void Cleaner::initializeManualMode()
 {
     // Set the state to the current one to make everything relative to when switching
     des_state_ = state_;
+    Serial.println("Initializing manual mode...");
 
     begin();  // Initialize the motors and communication bus
 }
@@ -359,35 +362,36 @@ void Cleaner::processCommand(SerialReceiver::CommandMessage command)
     }
     if (command.M906.received)
     {
+        // TODO: change the clamping to be relative of the potentiometer value
         if (command.M906.a != 0)
         {
             StepperMotor::ElectricalParams electricalParams =
                 jaw_rotation_motor_.getElectricalParams();
-            electricalParams.runCurrent_mA = command.M906.a * 1000;  // set current limit in mA
-            jaw_rotation_motor_.apply(electricalParams);             // set current limit in mA
+            electricalParams.runCurrent_mA = command.M906.a * 1000;
+            jaw_rotation_motor_.apply(electricalParams);  // set scurrent limit in mA
         }
         if (command.M906.y != 0)
         {
             StepperMotor::ElectricalParams electricalParams = jaw_pos_motor_.getElectricalParams();
-            electricalParams.runCurrent_mA = command.M906.y * 1000;  // set current limit in mA
-            jaw_pos_motor_.apply(electricalParams);                  // set current limit in mA
+            electricalParams.runCurrent_mA = command.M906.y * 1000;
+            jaw_pos_motor_.apply(electricalParams);  // set current limit in mA
         }
         if (command.M906.c != 0)
         {
             StepperMotor::ElectricalParams electricalParams = clamp_motor_.getElectricalParams();
-            electricalParams.runCurrent_mA = command.M906.c * 1000;  // set current limit in mA
-            clamp_motor_.apply(electricalParams);                    // set current limit in mA
+            electricalParams.runCurrent_mA = command.M906.c * 1000;
+            clamp_motor_.apply(electricalParams);  // set current limit in mA
         }
     }
 }
-
-void Cleaner::printDriverDebug() { jaw_rotation_motor_.printDriverDebug(); }
 
 int Cleaner::shutdown()
 {
     jaw_rotation_motor_.kill();
     jaw_pos_motor_.kill();
     clamp_motor_.kill();
+
+    state_.is_Estopped = true;
 
     return EXIT_SUCCESS;
 }

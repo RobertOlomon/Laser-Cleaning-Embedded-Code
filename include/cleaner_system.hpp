@@ -29,7 +29,6 @@ public:
 
     void PCFMessageRec();
     void updatePCF8575();
-    void printDriverDebug();
 
     enum CleanerOperatorMode
     {

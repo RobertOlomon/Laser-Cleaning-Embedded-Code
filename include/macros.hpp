@@ -34,3 +34,18 @@ inline void runOnSwitch(bool& flag, bool trigger_when, Cleaner& system, void (Cl
         flag = !flag;
     }
 }
+
+#define DO_ONCE_AFTER(seconds, block)                 \
+    do {                                              \
+        static unsigned long _startTime = 0;          \
+        static bool _done = false;                    \
+        if (!_done) {                                 \
+            if (_startTime == 0) {                     \
+                _startTime = millis();                 \
+            }                                          \
+            if (millis() - _startTime >= (seconds) * 1000) { \
+                _done = true;                         \
+                block;                                \
+            }                                          \
+        }                                              \
+    } while (0)
