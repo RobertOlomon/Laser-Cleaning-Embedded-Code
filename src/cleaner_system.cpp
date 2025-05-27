@@ -85,7 +85,7 @@ int Cleaner::begin()
         attachInterrupt(
             IO_EXTENDER_INT,
             bindArgGateThisAllocate(&Cleaner::PCFMessageRec, this),
-            FALLING);
+            CHANGE);
     }
     // Initialize the pins
     pinMode(LIMIT_SWITCH_PIN_JAW_ROTATION, INPUT_PULLUP);
@@ -315,8 +315,8 @@ void Cleaner::processCommand(SerialReceiver::CommandMessage command)
         // Move command, modify the state to the desired state
         command.G0.received     = false;         // reset the received
         des_state_.jaw_rotation = command.G0.a;  // jaw rotation
-        des_state_.jaw_pos      = command.G0.c;  // jaw position
-        des_state_.clamp_pos    = command.G0.y;  // clamp position
+        des_state_.jaw_pos      = command.G0.y;  // jaw position
+        des_state_.clamp_pos    = command.G0.c;  // clamp position
     }
     if (command.G4.received)
     {
