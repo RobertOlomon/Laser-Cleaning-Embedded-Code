@@ -19,13 +19,13 @@ constexpr StepperMotor::StaticConfig clampCfg{
     "Clamp Motor"};
 
 /* Electrical Presets */
-constexpr StepperMotor::ElectricalParams JawRotationElectrical{800, 32};
+constexpr StepperMotor::ElectricalParams JawRotationElectrical{3000, 32};
 constexpr StepperMotor::ElectricalParams JawPositionElectrical{1200, 32};
 constexpr StepperMotor::ElectricalParams clampElectrical{1200, 32};
 
 /* Physical Presets */
 constexpr StepperMotor::PhysicalParams JawRotationPhysical{
-    M_PI / 200 / JawRotationElectrical.microsteps};  // 200 steps per revolution
+    M_TWOPI / 200 / JawRotationElectrical.microsteps / 10.0f};  // 200 steps per revolution, 10:1 ratio
 constexpr StepperMotor::PhysicalParams JawPositionPhysical{
     5.0f / 200 / JawPositionElectrical.microsteps};  // 200 steps per revolution, 5mm pitch
 constexpr StepperMotor::PhysicalParams clampPhysical{M_TWOPI / 200 / clampElectrical.microsteps};  // 200 steps per revolution
