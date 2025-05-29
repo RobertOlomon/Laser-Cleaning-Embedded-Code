@@ -9,13 +9,12 @@
 #include "pin_defs.hpp"
 #include "stepper_motor.hpp"
 
-
 Cleaner::Cleaner()
     : jaw_rotation_motor_(jawRotationCfg),
       jaw_pos_motor_(jawPosCfg),
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
       encoder_(ENCODER_CS_PIN, false),
-      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(50.0f, 1.0f / RUN_RATE_HZ)),
+      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(200.0f, 1.0f / RUN_RATE_HZ)),
       JawRotationPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       ClampPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
@@ -33,8 +32,8 @@ Cleaner::Cleaner()
 {
     // Add motors to the array
     motors[0] = &jaw_rotation_motor_;
-    motors[1] = &clamp_motor_;
-    motors[2] = &jaw_pos_motor_;
+    motors[1] = &jaw_pos_motor_;
+    motors[2] = &clamp_motor_;
 
     jaw_rotation_motor_.apply(JawRotationMotion);
     jaw_pos_motor_.apply(JawPositionMotion);
@@ -145,7 +144,11 @@ void Cleaner::run()
         updateRealState();
 
         // seems kinda strange but I think this will work
-        const State error = des_state_ - state_;
+        State error = des_state_ - state_;
+
+        error.jaw_rotation = (fabsf(error.jaw_rotation) < 5e-3f)
+                                 ? 0.0f
+                                 : error.jaw_rotation;  // below threshold → zero
 
         float jaw_rotation_speed = JawRotationPID.filterData(error.jaw_rotation);
         jaw_rotation_motor_.setSpeedUnits(jaw_rotation_speed);
@@ -154,6 +157,8 @@ void Cleaner::run()
         jaw_pos_motor_.setSpeedUnits(jaw_pos_speed);
 
         float clamp_speed = ClampPID.filterData(error.clamp_pos);
+        clamp_speed = (fabsf(clamp_speed) < (M_2_PI / 100)) ? 0.0f  // below threshold → zero
+                                                            : clamp_speed;  // otherwise keep it
         clamp_motor_.setSpeedUnits(clamp_speed);
 
         if (error.is_Brake)
@@ -164,7 +169,8 @@ void Cleaner::run()
 
         last_read_time = now;
         State errortol{1e-3, 1e-1, 1e-1, false, false};
-        DO_EVERY(1, error.print("ERROR "));
+        DO_EVERY(.1, error.print("ERROR "));
+        // DO_EVERY(.1, state_.print("STATE "));
 
         // if (error < errortol)
         // {
@@ -239,10 +245,9 @@ Cleaner::State Cleaner::updateRealState()
         return state_;
     }
 
-    state_.jaw_rotation =
-        encoderLowpassFilter.filterData(-encoder_.getRotationUnwrappedInRadians());
-    // state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
-    // state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
+    // state_.jaw_rotation = encoderLowpassFilter.filterData(encoder_.getRotationUnwrappedInRadians());
+    // state_.jaw_rotation = encoder_.getRotationUnwrappedInRadians();
+    state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
     state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
     state_.clamp_pos = clamp_motor_.currentPositionUnits();
 
@@ -303,7 +308,7 @@ void Cleaner::initializeManualMode()
 
     // Set the state to the current one to make everything relative to when switching
     des_state_              = state_;
-    des_state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
+    des_state_.jaw_rotation = encoder_.getRotationUnwrappedInRadians();
     encoderLowpassFilter.fill(des_state_.jaw_rotation);
 }
 

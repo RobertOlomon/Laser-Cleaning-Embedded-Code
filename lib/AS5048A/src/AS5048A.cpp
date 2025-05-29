@@ -121,7 +121,7 @@ int32_t AS5048A::getRotationUnwrapped()
     // 4. Convert to continuous counts and subtract the user-defined zero
     const int32_t continuous = (revCount * FULL_SCALE) + raw;
 
-    return continuous - static_cast<int32_t>(this->position);
+    return continuous - static_cast<int32_t>(this->position) - HALF_SCALE;
 }
 
 /**

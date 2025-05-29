@@ -5,7 +5,7 @@
 
 constexpr StepperMotor::StaticConfig jawRotationCfg{
     /* pins */ {JAW_ROTATION_CS_PIN, JAW_ROTATION_STEP_PIN, JAW_ROTATION_DIR_PIN, 255},
-    /* rSense */ StepperMotor::TMC5160_PRO_RSENSE,
+    /* rSense */ StepperMotor::TMC5160_PLUS_RSENSE,
     /* name   */ "Jaw Rotation Motor"};
 
 constexpr StepperMotor::StaticConfig jawPosCfg{
@@ -19,9 +19,9 @@ constexpr StepperMotor::StaticConfig clampCfg{
     "Clamp Motor"};
 
 /* Electrical Presets */
-constexpr StepperMotor::ElectricalParams JawRotationElectrical{1500, 32};
+constexpr StepperMotor::ElectricalParams JawRotationElectrical{500, 256};
 constexpr StepperMotor::ElectricalParams JawPositionElectrical{1200, 32};
-constexpr StepperMotor::ElectricalParams clampElectrical{1200, 32};
+constexpr StepperMotor::ElectricalParams clampElectrical{2000, 16};
 
 /* Physical Presets */
 constexpr StepperMotor::PhysicalParams JawRotationPhysical{
@@ -32,10 +32,10 @@ constexpr StepperMotor::PhysicalParams clampPhysical{M_TWOPI / 200 / clampElectr
 
 /* Motion Presets */
 constexpr StepperMotor::MotionParams JawRotationMotion{
-    400 * JawRotationElectrical.microsteps,
+    100 * JawRotationElectrical.microsteps,
     10 * JawRotationElectrical.microsteps};
 constexpr StepperMotor::MotionParams JawPositionMotion{
     800 * JawPositionElectrical.microsteps,
     20 * JawPositionElectrical.microsteps};
-constexpr StepperMotor::MotionParams ClampMotion{200 * clampElectrical.microsteps,
+constexpr StepperMotor::MotionParams ClampMotion{20 * clampElectrical.microsteps,
     10 * clampElectrical.microsteps};

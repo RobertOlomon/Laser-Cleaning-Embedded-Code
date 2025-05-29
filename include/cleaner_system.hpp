@@ -115,9 +115,9 @@ public:
 
     PCF8575 getIOExpander() { return IOExtender_; }
 
-    StepperMotor getJawRotationMotor() { return jaw_rotation_motor_; }
-    StepperMotor getJawPosMotor() { return jaw_pos_motor_; }
-    StepperMotor getClampMotor() { return clamp_motor_; }
+    StepperMotor& getJawRotationMotor() { return jaw_rotation_motor_; }
+    StepperMotor& getJawPosMotor() { return jaw_pos_motor_; }
+    StepperMotor& getClampMotor() { return clamp_motor_; }
     RotaryEncoder getJawRotationEncoder() { return encoder_jaw_rotation_; }
 
     AS5048A& getEncoder() { return encoder_; }

@@ -122,6 +122,7 @@ public:
     // getters
     const char* getName() const { return cfg_.name; }
     int getMicrosteps() const { return elec_.microsteps; }
+    Pins getPins() const { return cfg_.pins; }
 
     TMC5160Stepper& driver() { return stepper_driver_; }
 
@@ -145,8 +146,8 @@ public:
         Serial.printf("OLA: %d ", drv.ola());        // Overload A
         Serial.printf("OLB: %d ", drv.olb());        // Overload B
         Serial.printf("STST: %d ", drv.stst());      // Stepper state
-        Serial.printf(s & (1 << 12) ? "2vsa: 0 " : "2vsa: 1 ");
-
+        Serial.printf(s & (1 << 12) ? "2vsa: 1" : "2vsa: 0 ");
+        Serial.printf("2vsg: %d ", drv.s2vs_level());  // Short to VSA
         // 1.  Read GSTAT – it latches the reason for the last internal reset
         uint8_t gstat = drv.GSTAT();  // bits: 0-reset, 1-drv_err, 2-uv_cp
         Serial.printf("Reset: %d ", drv.reset());        // reset status

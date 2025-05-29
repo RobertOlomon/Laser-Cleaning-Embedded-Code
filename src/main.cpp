@@ -54,7 +54,8 @@ void setup()
 void loop()
 {
     cleaner_operator_mode = static_cast<Cleaner::CleanerOperatorMode>(cleaner_system.isAutoMode());
-
+    // cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;
+    
     switch (cleaner_operator_mode)
     {
         case Cleaner::CleanerOperatorMode::MANUAL:
@@ -88,12 +89,17 @@ void loop()
                     cleaner_system.stop();
                 }
                 break;
-
                 default:
                     break;
             }
         }
         break;  // case AUTO
+        case Cleaner::CleanerOperatorMode::DEBUG:
+        {
+            runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
+            Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5);
+            cleaner_system.run();
+        }
         default:
             break;  // do nothing
     }
