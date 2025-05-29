@@ -60,7 +60,7 @@ void loop()
         case Cleaner::CleanerOperatorMode::MANUAL:
         {
             runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            cleaner_system.updateDesStateManual();
+            const auto state = cleaner_system.updateDesStateManual();
             cleaner_system.run();
         }
         break;  // case MANUAL

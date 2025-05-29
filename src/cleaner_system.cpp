@@ -9,6 +9,7 @@
 #include "pin_defs.hpp"
 #include "stepper_motor.hpp"
 
+
 Cleaner::Cleaner()
     : jaw_rotation_motor_(jawRotationCfg),
       jaw_pos_motor_(jawPosCfg),
@@ -64,7 +65,7 @@ int Cleaner::begin()
     Wire.setClock(400000);
 
     IOExtender_.begin();
-    
+
     // Initialize the motors
     for (auto* motor : motors)
     {
@@ -144,7 +145,7 @@ void Cleaner::run()
         updateRealState();
 
         // seems kinda strange but I think this will work
-        State error = des_state_ - state_;
+        const State error = des_state_ - state_;
 
         float jaw_rotation_speed = JawRotationPID.filterData(error.jaw_rotation);
         jaw_rotation_motor_.setSpeedUnits(jaw_rotation_speed);
@@ -163,6 +164,7 @@ void Cleaner::run()
 
         last_read_time = now;
         State errortol{1e-3, 1e-1, 1e-1, false, false};
+        DO_EVERY(1, error.print("ERROR "));
 
         // if (error < errortol)
         // {
@@ -237,7 +239,8 @@ Cleaner::State Cleaner::updateRealState()
         return state_;
     }
 
-    state_.jaw_rotation = encoderLowpassFilter.filterData(-encoder_.getRotationUnwrappedInRadians());
+    state_.jaw_rotation =
+        encoderLowpassFilter.filterData(-encoder_.getRotationUnwrappedInRadians());
     // state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
     // state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
     state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
@@ -299,14 +302,12 @@ void Cleaner::initializeManualMode()
     updateDesStateManual();
 
     // Set the state to the current one to make everything relative to when switching
-    des_state_ = state_;
+    des_state_              = state_;
     des_state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
     encoderLowpassFilter.fill(des_state_.jaw_rotation);
 }
 
-void Cleaner::initializeAutoMode()
-{
-}
+void Cleaner::initializeAutoMode() {}
 
 void Cleaner::processCommand(SerialReceiver::CommandMessage command)
 {
@@ -381,13 +382,13 @@ void Cleaner::processCommand(SerialReceiver::CommandMessage command)
         if (command.M906.y != 0)
         {
             StepperMotor::ElectricalParams electricalParams = jaw_pos_motor_.getElectricalParams();
-            electricalParams.runCurrent_mA = command.M906.y * 1000;
+            electricalParams.runCurrent_mA                  = command.M906.y * 1000;
             jaw_pos_motor_.apply(electricalParams);  // set current limit in mA
         }
         if (command.M906.c != 0)
         {
             StepperMotor::ElectricalParams electricalParams = clamp_motor_.getElectricalParams();
-            electricalParams.runCurrent_mA = command.M906.c * 1000;
+            electricalParams.runCurrent_mA                  = command.M906.c * 1000;
             clamp_motor_.apply(electricalParams);  // set current limit in mA
         }
     }
