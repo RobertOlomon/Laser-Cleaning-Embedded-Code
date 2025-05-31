@@ -49,7 +49,7 @@ constexpr static uint8_t CLAMP_DIR_PIN         = A7;  // Pin for clamp direction
 /* -------------------------------------------------------------------------- */
 /*                                OTHER PINS                                  */
 /* -------------------------------------------------------------------------- */
-constexpr static uint8_t LIMIT_SWITCH_PIN_JAW_ROTATION = 255;  // Pin for limit switch
+constexpr static uint8_t LIMIT_SWITCH_PIN_JAW_ROTATION = A1;  // Pin for limit switch
 constexpr static uint8_t ESTOP_VSAMPLE_PIN             = 255;  // Pin for ESTOP voltage sample
 constexpr static uint8_t ROLLER_BRAKE_PIN = 12;   // Pin for the roller brake power in manual mode
 constexpr static uint8_t MODE_PIN         = 11;   // Pin for mode control

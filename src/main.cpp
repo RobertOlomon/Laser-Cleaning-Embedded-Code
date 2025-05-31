@@ -49,12 +49,13 @@ void setup()
     cleaner_operator_mode = Cleaner::CleanerOperatorMode::MANUAL;
     delay(1000);  // Wait for a second so the drivers don't kill themselves
     cleaner_system.begin();
+    cleaner_system.updatePCF8575();
 }
 
 void loop()
 {
     cleaner_operator_mode = static_cast<Cleaner::CleanerOperatorMode>(cleaner_system.isAutoMode());
-    // cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;
+    // cleaner_operator_mode = Cleaner::CleanerOperatorMode::AUTO;
     
     switch (cleaner_operator_mode)
     {
@@ -63,6 +64,10 @@ void loop()
             runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
             const auto state = cleaner_system.updateDesStateManual();
             cleaner_system.run();
+            // cleaner_system.getJawPosMotor().dumpDRV("JAW POS");
+            // cleaner_system.getClampMotor().dumpDRV("Clamp");
+            // DO_EVERY(.1,Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians()));
+            // DO_EVERY(.1,Serial.println(cleaner_system.getEncoder().getRotationInRadians()));
         }
         break;  // case MANUAL
 

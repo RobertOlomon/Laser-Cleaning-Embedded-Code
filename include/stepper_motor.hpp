@@ -130,8 +130,9 @@ public:
     ElectricalParams getElectricalParams() const { return elec_; }
     PhysicalParams getPhysicalParams() const { return phys_; }
 
-    void dumpDRV(TMC5160Stepper& drv, const char* name)
+    void dumpDRV(const char* name)
     {
+        TMC5160Stepper drv = stepper_driver_;
         uint32_t s = drv.DRV_STATUS();
 
         Serial.printf("%s 0x%08lX  ", name, s);
@@ -153,6 +154,9 @@ public:
         Serial.printf("Reset: %d ", drv.reset());        // reset status
         Serial.printf("DRV_ERR: %d ", drv.drv_err());  // driver error
         Serial.printf("UV_CP: %d ", drv.uv_cp());      // undervoltage condition
+
+        Serial.printf("ION Mode: sd %d ", drv.sd_mode());  // ION mode
+        Serial.printf("ION Mode: drv_enn %d ", drv.drv_enn());  // ION mode
 
 
         Serial.println();

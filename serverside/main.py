@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import serial
 import struct
 from typing import Tuple
+import time
 
 class Transmitter:
     def __init__(self, port: str, baud_rate: int, write_timeout: float, timeout: float):
@@ -60,11 +61,24 @@ class CommandMessage(Message):
 if __name__ == "__main__":
     # Example usage
     transmitter = Transmitter(port="COM9", baud_rate=921600, write_timeout=1, timeout=1)
-    
-    # general_msg = CommandMessage("G0 A3.1415\0")
-    # general_msg = CommandMessage("G0 A2\0")
-    general_msg = CommandMessage("G0 C-10\0")
+    # msg = CommandMessage("G28 A1\0")
+    # transmitter.send_msg(msg)
+    # general_msg = CommandMessage("G0 A0\0")
+    # transmitter.send_msg(general_msg)
+    # time.sleep(1)
+    # general_msg = CommandMessage("G0 A0 C-.2\0")
+    # transmitter.send_msg(general_msg)   
+    # time.sleep(1)
+    # general_msg = CommandMessage("G0 A6.28 C-.2\0")
+    # transmitter.send_msg(general_msg)
+    # time.sleep(10)
+    # general_msg = CommandMessage("G0 A6.28 C.2\0")
+    # transmitter.send_msg(general_msg)
+    # time.sleep(10)
+    general_msg = CommandMessage("G0 A6.28 C.2 Y100\0")
     transmitter.send_msg(general_msg)
+    # time.sleep(30)
+    
     
     while True:
         try:

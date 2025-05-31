@@ -28,15 +28,15 @@
 // // SPI TMC2660Stepper driver = TMC2660Stepper(CS_PIN, R_SENSE); // Hardware SPI TMC2660Stepper
 // // driver = TMC2660Stepper(CS_PIN, R_SENSE, SW_MOSI, SW_MISO, SW_SCK); TMC5160Stepper driver =
 // // TMC5160Stepper(CS_PIN, R_SENSE);
-// TMC5160Stepper driver = TMC5160Stepper(JAW_POSITION_CS_PIN, R_SENSE, HW_MOSI, HW_MISO, HW_SCK);
+// TMC5160Stepper driver = TMC5160Stepper(JAW_ROTATION_CS_PIN, R_SENSE, HW_MOSI, HW_MISO, HW_SCK);
 
 // bool dir = true;
 
 // void setup()
 // {
 //     Serial.begin(9600);
-//     while (!Serial)
-//         ;
+//     // while (!Serial)
+//     //     ;
 //     Serial.println("Start...");
 //     driver.begin();           // Initiate pins and registeries
 //     driver.rms_current(1200);  // Set stepper current to 600mA. The command is the same as command
@@ -44,7 +44,7 @@
 //     driver.en_pwm_mode(1);    // Enable extremely quiet stepping
 
 //     // pinMode(EN_PIN, OUTPUT);
-//     pinMode(JAW_POSITION_STEP_PIN, OUTPUT);
+//     pinMode(JAW_ROTATION_STEP_PIN, OUTPUT);
 //     // digitalWrite(EN_PIN, LOW);  // Enable driver in hardware
 
 //     Serial.print("DRV_STATUS=0b");
@@ -53,10 +53,10 @@
 
 // void loop()
 // {
-//     digitalWrite(JAW_POSITION_STEP_PIN, HIGH);
-//     delayMicroseconds(10);
-//     digitalWrite(JAW_POSITION_STEP_PIN, LOW);
-//     delayMicroseconds(10);
+//     digitalWrite(JAW_ROTATION_STEP_PIN, HIGH);
+//     delayMicroseconds(1000);
+//     digitalWrite(JAW_ROTATION_STEP_PIN, LOW);
+//     delayMicroseconds(1000);
 //     uint32_t ms               = millis();
 //     static uint32_t last_time = 0;
 //     // Serial.println(driver.DRV_STATUS(), HEX);

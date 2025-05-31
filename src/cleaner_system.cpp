@@ -14,10 +14,10 @@ Cleaner::Cleaner()
       jaw_pos_motor_(jawPosCfg),
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
       encoder_(ENCODER_CS_PIN, false),
-      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(200.0f, 1.0f / RUN_RATE_HZ)),
+      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(50.0f, 1.0f / RUN_RATE_HZ)),
       JawRotationPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
-      ClampPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      ClampPID(controller::PIDControllerCoefficients(100.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       encoder_jaw_rotation_(
           ENCODER_JAW_ROTATION_PIN1,
           ENCODER_JAW_ROTATION_PIN2,
@@ -159,7 +159,8 @@ void Cleaner::run()
         float clamp_speed = ClampPID.filterData(error.clamp_pos);
         clamp_speed = (fabsf(clamp_speed) < (M_2_PI / 100)) ? 0.0f  // below threshold → zero
                                                             : clamp_speed;  // otherwise keep it
-        clamp_motor_.setSpeedUnits(clamp_speed);
+        // clamp_motor_.setSpeedUnits(clamp_speed + jaw_rotation_speed / 10000000000000);  // add jaw rotation speed to clamp
+        clamp_motor_.setSpeedUnits(clamp_speed);  // add jaw rotation speed to clamp
 
         if (error.is_Brake)
         {
@@ -181,7 +182,6 @@ void Cleaner::run()
     for (const auto& motor : motors)
     {
         motor->runSpeed();
-        // motor->dumpDRV(motor->driver(), motor->getName());
     }
 }
 
@@ -194,7 +194,10 @@ void Cleaner::home(SerialReceiver::CommandMessage command)
         state_.jaw_rotation     = 0.0f;
         des_state_.jaw_rotation = 0.0f;
         // enter a loop until we hit the limit switch
-        while (!digitalRead(LIMIT_SWITCH_PIN_JAW_ROTATION))
+        while(1){
+            Serial.println("HIT");
+        }
+        while (digitalRead(LIMIT_SWITCH_PIN_JAW_ROTATION))
         {
             jaw_rotation_motor_.setSpeedUnits(HOMING_SPEED);
             jaw_rotation_motor_.runSpeed();
@@ -203,17 +206,17 @@ void Cleaner::home(SerialReceiver::CommandMessage command)
         state_.jaw_rotation = 0.0f;
     }
 
-    if (command.M80.y > 0)
-    {
-        state_.jaw_pos     = 0.0f;
-        des_state_.jaw_pos = 0.0f;
-    }
+    // if (command.M80.y > 0)
+    // {
+    //     state_.jaw_pos     = 0.0f;
+    //     des_state_.jaw_pos = 0.0f;
+    // }
 
-    if (command.M80.c > 0)
-    {
-        state_.clamp_pos     = 0.0f;
-        des_state_.clamp_pos = 0.0f;
-    }
+    // if (command.M80.c > 0)
+    // {
+    //     state_.clamp_pos     = 0.0f;
+    //     des_state_.clamp_pos = 0.0f;
+    // }
 }
 
 int Cleaner::reset()
@@ -245,11 +248,11 @@ Cleaner::State Cleaner::updateRealState()
         return state_;
     }
 
-    // state_.jaw_rotation = encoderLowpassFilter.filterData(encoder_.getRotationUnwrappedInRadians());
-    // state_.jaw_rotation = encoder_.getRotationUnwrappedInRadians();
+    // state_.jaw_rotation = encoderLowpassFilter.filterData(-encoder_.getRotationUnwrappedInRadians());
+    // state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
     state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
     state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
-    state_.clamp_pos = clamp_motor_.currentPositionUnits();
+    state_.clamp_pos = clamp_motor_.currentPositionUnits() - state_.jaw_rotation / 5;  // clamp is relative to jaw rotation
 
     state_.is_Brake = digitalRead(ROLLER_BRAKE_PIN);
 
@@ -294,6 +297,7 @@ Cleaner::State Cleaner::updateDesStateManual()
 // Used to see if we need to switch modes
 void Cleaner::updateModeAuto()
 {
+    DO_EVERY(.05, updatePCF8575());
     if (updatePCF8575_flag)
     {
         updatePCF8575_flag = false;
@@ -308,7 +312,7 @@ void Cleaner::initializeManualMode()
 
     // Set the state to the current one to make everything relative to when switching
     des_state_              = state_;
-    des_state_.jaw_rotation = encoder_.getRotationUnwrappedInRadians();
+    // des_state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
     encoderLowpassFilter.fill(des_state_.jaw_rotation);
 }
 
