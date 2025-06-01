@@ -31,26 +31,27 @@ constexpr static uint8_t HW_MISO = D12;
 constexpr static uint8_t HW_SCK  = D13;
 
 // Chip Select Pins
-constexpr static uint8_t JAW_ROTATION_CS_PIN = D6;   // Pin for jaw rotation motor
-constexpr static uint8_t JAW_POSITION_CS_PIN = D9;   // Pin for jaw position motor
+constexpr static uint8_t JAW_ROTATION_CS_PIN = D6;  // Pin for jaw rotation motor
+constexpr static uint8_t JAW_POSITION_CS_PIN = D9;  // Pin for jaw position motor
 constexpr static uint8_t CLAMP_CS_PIN        = D3;  // Pin for clamp motor
-constexpr static uint8_t ENCODER_CS_PIN      = A0;   // Pin for encoder CS
+constexpr static uint8_t ENCODER_CS_PIN      = A0;  // Pin for encoder CS
 
 /* -------------------------------------------------------------------------- */
 /*                           MOTOR PIN DEFINITIONS                            */
 /* -------------------------------------------------------------------------- */
-constexpr static uint8_t JAW_ROTATION_STEP_PIN = D5;   // Pin for jaw rotation step
-constexpr static uint8_t JAW_ROTATION_DIR_PIN  = D4;   // Pin for jaw rotation direction
-constexpr static uint8_t JAW_POSITION_STEP_PIN = D8;   // Pin for jaw position step
-constexpr static uint8_t JAW_POSITION_DIR_PIN  = D7;   // Pin for jaw position direction
+constexpr static uint8_t JAW_ROTATION_STEP_PIN = D5;  // Pin for jaw rotation step
+constexpr static uint8_t JAW_ROTATION_DIR_PIN  = D4;  // Pin for jaw rotation direction
+constexpr static uint8_t JAW_POSITION_STEP_PIN = D8;  // Pin for jaw position step
+constexpr static uint8_t JAW_POSITION_DIR_PIN  = D7;  // Pin for jaw position direction
 constexpr static uint8_t CLAMP_STEP_PIN        = D2;  // Pin for clamp step
 constexpr static uint8_t CLAMP_DIR_PIN         = A7;  // Pin for clamp direction
 
 /* -------------------------------------------------------------------------- */
 /*                                OTHER PINS                                  */
 /* -------------------------------------------------------------------------- */
-constexpr static uint8_t LIMIT_SWITCH_PIN_JAW_ROTATION = A1;  // Pin for limit switch
+constexpr static uint8_t LIMIT_SWITCH_PIN_JAW_ROTATION = 255;  // Pin for limit switch
 constexpr static uint8_t ESTOP_VSAMPLE_PIN             = 255;  // Pin for ESTOP voltage sample
+constexpr static uint8_t CLAMP_POT_PIN                 = A1;   // Pin for current selection on clamp
 constexpr static uint8_t ROLLER_BRAKE_PIN = 12;   // Pin for the roller brake power in manual mode
 constexpr static uint8_t MODE_PIN         = 11;   // Pin for mode control
 constexpr static uint8_t ESTOP_PIN        = 255;  // Pin for emergency stop

@@ -30,7 +30,8 @@ AS5048A::AS5048A(byte cs, bool debug /*=false*/)
       errorFlag(false),
       ocfFlag(false),
       position(0),
-      debug(debug)
+      debug(debug),
+      filter(filter::butterworth<3, filter::LOWPASS, float>(1000.0, 1/1000.0))
 {
 }
 
@@ -80,6 +81,25 @@ uint8_t AS5048A::spiCalcEvenParity(uint16_t value)
 }
 
 /**
+ * @brief  Verify the even-parity bit in a 16-bit SPI word.
+ * @param  value  Raw 16-bit word read from the encoder.
+ * @return 1 if parity is *good*, 0 if there is a parity error.
+ */
+uint8_t AS5048A::spiCheckParity(uint16_t value)
+{
+    uint8_t parityBit = (value >> 15) & 0x01;   // MSB
+    uint16_t data     =  value & 0x7FFF;        // lower 15 bits
+
+    /*--- Compute parity of the 15 data bits -----------------------------*/
+    /* GCC & Clang: use fast builtin (returns 1 for odd number of 1-bits) */
+    uint8_t dataParity = __builtin_parity(data);
+
+    /*--- Even-parity test ----------------------------------------------*/
+    /* For even parity: parityBit should equal dataParity                 */
+    return (parityBit == dataParity) ? 1U : 0U;
+}
+
+/**
  * Get the rotation of the sensor relative to the zero position.
  *
  * @return {int16_t} between -2^13 and 2^13
@@ -97,11 +117,17 @@ int32_t AS5048A::getRotationUnwrapped()
     // 1. Read the current 14-bit angle
     uint16_t raw = getRawRotation();
 
+    raw = filter.filterData(raw);
+
 	// Hack because reading seems to be inconsistent
-	if (!raw)
-	{
-		raw = prevRaw;  // If the read value is zero, use the previous value
-	}
+	// if (!raw)
+	// {
+	// 	raw = prevRaw;  // If the read value is zero, use the previous value
+	// }
+    if (errorFlag)
+    {
+        raw = prevRaw;  // If an error occurred, use the previous value
+    }
 
 	if (!prevRawinitialized){
 		prevRawinitialized = true;
@@ -270,13 +296,14 @@ bool AS5048A::error() { return this->errorFlag; }
 uint16_t AS5048A::read(uint16_t registerAddress)
 {
     uint16_t command = 0x4000;  // PAR=0 R/W=R
-    command          = command | registerAddress;
+
+    command = command | registerAddress;
 
     // Add a parity bit on the the MSB
-    // command |= static_cast<uint16_t>(spiCalcEvenParity(command) << 0xF);
+    command |= static_cast<uint16_t>(spiCalcEvenParity(command) << 0xF);
 
-    command &= 0x7FFF;                              // Clear bit 15
-    command |= (spiCalcEvenParity(command) << 15);  // Set bit 15 if parity is 1
+    // command &= 0x7FFF;                              // Clear bit 15
+    // command |= (spiCalcEvenParity(command) << 15);  // Set bit 15 if parity is 1
 
     if (this->debug)
     {
@@ -293,7 +320,7 @@ uint16_t AS5048A::read(uint16_t registerAddress)
     digitalWrite(this->_cs, LOW);
     SPI.transfer16(command);
     digitalWrite(this->_cs, HIGH);
-
+    delayMicroseconds(10);
     // Now read the response
     digitalWrite(this->_cs, LOW);
     uint16_t response = SPI.transfer16(0x00);
@@ -308,8 +335,9 @@ uint16_t AS5048A::read(uint16_t registerAddress)
         Serial.println(response, BIN);
     }
 
-    // Check if the error bit is set
-    if (response & 0x4000)
+    // Check if the error bit is set or parity fails
+    // if (response & 0x4000 || spiCheckParity(response) == 0)
+    if (response & (0x01 >> 14) || spiCheckParity(response) == 0)
     {
         if (this->debug)
         {

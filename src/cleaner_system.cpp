@@ -1,5 +1,7 @@
 #include "cleaner_system.hpp"
 
+#include <cmath>
+
 #include "BindArg.h"
 #include "RotaryEncoder.h"
 #include "TMCStepper.h"
@@ -14,8 +16,8 @@ Cleaner::Cleaner()
       jaw_pos_motor_(jawPosCfg),
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
       encoder_(ENCODER_CS_PIN, false),
-      encoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(50.0f, 1.0f / RUN_RATE_HZ)),
-      JawRotationPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      clampLowpassFilter(filter::butterworth<2, filter::LOWPASS>(50.0f, 1.0f / RUN_RATE_HZ)),
+      JawRotationPID(controller::PIDControllerCoefficients(100.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       ClampPID(controller::PIDControllerCoefficients(100.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       encoder_jaw_rotation_(
@@ -138,29 +140,40 @@ void Cleaner::run()
     static unsigned long last_read_time        = 0;
     static const unsigned long min_interval_us = 1e6 / RUN_RATE_HZ;
     unsigned long now                          = micros();
+    float desired_clamp_speed                  = 0;
 
     if (now - last_read_time >= min_interval_us)
     {
         updateRealState();
 
-        // seems kinda strange but I think this will work
+        if (potValue != lastPotValue)
+        {
+            const StepperMotor::ElectricalParams newElectrical{
+                clampElectrical.runCurrent_mA * potValue,
+                clampElectrical.microsteps};
+            clamp_motor_.apply(newElectrical);
+            lastPotValue = potValue;
+        }
+
         State error = des_state_ - state_;
+        jaw_rotation_motor_.moveToUnits(des_state_.jaw_rotation);
+        jaw_pos_motor_.moveToUnits(des_state_.jaw_pos);
 
-        error.jaw_rotation = (fabsf(error.jaw_rotation) < 5e-3f)
-                                 ? 0.0f
-                                 : error.jaw_rotation;  // below threshold → zero
+        clamp_motor_.moveToUnits(des_state_.clamp_pos + state_.jaw_rotation);
+        // clamp_motor_.moveToUnits(state_.jaw_rotation);
 
-        float jaw_rotation_speed = JawRotationPID.filterData(error.jaw_rotation);
-        jaw_rotation_motor_.setSpeedUnits(jaw_rotation_speed);
-
-        float jaw_pos_speed = JawPositionPID.filterData(error.jaw_pos);
-        jaw_pos_motor_.setSpeedUnits(jaw_pos_speed);
-
-        float clamp_speed = ClampPID.filterData(error.clamp_pos);
-        clamp_speed = (fabsf(clamp_speed) < (M_2_PI / 100)) ? 0.0f  // below threshold → zero
-                                                            : clamp_speed;  // otherwise keep it
-        // clamp_motor_.setSpeedUnits(clamp_speed + jaw_rotation_speed / 10000000000000);  // add jaw rotation speed to clamp
-        clamp_motor_.setSpeedUnits(clamp_speed);  // add jaw rotation speed to clamp
+        if (abs(error.jaw_rotation) < 0.01f)
+        {
+            desired_clamp_speed = 0;
+        }
+        if (error.clamp_pos > .01f)
+        {
+            desired_clamp_speed = clamp_motor_.maxSpeed();
+        }
+        if (error.clamp_pos < -.01f)
+        {
+            desired_clamp_speed = -clamp_motor_.maxSpeed();
+        }
 
         if (error.is_Brake)
         {
@@ -169,8 +182,9 @@ void Cleaner::run()
         }
 
         last_read_time = now;
-        State errortol{1e-3, 1e-1, 1e-1, false, false};
-        DO_EVERY(.1, error.print("ERROR "));
+
+        // State errortol{1e-3, 1e-1, 1e-1, false, false};
+        // DO_EVERY(.1, error.print("ERROR "));
         // DO_EVERY(.1, state_.print("STATE "));
 
         // if (error < errortol)
@@ -181,7 +195,12 @@ void Cleaner::run()
     // run all motors
     for (const auto& motor : motors)
     {
-        motor->runSpeed();
+        if (abs(jaw_rotation_motor_.speed()) > 0.0f)
+        {
+            clamp_motor_.setSpeed(jaw_rotation_motor_.speed() / 5 + desired_clamp_speed);
+        }
+        // motor->runSpeed();
+        motor->run();
     }
 }
 
@@ -194,7 +213,8 @@ void Cleaner::home(SerialReceiver::CommandMessage command)
         state_.jaw_rotation     = 0.0f;
         des_state_.jaw_rotation = 0.0f;
         // enter a loop until we hit the limit switch
-        while(1){
+        while (1)
+        {
             Serial.println("HIT");
         }
         while (digitalRead(LIMIT_SWITCH_PIN_JAW_ROTATION))
@@ -248,11 +268,10 @@ Cleaner::State Cleaner::updateRealState()
         return state_;
     }
 
-    // state_.jaw_rotation = encoderLowpassFilter.filterData(-encoder_.getRotationUnwrappedInRadians());
-    // state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
     state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
-    state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
-    state_.clamp_pos = clamp_motor_.currentPositionUnits() - state_.jaw_rotation / 5;  // clamp is relative to jaw rotation
+    state_.jaw_pos      = jaw_pos_motor_.currentPositionUnits();
+    state_.clamp_pos    = clamp_motor_.currentPositionUnits() -
+                       state_.jaw_rotation;  // clamp is relative to jaw rotation
 
     state_.is_Brake = digitalRead(ROLLER_BRAKE_PIN);
 
@@ -261,6 +280,7 @@ Cleaner::State Cleaner::updateRealState()
 
 Cleaner::State Cleaner::updateDesStateManual()
 {
+    DO_EVERY(.05, updatePCF8575());
     if (updatePCF8575_flag)
     {
         updatePCF8575_flag = false;
@@ -291,6 +311,14 @@ Cleaner::State Cleaner::updateDesStateManual()
     last_enc_jaw_pos_ = cur_jaw_pos;
     last_enc_clamp_   = cur_clamp;
 
+    uint8_t constexpr binNum = 10;
+    potValue = clampLowpassFilter.filterData(std::pow(2,12) - analogRead(CLAMP_POT_PIN)) / std::pow(2, 12);
+    potValue = std::max(potValue, 1e-3f);  // Ensure it's not negative
+    potValue = std::min(potValue, 1.0f);  // Ensure it's not greater than 1.0
+    potValue = std::ceil(potValue * binNum) / binNum;
+
+    Serial.println(potValue);
+
     return des_state_;
 }
 
@@ -308,15 +336,14 @@ void Cleaner::updateModeAuto()
 void Cleaner::initializeManualMode()
 {
     updateRealState();  // Update the real state to get the current position
-    updateDesStateManual();
-
-    // Set the state to the current one to make everything relative to when switching
-    des_state_              = state_;
-    // des_state_.jaw_rotation = -encoder_.getRotationUnwrappedInRadians();
-    encoderLowpassFilter.fill(des_state_.jaw_rotation);
+    des_state_ = state_;
 }
 
-void Cleaner::initializeAutoMode() {}
+void Cleaner::initializeAutoMode()
+{
+    updateRealState();
+    // jaw_rotation_motor_.setPositionUnits(0);
+}
 
 void Cleaner::processCommand(SerialReceiver::CommandMessage command)
 {

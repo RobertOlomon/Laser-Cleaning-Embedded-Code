@@ -36,7 +36,7 @@ void setup()
     interrupts();
 
     Serial.begin(BAUDERATE);
-    Serial.println("Starting Cleaner System...");
+    // Serial.println("Starting Cleaner System...");
 
     pinMode(LED_BLUE, OUTPUT);  // Set LED pins as output
     pinMode(LED_RED, OUTPUT);
@@ -44,7 +44,6 @@ void setup()
     analogWrite(LED_BLUE, 128);  // Turn on blue LED
     analogWrite(LED_RED, 255);   // Turn off red LED
     analogWrite(LED_GREEN, 0);   // Turn on green LED to indicate system is starting
-
 
     cleaner_operator_mode = Cleaner::CleanerOperatorMode::MANUAL;
     delay(1000);  // Wait for a second so the drivers don't kill themselves
@@ -56,6 +55,7 @@ void loop()
 {
     cleaner_operator_mode = static_cast<Cleaner::CleanerOperatorMode>(cleaner_system.isAutoMode());
     // cleaner_operator_mode = Cleaner::CleanerOperatorMode::AUTO;
+    // cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;
     
     switch (cleaner_operator_mode)
     {
@@ -64,10 +64,6 @@ void loop()
             runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
             const auto state = cleaner_system.updateDesStateManual();
             cleaner_system.run();
-            // cleaner_system.getJawPosMotor().dumpDRV("JAW POS");
-            // cleaner_system.getClampMotor().dumpDRV("Clamp");
-            // DO_EVERY(.1,Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians()));
-            // DO_EVERY(.1,Serial.println(cleaner_system.getEncoder().getRotationInRadians()));
         }
         break;  // case MANUAL
 
@@ -75,8 +71,10 @@ void loop()
         {
             runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
             cleaner_system.updateModeAuto();  // Update the pcf to get if we need to switch
-            // will either update the message or skip if no message is available
             receiver.parse();
+            // Serial.println("Auto mode active");
+            // DO_EVERY(1 / 1000.0f, Serial.println("Test"));
+            // will either update the message or skip if no message is available
             switch (receiver.lastReceivedMessageId())
             {
                 case SerialReceiver::MessageType::COMMAND:
@@ -102,8 +100,9 @@ void loop()
         case Cleaner::CleanerOperatorMode::DEBUG:
         {
             runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5);
-            cleaner_system.run();
+            // DO_EVERY(1/1000.0f, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
+            // Serial.println(analogRead(CLAMP_POT_PIN));
+            // cleaner_system.run();
         }
         default:
             break;  // do nothing

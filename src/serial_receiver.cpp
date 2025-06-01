@@ -38,11 +38,13 @@ SerialReceiver::CommandMessage::CommandMessage(
 }
 
 /**
- * @brief Constructs a CommandMessage object by parsing a buffer containing G-code or M-code commands.
+ * @brief Constructs a CommandMessage object by parsing a buffer containing G-code or M-code
+ * commands.
  *
- * This constructor takes a character buffer as input, which represents a G-code or M-code command string.
- * It parses the buffer to identify the command type (G or M) and its associated parameters. The parsed
- * data is stored in the respective command fields (e.g., G0, G4, M80, etc.) of the CommandMessage object.
+ * This constructor takes a character buffer as input, which represents a G-code or M-code command
+ * string. It parses the buffer to identify the command type (G or M) and its associated parameters.
+ * The parsed data is stored in the respective command fields (e.g., G0, G4, M80, etc.) of the
+ * CommandMessage object.
  *
  * The parsing logic handles:
  * - G-code commands (e.g., G0, G4, G28, G90) and their parameters (e.g., Y, A, C).
@@ -50,14 +52,15 @@ SerialReceiver::CommandMessage::CommandMessage(
  *
  * @param buffer A null-terminated character array containing the G-code or M-code command string.
  *
- * @note The constructor uses `strtok` to tokenize the input buffer and processes each token to extract
- *       the command type and parameters. Unhandled commands or parameters are logged using `Serial.print`.
+ * @note The constructor uses `strtok` to tokenize the input buffer and processes each token to
+ * extract the command type and parameters. Unhandled commands or parameters are logged using
+ * `Serial.print`.
  */
 SerialReceiver::CommandMessage::CommandMessage(char buffer[])
 {
     // received string from serial, parse to allowed Gcode and Mcode
-    char POS_STRTOK_F_YOU[strlen(buffer)+1];
-    std::memcpy(POS_STRTOK_F_YOU, buffer, strlen(buffer)+1);
+    char POS_STRTOK_F_YOU[strlen(buffer) + 1];
+    std::memcpy(POS_STRTOK_F_YOU, buffer, strlen(buffer) + 1);
     char *token = strtok(POS_STRTOK_F_YOU, " ");
 
     switch (token[0])
@@ -78,7 +81,7 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
                     break;
                 case 4:
                     G4.received = true;
-                    G4.val      = atof(&buffer[strlen(token) + 2]); // + 2 to skip the letter
+                    G4.val      = atof(&buffer[strlen(token) + 2]);  // + 2 to skip the letter
                     break;
                 case 28:
                     G28.received = true;
@@ -155,7 +158,8 @@ void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *co
     }
 }
 
-// Special code for the home command because of it's strangeness, it's a hack but I don't wanna refactor stuff
+// Special code for the home command because of it's strangeness, it's a hack but I don't wanna
+// refactor stuff
 void SerialReceiver::CommandMessage::ProcessHomeCommand(char *param, gCommand *command)
 {
     char *token = strtok(param, " ");

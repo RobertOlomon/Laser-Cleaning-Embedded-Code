@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef butterworth_h
+#define butterworth_h
+
 #include <array>
 #include <cmath>
 #include <complex>
@@ -91,7 +94,7 @@ enum FilterType : uint8_t
  * @param [in] Ts the sample time
  * @return a complex number corresponding to the Z domain location
  */
-std::complex<double> s2z(std::complex<double> s, double Ts)
+std::complex<double> inline s2z(std::complex<double> s, double Ts)
 {
     return (static_cast<std::complex<double>>(1.0) + (Ts / 2) * s) /
            (static_cast<std::complex<double>>(1.0) - (Ts / 2) * s);
@@ -182,7 +185,7 @@ std::complex<double> evaluateFrequencyResponse(
  * @param [in] z the complex number to calculate the magnitude of
  * @return the magnitude of the complex number
  */
-double complexAbs(std::complex<double> z)
+double inline complexAbs(std::complex<double> z)
 {
     return std::sqrt(z.real() * z.real() + z.imag() * z.imag());
 }
@@ -193,7 +196,7 @@ double complexAbs(std::complex<double> z)
  * @return the square root of the complex number
  */
 
-std::complex<double> complexSqrt(std::complex<double> z)
+std::complex<double> inline complexSqrt(std::complex<double> z)
 {
     double r     = std::sqrt(complexAbs(z));
     double theta = static_cast<double>(std::atan2(z.imag(), z.real())) * static_cast<double>(0.5f);
@@ -436,3 +439,5 @@ Coefficients<getNumCoefficients(ORDER, Type), T> butterworth(double wc, double T
     return both_coefficients;
 }
 } // namespace Filter
+
+#endif

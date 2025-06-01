@@ -21,21 +21,20 @@ constexpr StepperMotor::StaticConfig clampCfg{
 /* Electrical Presets */
 constexpr StepperMotor::ElectricalParams JawRotationElectrical{2000, 32};
 constexpr StepperMotor::ElectricalParams JawPositionElectrical{1200, 32};
-constexpr StepperMotor::ElectricalParams clampElectrical{2000, 16};
+constexpr StepperMotor::ElectricalParams clampElectrical{2500, 32};
 
 /* Physical Presets */
 constexpr StepperMotor::PhysicalParams JawRotationPhysical{
     M_TWOPI / 200 / JawRotationElectrical.microsteps / 10.0f};  // 200 steps per revolution, 10:1 ratio
 constexpr StepperMotor::PhysicalParams JawPositionPhysical{
     5.0f / 200 / JawPositionElectrical.microsteps};  // 200 steps per revolution, 5mm pitch
-constexpr StepperMotor::PhysicalParams clampPhysical{JawRotationPhysical.stepDistance * 2};  // 200 steps per revolution
-
+constexpr StepperMotor::PhysicalParams clampPhysical{JawRotationPhysical.stepDistance * 10 / 2};  // 10 reduction, 2 to 1 clamp pulley
 /* Motion Presets */
 constexpr StepperMotor::MotionParams JawRotationMotion{
-    100 * JawRotationElectrical.microsteps,
-    100 * JawRotationElectrical.microsteps};
+    200 * JawRotationElectrical.microsteps,
+    1000 * JawRotationElectrical.microsteps};
 constexpr StepperMotor::MotionParams JawPositionMotion{
-    800 * JawPositionElectrical.microsteps,
-    20 * JawPositionElectrical.microsteps};
-constexpr StepperMotor::MotionParams ClampMotion{20 * clampElectrical.microsteps,
-    10 * clampElectrical.microsteps};
+    1200 * JawPositionElectrical.microsteps,
+    8000 * JawPositionElectrical.microsteps};
+constexpr StepperMotor::MotionParams ClampMotion{200 * clampElectrical.microsteps,
+    500 * clampElectrical.microsteps};

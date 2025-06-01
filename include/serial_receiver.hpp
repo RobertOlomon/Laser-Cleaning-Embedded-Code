@@ -5,7 +5,7 @@ class SerialReceiver
 {
 public:
     static constexpr int HEADER_SIZE = 5;
-    static constexpr int BUFFER_SIZE = 256;
+    static constexpr int BUFFER_SIZE = 1024;
 
     enum State
     {

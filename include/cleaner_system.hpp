@@ -170,7 +170,7 @@ private:
         M_TWOPI / 100.0f;  // Sensitivity for jaw rotation encoder
     constexpr static float ENCODER_JAW_POSITION_SENSITIVITY =
         1.0f;  // Sensitivity for jaw position encoder
-    constexpr static float ENCODER_CLAMP_SENSITIVITY = 1.0f;  // Sensitivity for clamp encoder
+    constexpr static float ENCODER_CLAMP_SENSITIVITY = 0.1f;  // Sensitivity for clamp encoder
 
     constexpr static const float RUN_RATE_HZ  = 1000.0f;  // Change this to desired Hz
     constexpr static const float HOMING_SPEED = 100.0f;   // Speed for homing in mm/s
@@ -197,9 +197,12 @@ private:
     StepperMotor* motors[3];
 
     // Filters and Controllers
-    DiscreteFilter<3> encoderLowpassFilter;
+    DiscreteFilter<3> clampLowpassFilter;
 
     DiscreteFilter<3> JawRotationPID;
     DiscreteFilter<3> JawPositionPID;
     DiscreteFilter<3> ClampPID;
+
+    float potValue = 0;
+    float lastPotValue = 0;
 };

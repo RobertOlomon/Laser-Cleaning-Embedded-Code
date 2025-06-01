@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include "butterworth.hpp"
 
 
 class AS5048A
@@ -26,6 +27,10 @@ private:
     SPISettings settings;
 
     uint8_t spiCalcEvenParity(uint16_t);
+
+    static uint8_t spiCheckParity(uint16_t value);
+
+    DiscreteFilter<4> filter;  // Butterworth filter for smoothing the angle readings
 
     /**
      * Set the delay acording to the microcontroller architecture

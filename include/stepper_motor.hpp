@@ -116,6 +116,7 @@ public:
     void apply(const PhysicalParams& p);
 
     float currentPositionUnits() { return currentPosition() * phys_.stepDistance; }
+    void setPositionUnits(float pos) { setCurrentPosition(pos / phys_.stepDistance); }
     void moveToUnits(float pos) { moveTo(pos / phys_.stepDistance); }
     void setSpeedUnits(float speed) { setSpeed(speed / phys_.stepDistance); }
 
@@ -133,7 +134,7 @@ public:
     void dumpDRV(const char* name)
     {
         TMC5160Stepper drv = stepper_driver_;
-        uint32_t s = drv.DRV_STATUS();
+        uint32_t s         = drv.DRV_STATUS();
 
         Serial.printf("%s 0x%08lX  ", name, s);
         Serial.printf("SGR: %d ", drv.sg_result());  // StallGuard value
@@ -150,14 +151,13 @@ public:
         Serial.printf(s & (1 << 12) ? "2vsa: 1" : "2vsa: 0 ");
         Serial.printf("2vsg: %d ", drv.s2vs_level());  // Short to VSA
         // 1.  Read GSTAT – it latches the reason for the last internal reset
-        uint8_t gstat = drv.GSTAT();  // bits: 0-reset, 1-drv_err, 2-uv_cp
-        Serial.printf("Reset: %d ", drv.reset());        // reset status
+        uint8_t gstat = drv.GSTAT();                   // bits: 0-reset, 1-drv_err, 2-uv_cp
+        Serial.printf("Reset: %d ", drv.reset());      // reset status
         Serial.printf("DRV_ERR: %d ", drv.drv_err());  // driver error
         Serial.printf("UV_CP: %d ", drv.uv_cp());      // undervoltage condition
 
-        Serial.printf("ION Mode: sd %d ", drv.sd_mode());  // ION mode
+        Serial.printf("ION Mode: sd %d ", drv.sd_mode());       // ION mode
         Serial.printf("ION Mode: drv_enn %d ", drv.drv_enn());  // ION mode
-
 
         Serial.println();
     }
