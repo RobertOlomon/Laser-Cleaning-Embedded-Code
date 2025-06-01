@@ -1,92 +1,40 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-import serial
-import struct
-from typing import Tuple
+import transmitter
+import threading
 import time
 
-class Transmitter:
-    def __init__(self, port: str, baud_rate: int, write_timeout: float, timeout: float):
-        self.serial = serial.Serial(port, baud_rate, write_timeout=write_timeout, timeout=timeout)
-    
-    def send_msg(self, msg: "Message"):
-        sentinel = b"\xA5"
-        header = struct.pack("<BI", msg.message_id(), msg.length())
-        self.serial.write(sentinel + header + msg.encode())
-        
-        
-@dataclass
-class Message(ABC):
-    @staticmethod
-    @abstractmethod
-    def message_id() -> int:
-        ...
-    
-    @abstractmethod
-    def length(self) -> int:
-        ...
-    
-    @abstractmethod
-    def encode(self) -> bytes:
-        ...
-        
-@dataclass
-class ShutdownMessage(Message):
-    
-    @staticmethod
-    def message_id() -> int:
-        return 0x00
-    
-    def length(self) -> int:
-        return 4
-    
-    def encode(self) -> bytes:
-        return struct.pack("i", 0)
-    
-@dataclass
-class CommandMessage(Message):
-    Command: str
-        
-    @staticmethod
-    def message_id() -> int:
-        return 0x01
-    
-    def length(self) -> int:
-        return len(self.Command.encode('utf-8')) * 4
-    
-    def encode(self) -> bytes:
-        data = struct.pack(f"<{self.length()}s", self.Command.encode('utf-8'))
-        return data
-    
-if __name__ == "__main__":
-    # Example usage
-    transmitter = Transmitter(port="COM9", baud_rate=921600, write_timeout=1, timeout=1)
-    # msg = CommandMessage("G28 A1\0")
-    # transmitter.send_msg(msg)
-    # general_msg = CommandMessage("G0 A0\0")
-    # transmitter.send_msg(general_msg)
-    # time.sleep(1)
-    # general_msg = CommandMessage("G0 A0 C-.2\0")
-    # transmitter.send_msg(general_msg)   
-    # time.sleep(1)
-    # general_msg = CommandMessage("G0 A6.28 C-.2\0")
-    # transmitter.send_msg(general_msg)
-    # time.sleep(10)
-    # general_msg = CommandMessage("G0 A6.28 C.2\0")
-    # transmitter.send_msg(general_msg)
-    # time.sleep(10)
-    general_msg = CommandMessage("G0 A6.28 C.2 Y100\0")
-    transmitter.send_msg(general_msg)
-    # time.sleep(30)
-    
-    
+def background_reader(serial_port):
     while True:
         try:
-            data = transmitter.serial.read_until("\r")
-            if data:
-                print("Received:", data)
-        except serial.SerialTimeoutException:
-            print("Timeout occurred while reading from the serial port.")
+            line = serial_port.readline()
+            if line:
+                print("ESP32:", line.decode(errors='replace').strip())
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print("Read error:", e)
             break
+
+def main():
+    tx = transmitter.Transmitter(port="COM9", baud_rate=921600, write_timeout=1, timeout=1)
+    
+    # Start the background reader
+    reader_thread = threading.Thread(target=background_reader, args=(tx.serial,), daemon=True)
+    reader_thread.start()
+    
+    # Main loop for sending commands
+    while True:
+        user_input = input("Enter command: ")
+        if user_input.strip().lower() == "exit":
+            print("Exiting...")
+            break
+
+        if not user_input.endswith("\0"):
+            user_input += "\0"
+        
+        msg = transmitter.CommandMessage(user_input)
+        tx.send_msg(msg)
+        print(f"Sent: {user_input.strip()}")
+
+    tx.serial.close()
+    print("Serial connection closed.")
+
+if __name__ == "__main__":
+    main()
