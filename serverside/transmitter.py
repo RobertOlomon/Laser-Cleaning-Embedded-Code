@@ -38,7 +38,7 @@ class ShutdownMessage(Message):
         return 0x00
     
     def length(self) -> int:
-        return 4
+        return 1*4
     
     def encode(self) -> bytes:
         return struct.pack("i", 0)
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-            data = transmitter.serial.read_until("\r")
+            data = transmitter.serial.read_until(b'\r')
             if data:
                 print("Received:", data)
         except serial.SerialTimeoutException:
