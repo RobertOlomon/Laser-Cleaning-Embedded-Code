@@ -72,9 +72,6 @@ void loop()
             runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
             cleaner_system.updateModeAuto();  // Update the pcf to get if we need to switch
             receiver.parse();
-            // Serial.println("Auto mode active");
-            // DO_EVERY(1 / 1000.0f, Serial.println("Test"));
-            // will either update the message or skip if no message is available
             switch (receiver.lastReceivedMessageId())
             {
                 case SerialReceiver::MessageType::COMMAND:

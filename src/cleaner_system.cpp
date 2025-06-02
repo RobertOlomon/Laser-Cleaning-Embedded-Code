@@ -146,34 +146,34 @@ void Cleaner::run()
     {
         updateRealState();
 
-        if (potValue != lastPotValue)
-        {
-            const StepperMotor::ElectricalParams newElectrical{
-                clampElectrical.runCurrent_mA * potValue,
-                clampElectrical.microsteps};
-            clamp_motor_.apply(newElectrical);
-            lastPotValue = potValue;
-        }
+        // if (potValue != lastPotValue)
+        // {
+        //     const StepperMotor::ElectricalParams newElectrical{
+        //         clampElectrical.runCurrent_mA * potValue,
+        //         clampElectrical.microsteps};
+        //     clamp_motor_.apply(newElectrical);
+        //     lastPotValue = potValue;
+        // }
 
         State error = des_state_ - state_;
         jaw_rotation_motor_.moveToUnits(des_state_.jaw_rotation);
         jaw_pos_motor_.moveToUnits(des_state_.jaw_pos);
-
         clamp_motor_.moveToUnits(des_state_.clamp_pos + state_.jaw_rotation);
-        // clamp_motor_.moveToUnits(state_.jaw_rotation);
 
-        if (abs(error.jaw_rotation) < 0.01f)
-        {
-            desired_clamp_speed = 0;
-        }
-        if (error.clamp_pos > .01f)
-        {
-            desired_clamp_speed = clamp_motor_.maxSpeed();
-        }
-        if (error.clamp_pos < -.01f)
-        {
-            desired_clamp_speed = -clamp_motor_.maxSpeed();
-        }
+
+        // Serial.println(des_state_.clamp_pos + state_.jaw_rotation);
+        // Serial.println(error.clamp_pos);
+
+        // desired_clamp_speed = 0;
+
+        // if (error.clamp_pos > .001f)
+        // {
+        //     desired_clamp_speed = clamp_motor_.maxSpeed();
+        // }
+        // if (error.clamp_pos < -.001f)
+        // {
+        //     desired_clamp_speed = -clamp_motor_.maxSpeed();
+        // }
 
         if (error.is_Brake)
         {
@@ -195,11 +195,14 @@ void Cleaner::run()
     // run all motors
     for (const auto& motor : motors)
     {
-        if (abs(jaw_rotation_motor_.speed()) > 0.0f)
-        {
-            clamp_motor_.setSpeed(jaw_rotation_motor_.speed() / 5 + desired_clamp_speed);
-        }
-        // motor->runSpeed();
+        /* If we're moving the jaw rotation, sync the clamp motor to it
+         * and add any additional speed needed to move the clamp when it
+         * too has error
+         */
+        // if (jaw_rotation_motor_.isRunning())
+        // {
+        //     clamp_motor_.setSpeed(jaw_rotation_motor_.speed() * 2 + desired_clamp_speed);
+        // }
         motor->run();
     }
 }

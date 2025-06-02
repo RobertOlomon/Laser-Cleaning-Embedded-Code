@@ -98,7 +98,7 @@ def main():
                 continue
             if not cmd.endswith("\0"):
                 cmd += "\0"
-            cmd2 = cmd3
+            # cmd2 = cmd3
             for j in range(10):
                 for i in range(len(cmd2)):
                     print(f"[sending] {cmd2[i]}")

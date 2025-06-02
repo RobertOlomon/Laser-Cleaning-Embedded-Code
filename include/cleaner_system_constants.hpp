@@ -2,7 +2,6 @@
 #include "pin_defs.hpp"
 #include "stepper_motor.hpp"
 
-
 constexpr StepperMotor::StaticConfig jawRotationCfg{
     /* pins */ {JAW_ROTATION_CS_PIN, JAW_ROTATION_STEP_PIN, JAW_ROTATION_DIR_PIN, 255},
     /* rSense */ StepperMotor::TMC5160_PRO_RSENSE,
@@ -21,20 +20,23 @@ constexpr StepperMotor::StaticConfig clampCfg{
 /* Electrical Presets */
 constexpr StepperMotor::ElectricalParams JawRotationElectrical{2000, 32};
 constexpr StepperMotor::ElectricalParams JawPositionElectrical{1200, 32};
-constexpr StepperMotor::ElectricalParams clampElectrical{2500, 32};
+constexpr StepperMotor::ElectricalParams clampElectrical{1500, 32};
 
 /* Physical Presets */
 constexpr StepperMotor::PhysicalParams JawRotationPhysical{
-    M_TWOPI / 200 / JawRotationElectrical.microsteps / 10.0f};  // 200 steps per revolution, 10:1 ratio
+    M_TWOPI / 200 / JawRotationElectrical.microsteps /
+    10.0f};  // 200 steps per revolution, 10:1 ratio
 constexpr StepperMotor::PhysicalParams JawPositionPhysical{
     5.0f / 200 / JawPositionElectrical.microsteps};  // 200 steps per revolution, 5mm pitch
-constexpr StepperMotor::PhysicalParams clampPhysical{JawRotationPhysical.stepDistance * 10 / 2};  // 10 reduction, 2 to 1 clamp pulley
+constexpr StepperMotor::PhysicalParams clampPhysical{
+    JawRotationPhysical.stepDistance / 2};  // same gear as the rotation, 2:1 pulley
 /* Motion Presets */
 constexpr StepperMotor::MotionParams JawRotationMotion{
-    200 * JawRotationElectrical.microsteps,
+    100 * JawRotationElectrical.microsteps,
     1000 * JawRotationElectrical.microsteps};
 constexpr StepperMotor::MotionParams JawPositionMotion{
     1200 * JawPositionElectrical.microsteps,
     8000 * JawPositionElectrical.microsteps};
-constexpr StepperMotor::MotionParams ClampMotion{200 * clampElectrical.microsteps,
-    500 * clampElectrical.microsteps};
+constexpr StepperMotor::MotionParams ClampMotion{
+    2500 * clampElectrical.microsteps,
+    3000 * clampElectrical.microsteps};
