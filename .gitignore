@@ -11,3 +11,10 @@
 
 # Python virtual environment
 serverside/venv/
+
+#python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
