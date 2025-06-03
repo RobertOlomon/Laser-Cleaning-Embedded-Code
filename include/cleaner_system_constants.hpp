@@ -38,5 +38,5 @@ constexpr StepperMotor::MotionParams JawPositionMotion{
     1200 * JawPositionElectrical.microsteps,
     8000 * JawPositionElectrical.microsteps};
 constexpr StepperMotor::MotionParams ClampMotion{
-    2500 * clampElectrical.microsteps,
-    3000 * clampElectrical.microsteps};
+    1200 * clampElectrical.microsteps,
+    2500 * clampElectrical.microsteps};

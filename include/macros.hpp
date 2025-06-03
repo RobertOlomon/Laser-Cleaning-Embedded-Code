@@ -49,3 +49,15 @@ inline void runOnSwitch(bool& flag, bool trigger_when, Cleaner& system, void (Cl
             }                                          \
         }                                              \
     } while (0)
+
+
+template <typename T>
+inline T limit_val(const T& val, const T& min_val, const T& max_val) {
+    if (val < min_val) {
+        return min_val;
+    }
+    if (val > max_val) {
+        return max_val;
+    }
+    return val;
+}

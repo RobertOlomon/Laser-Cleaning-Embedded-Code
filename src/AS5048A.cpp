@@ -117,13 +117,8 @@ int32_t AS5048A::getRotationUnwrapped()
     // 1. Read the current 14-bit angle
     uint16_t raw = getRawRotation();
 
-    raw = filter.filterData(raw);
+    // raw = filter.filterData(raw);
 
-	// Hack because reading seems to be inconsistent
-	// if (!raw)
-	// {
-	// 	raw = prevRaw;  // If the read value is zero, use the previous value
-	// }
     if (errorFlag)
     {
         raw = prevRaw;  // If an error occurred, use the previous value

@@ -54,15 +54,19 @@ int StepperMotor::begin()
 void StepperMotor::apply(const MotionParams& p)
 {
     motion_ = p;
+    digitalWrite(cfg_.pins.cs, LOW);  // Start SPI transaction
     setMaxSpeed(p.maxSpeed);
     setAcceleration(p.acceleration);
+    digitalWrite(cfg_.pins.cs, HIGH);  // End SPI transaction
 };
 
 void StepperMotor::apply(const ElectricalParams& p)
 {
     elec_ = p;
+    digitalWrite(cfg_.pins.cs, LOW);  // Start SPI transaction
     stepper_driver_.rms_current(elec_.runCurrent_mA);
     stepper_driver_.microsteps(p.microsteps);
+    digitalWrite(cfg_.pins.cs, HIGH);  // End SPI transaction
 };
 
 void StepperMotor::apply(const PhysicalParams& p) { phys_ = p; };

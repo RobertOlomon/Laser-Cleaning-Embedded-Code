@@ -119,6 +119,8 @@ public:
     void setPositionUnits(float pos) { setCurrentPosition(pos / phys_.stepDistance); }
     void moveToUnits(float pos) { moveTo(pos / phys_.stepDistance); }
     void setSpeedUnits(float speed) { setSpeed(speed / phys_.stepDistance); }
+    float speedUnits() { return speed() * phys_.stepDistance; }
+    float maxSpeedUnits() { return maxSpeed() * phys_.stepDistance; }
 
     // getters
     const char* getName() const { return cfg_.name; }

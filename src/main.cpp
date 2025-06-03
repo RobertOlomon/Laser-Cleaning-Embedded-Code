@@ -64,6 +64,7 @@ void loop()
             runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
             const auto state = cleaner_system.updateDesStateManual();
             cleaner_system.run();
+            // DO_EVERY(.1, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
         }
         break;  // case MANUAL
 
@@ -77,6 +78,7 @@ void loop()
                 case SerialReceiver::MessageType::COMMAND:
                 {
                     SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
+                    DO_EVERY(1, Serial.println(msg.G0.a, 3));
                     cleaner_system.processCommand(msg);
                     cleaner_system.run();
                 }
@@ -96,10 +98,11 @@ void loop()
         break;  // case AUTO
         case Cleaner::CleanerOperatorMode::DEBUG:
         {
-            runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
+            // runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
             // DO_EVERY(1/1000.0f, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
             // Serial.println(analogRead(CLAMP_POT_PIN));
             // cleaner_system.run();
+            digitalWrite(ROLL_BRAKE_REAL_PIN, HIGH); 
         }
         default:
             break;  // do nothing

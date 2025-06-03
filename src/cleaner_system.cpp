@@ -19,7 +19,7 @@ Cleaner::Cleaner()
       clampLowpassFilter(filter::butterworth<2, filter::LOWPASS>(50.0f, 1.0f / RUN_RATE_HZ)),
       JawRotationPID(controller::PIDControllerCoefficients(100.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
-      ClampPID(controller::PIDControllerCoefficients(100.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      ClampPID(controller::PIDControllerCoefficients(10.0f, 1.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       encoder_jaw_rotation_(
           ENCODER_JAW_ROTATION_PIN1,
           ENCODER_JAW_ROTATION_PIN2,
@@ -92,6 +92,7 @@ int Cleaner::begin()
     // Initialize the pins
     pinMode(LIMIT_SWITCH_PIN_JAW_ROTATION, INPUT_PULLUP);
     pinMode(ESTOP_PIN, INPUT_PULLUP);
+    pinMode(ROLL_BRAKE_REAL_PIN, OUTPUT);
 
     return EXIT_SUCCESS;
 }
@@ -106,16 +107,16 @@ void Cleaner::updatePCF8575()
 
     // read current state
 
-    ENCODER_BUTTONS[0].current = IOExtender_.readNoUpdate(ENCODER_JAW_ROTATION_BUTTON_PIN);
-    ENCODER_BUTTONS[1].current = IOExtender_.readNoUpdate(ENCODER_JAW_POSITION_BUTTON_PIN);
-    ENCODER_BUTTONS[2].current = IOExtender_.readNoUpdate(ENCODER_CLAMP_BUTTON_PIN);
+    ENCODER_BUTTONS[0].rawState = IOExtender_.readNoUpdate(ENCODER_JAW_ROTATION_BUTTON_PIN);
+    ENCODER_BUTTONS[1].rawState = IOExtender_.readNoUpdate(ENCODER_JAW_POSITION_BUTTON_PIN);
+    ENCODER_BUTTONS[2].rawState = IOExtender_.readNoUpdate(ENCODER_CLAMP_BUTTON_PIN);
 
     for (auto& button : ENCODER_BUTTONS)
     {
         toggleButton(button);
     }
 
-    des_state_.is_Brake = IOExtender_.readNoUpdate(ROLLER_BRAKE_PIN) == LOW;
+    des_state_.is_Brake = IOExtender_.readNoUpdate(ROLL_BRAKE_BUT_PIN) == HIGH;
 
     IOExtender_.writeNoUpdate(
         ENCODER_JAW_ROTATION_SPEED_LED,
@@ -136,11 +137,9 @@ void Cleaner::run()
     {
         return;
     }
-    // Runs at a fixed rate of RUN_RATE_HZ
-    static unsigned long last_read_time        = 0;
     static const unsigned long min_interval_us = 1e6 / RUN_RATE_HZ;
-    unsigned long now                          = micros();
-    float desired_clamp_speed                  = 0;
+
+    unsigned long now = micros();
 
     if (now - last_read_time >= min_interval_us)
     {
@@ -158,39 +157,24 @@ void Cleaner::run()
         State error = des_state_ - state_;
         jaw_rotation_motor_.moveToUnits(des_state_.jaw_rotation);
         jaw_pos_motor_.moveToUnits(des_state_.jaw_pos);
-        clamp_motor_.moveToUnits(des_state_.clamp_pos + state_.jaw_rotation);
 
+        // if we're done with moving, clear and then recompute the move command
 
         // Serial.println(des_state_.clamp_pos + state_.jaw_rotation);
         // Serial.println(error.clamp_pos);
 
-        // desired_clamp_speed = 0;
-
-        // if (error.clamp_pos > .001f)
-        // {
-        //     desired_clamp_speed = clamp_motor_.maxSpeed();
-        // }
-        // if (error.clamp_pos < -.001f)
-        // {
-        //     desired_clamp_speed = -clamp_motor_.maxSpeed();
-        // }
+        desired_clamp_speed = limit_val(
+            ClampPID.filterData(error.clamp_pos),
+            -clamp_motor_.maxSpeedUnits() * .5f,
+            clamp_motor_.maxSpeedUnits() * .5f);
 
         if (error.is_Brake)
         {
             // Invert what's currently on the brake
-            digitalWrite(ROLLER_BRAKE_PIN, !digitalRead(ROLLER_BRAKE_PIN));
+            digitalWrite(ROLL_BRAKE_REAL_PIN, !digitalRead(ROLL_BRAKE_REAL_PIN));
         }
 
         last_read_time = now;
-
-        // State errortol{1e-3, 1e-1, 1e-1, false, false};
-        // DO_EVERY(.1, error.print("ERROR "));
-        // DO_EVERY(.1, state_.print("STATE "));
-
-        // if (error < errortol)
-        // {
-        //     Serial.print(SERIAL_ACK);
-        // }
     }
     // run all motors
     for (const auto& motor : motors)
@@ -199,10 +183,11 @@ void Cleaner::run()
          * and add any additional speed needed to move the clamp when it
          * too has error
          */
-        // if (jaw_rotation_motor_.isRunning())
-        // {
-        //     clamp_motor_.setSpeed(jaw_rotation_motor_.speed() * 2 + desired_clamp_speed);
-        // }
+        clamp_motor_.setSpeed(limit_val(
+            jaw_rotation_motor_.speed() * 2 +
+                desired_clamp_speed / clamp_motor_.getPhysicalParams().stepDistance,
+            -clamp_motor_.maxSpeed(),
+            clamp_motor_.maxSpeed()));
         motor->run();
     }
 }
@@ -276,7 +261,7 @@ Cleaner::State Cleaner::updateRealState()
     state_.clamp_pos    = clamp_motor_.currentPositionUnits() -
                        state_.jaw_rotation;  // clamp is relative to jaw rotation
 
-    state_.is_Brake = digitalRead(ROLLER_BRAKE_PIN);
+    state_.is_Brake = digitalRead(ROLL_BRAKE_REAL_PIN);
 
     return state_;
 }
@@ -314,13 +299,11 @@ Cleaner::State Cleaner::updateDesStateManual()
     last_enc_jaw_pos_ = cur_jaw_pos;
     last_enc_clamp_   = cur_clamp;
 
-    uint8_t constexpr binNum = 10;
-    potValue = clampLowpassFilter.filterData(std::pow(2,12) - analogRead(CLAMP_POT_PIN)) / std::pow(2, 12);
-    potValue = std::max(potValue, 1e-3f);  // Ensure it's not negative
-    potValue = std::min(potValue, 1.0f);  // Ensure it's not greater than 1.0
-    potValue = std::ceil(potValue * binNum) / binNum;
-
-    Serial.println(potValue);
+    // uint8_t constexpr binNum = 10;
+    // potValue = clampLowpassFilter.filterData(std::pow(2,12) - analogRead(CLAMP_POT_PIN)) /
+    // std::pow(2, 12); potValue = std::max(potValue, 1e-3f);  // Ensure it's not negative potValue
+    // = std::min(potValue, 1.0f);  // Ensure it's not greater than 1.0 potValue =
+    // std::ceil(potValue * binNum) / binNum;
 
     return des_state_;
 }
@@ -345,6 +328,12 @@ void Cleaner::initializeManualMode()
 void Cleaner::initializeAutoMode()
 {
     updateRealState();
+    reset();
+    for (auto* motor : motors)
+    {
+        motor->setCurrentPosition(0);
+    }
+    // TO:DO Add encoder reset if we use encoder
     // jaw_rotation_motor_.setPositionUnits(0);
 }
 

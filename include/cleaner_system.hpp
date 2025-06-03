@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "AS5048A.hpp"
-
 #include "PCF8575.h"
 #include "RotaryEncoder.h"
 #include "TMCStepper.h"
@@ -123,18 +122,23 @@ public:
     AS5048A& getEncoder() { return encoder_; }
 
 private:
+    static constexpr uint32_t DEBOUNCE_TIME_MS = 2;
     struct ToggleButtonState
     {
         const char* name;
-        bool current;
-        bool last;
+        bool rawState, rawStateLast;        // Raw input sampled at 1 kHz
+        bool debouncedState, debouncedStateLast;
         bool& target;
+        uint32_t lastDebounceTime;
 
         ToggleButtonState(const char* n, bool& targetRef)
             : name(n),
-              current(false),
-              last(false),
-              target(targetRef)
+              rawState(false),
+              rawStateLast(false),
+              debouncedState(false),
+              debouncedStateLast(false),
+              target(targetRef),
+              lastDebounceTime(0)
         {
         }
     };
@@ -145,13 +149,30 @@ private:
      */
     inline void toggleButton(ToggleButtonState& button)
     {
-        if (!button.current && button.last)
-        {
-            button.target = !button.target;
-        }
-        button.last = button.current;
-    }
+        uint32_t now = millis();
 
+        // If raw state has changed, reset debounce timer
+        if (button.rawState != button.rawStateLast)
+        {
+            button.lastDebounceTime = now;
+        }
+
+        // If debounce time has passed, update debounced state
+        if ((now - button.lastDebounceTime) >= DEBOUNCE_TIME_MS)
+        {
+            button.debouncedState = button.rawState;
+
+            if (!button.debouncedState && button.debouncedStateLast)
+            {
+                // Button was released, toggle the target state
+                button.target = !button.target;
+            }
+        }
+
+
+        button.rawStateLast = button.rawState;
+        button.debouncedStateLast = button.debouncedState;
+    }
     std::vector<ToggleButtonState> ENCODER_BUTTONS = {
         {"Jaw Rotation", ENCODER_JAW_ROTATION_SPEED_HIGH},
         {"Jaw Position", ENCODER_JAW_POSITION_SPEED_HIGH},
@@ -203,6 +224,10 @@ private:
     DiscreteFilter<3> JawPositionPID;
     DiscreteFilter<3> ClampPID;
 
-    float potValue = 0;
+    float potValue     = 0;
     float lastPotValue = 0;
+
+    float desired_clamp_speed = 0;
+
+    unsigned long last_read_time = 0;
 };

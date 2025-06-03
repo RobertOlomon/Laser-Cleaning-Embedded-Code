@@ -46,37 +46,66 @@ cmd2 = [
 ]
 
 cmd3 = [
-    "G0 A0 Y0 C-.2\0",
-    "G0 A0 Y0 C-.2\0",
-    "G0 A3 Y0 C-.2\0",
-    "G0 A3 Y0 C-.2\0",
-    "G0 A3 Y0 C-.2\0",
-    f"G0 A{math.pi * 2} Y0 C-.2\0",
-    f"G0 A{math.pi * 2} Y0 C-.2\0",
-    f"G0 A{math.pi * 2} Y0 C-.2\0",
-    f"G0 A{math.pi * 2} Y0 C-.2\0",
-    f"G0 A{math.pi * 2} Y0 C-.2\0",
-    f"G0 A{math.pi * 2} Y0 C-.2\0",
-    f"G0 A{math.pi * 2} Y0 C-.2\0",
-    "G0 A6.2831 Y0 C2\0",
-    "G0 A6.2831 Y0 C2\0",
-    "G0 A6.2831 Y100 C2\0",
-    "G0 A6.2831 Y100 C2\0",
-    "G0 A6.2831 Y100 C2\0",
-    "G0 A6.2831 Y100 C2\0",
-    "G0 A6.2831 Y100 C2\0",
-    "G0 C2\0",
-    "G0 C2\0",
-    "G0 C2\0",
-    "G0 C2\0",
-    "G0 C2\0",
-    "G0 C2\0",
-    "G0 C2\0",
-    "G0 C2\0",
+    "G0 A0 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    "G0 A3 Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    f"G0 A{math.pi * 2} Y0 C0\0",
+    "G0 A6.2831 Y0 C4\0",
+    "G0 A6.2831 Y0 C4\0",
+    "G0 A6.2831 Y100 C4\0",
+    "G0 A6.2831 Y100 C4\0",
+    "G0 A6.2831 Y100 C4\0",
+    "G0 A6.2831 Y100 C4\0",
+    "G0 A6.2831 Y100 C4\0",
+    "G0 A6.2831 Y100 C4\0",
+    "G0 C4\0",
+    "G0 C4\0",
+    "G0 C4\0",
+    "G0 C4\0",
+    "G0 C4\0",
     "G0 C1.5\0",
     "G0 C1.5\0",
     "G0 C1.5\0",
-    "G0 \0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0 C1.5\0",
+    "G0\0",
+    "G0\0",
+    "G0\0",
+    "G0\0",
+    "G0\0"
 ]
 # ─────────────────────────────── main program ────────────────────────────────
 def main():
@@ -98,13 +127,14 @@ def main():
                 continue
             if not cmd.endswith("\0"):
                 cmd += "\0"
-            # cmd2 = cmd3
-            for j in range(10):
-                for i in range(len(cmd2)):
-                    print(f"[sending] {cmd2[i]}")
-                    tx.send_msg(transmitter.CommandMessage(cmd2[i]))
-                    time.sleep(1)
+            cmd2 = cmd3
+            # for j in range(10):
+            for i in range(len(cmd2)):
+                print(f"[sending] {cmd2[i]}")
+                tx.send_msg(transmitter.CommandMessage(cmd2[i]))
+                time.sleep(1)
             
+            tx.send_msg(transmitter.CommandMessage(cmd))
             print("[sent]")
     finally:
         tx.serial.close()
