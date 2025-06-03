@@ -236,10 +236,11 @@ void Cleaner::initializeManualMode()
     des_state_ = state_;
 }
 
-void Cleaner::initializeAutoMode()
+void Cleaner::initializeAutoMode(SerialReceiver& receiver)
 {
     updateRealState();
     reset();
+    receiver.reset();
 }
 
 // ISR for PCF8575

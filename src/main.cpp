@@ -61,7 +61,7 @@ void loop()
     {
         case Cleaner::CleanerOperatorMode::MANUAL:
         {
-            runOnSwitch(wasInManualMode, false, cleaner_system, &Cleaner::initializeManualMode);
+            runOnSwitch(wasInManualMode, false, [&]{cleaner_system.initializeManualMode();});
             const auto state = cleaner_system.updateDesStateManual();
             cleaner_system.run();
             // DO_EVERY(.1, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
@@ -70,7 +70,7 @@ void loop()
 
         case Cleaner::CleanerOperatorMode::AUTO:
         {
-            runOnSwitch(wasInManualMode, true, cleaner_system, &Cleaner::initializeAutoMode);
+            runOnSwitch(wasInManualMode, true, [&]{cleaner_system.initializeAutoMode(receiver);});
             cleaner_system.updateModeAuto();  // Update the pcf to get if we need to switch
             receiver.parse();
             switch (receiver.lastReceivedMessageId())

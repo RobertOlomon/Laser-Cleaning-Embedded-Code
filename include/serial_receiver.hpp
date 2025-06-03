@@ -74,6 +74,7 @@ public:
     SerialReceiver();
     
     void parse();
+    void reset();
     CommandMessage lastReceivedCommandMessage() const;
     Stop lastReceivedStopMessage() const;
     MessageType lastReceivedMessageId() const;

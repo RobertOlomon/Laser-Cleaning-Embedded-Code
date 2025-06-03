@@ -1,3 +1,5 @@
+#include <utility>
+
 #define PrintHzRateDebug()                                                                 \
     do                                                                                     \
     {                                                                                      \
@@ -33,14 +35,16 @@
         }                                             \
     } while (0)
 
-inline void runOnSwitch(bool& flag, bool trigger_when, Cleaner& system, void (Cleaner::*func)())
+template<class Callable>
+inline void runOnSwitch(bool& flag, bool trigger_when, Callable&& task)
 {
     if (flag == trigger_when)
     {
-        (system.*func)();
+        std::forward<Callable>(task)();
         flag = !flag;
     }
 }
+
 
 #define DO_ONCE_AFTER(seconds, block)                    \
     do                                                   \

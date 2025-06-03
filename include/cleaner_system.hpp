@@ -24,7 +24,7 @@ public:
     void processCommand(SerialReceiver::CommandMessage command);
     void run();
     void initializeManualMode();
-    void initializeAutoMode();
+    void initializeAutoMode(SerialReceiver& receiver);
 
     void stop();
 

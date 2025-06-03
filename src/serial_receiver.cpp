@@ -211,6 +211,20 @@ SerialReceiver::SerialReceiver()
 }
 
 /**
+ * @brief Resets the SerialReceiver state to its initial values.
+ */
+void SerialReceiver::reset()
+{
+    state_ = State::WAITING_FOR_HEADER;
+    currMsgId_ = MessageType::NONE;
+    lastReceivedMsgId_ = MessageType::NONE;
+    currMsgLen_ = 0;
+    std::memset(currMsgData_, 0, BUFFER_SIZE);
+    lastReceivedCommandMessage_ = CommandMessage();
+    lastReceivedStopMessage_ = Stop();
+}
+
+/**
  * @brief Parses incoming serial data and processes messages based on their
  * type.
  *
