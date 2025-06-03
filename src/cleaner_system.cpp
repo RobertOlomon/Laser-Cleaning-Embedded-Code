@@ -208,6 +208,8 @@ Cleaner::State Cleaner::updateDesStateManual()
     last_enc_jaw_pos_ = cur_jaw_pos;
     last_enc_clamp_   = cur_clamp;
 
+    des_state_.is_Brake = breakSwitchedOn;
+
     // uint8_t constexpr binNum = 10;
     // potValue = clampLowpassFilter.filterData(std::pow(2,12) - analogRead(CLAMP_POT_PIN)) /
     // std::pow(2, 12); potValue = std::max(potValue, 1e-3f);  // Ensure it's not negative potValue
@@ -261,7 +263,7 @@ void Cleaner::updatePCF8575()
         toggleButton(button);
     }
 
-    des_state_.is_Brake = IOExtender_.readNoUpdate(ROLL_BRAKE_BUT_PIN) == HIGH;
+    breakSwitchedOn = IOExtender_.readNoUpdate(ROLL_BRAKE_BUT_PIN) == HIGH;
 
     // Update the LEDS with the current button state
     IOExtender_.writeNoUpdate(

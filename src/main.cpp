@@ -78,7 +78,6 @@ void loop()
                 case SerialReceiver::MessageType::COMMAND:
                 {
                     SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
-                    DO_EVERY(1, Serial.println(msg.G0.a, 3));
                     cleaner_system.processCommand(msg);
                     cleaner_system.run();
                 }

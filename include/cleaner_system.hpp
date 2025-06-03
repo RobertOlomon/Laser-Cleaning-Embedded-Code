@@ -200,6 +200,7 @@ private:
     bool ENCODER_JAW_ROTATION_SPEED_HIGH = false;
 
     bool AutoMode = false;
+    bool breakSwitchedOn = false;
 
     PCF8575 IOExtender_;  // Must be defined before the rotary encoders
 
