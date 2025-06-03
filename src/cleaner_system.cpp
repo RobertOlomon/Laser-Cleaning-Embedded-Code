@@ -361,8 +361,10 @@ void Cleaner::processCommand(SerialReceiver::CommandMessage command)
     if (command.G4.received)
     {
         // Dwell command, wait for a certain time
+        // (BEING HACKED FOR USE AS THE BRAKE COMMAND)
         command.G4.received = false;  // reset the received
-        delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
+        // delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
+        des_state_.is_Brake = !des_state_.is_Brake;  // toggle the brake state
     }
     if (command.G28.received)
     {
