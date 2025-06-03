@@ -104,29 +104,31 @@ public:
         }
     };
 
-    State updateDesStateManual();
-    void updateModeAuto();
     bool updatePCF8575_flag = false;
+    void updateModeAuto();
 
-    bool isAutoMode() const { return AutoMode; }
-
+    State updateDesStateManual();
     State updateRealState();
 
-    PCF8575 getIOExpander() { return IOExtender_; }
+    /* -------- Getters -------- */
+
+    bool isAutoMode() const { return AutoMode; }
+    PCF8575 getIOExpander() const { return IOExtender_; }
 
     StepperMotor& getJawRotationMotor() { return jaw_rotation_motor_; }
     StepperMotor& getJawPosMotor() { return jaw_pos_motor_; }
     StepperMotor& getClampMotor() { return clamp_motor_; }
-    RotaryEncoder getJawRotationEncoder() { return encoder_jaw_rotation_; }
 
     AS5048A& getEncoder() { return encoder_; }
 
 private:
-    static constexpr uint32_t DEBOUNCE_TIME_MS = 2;
+    void runControl();
+
+    static constexpr uint32_t DEBOUNCE_TIME_MS = 10;
     struct ToggleButtonState
     {
         const char* name;
-        bool rawState, rawStateLast;        // Raw input sampled at 1 kHz
+        bool rawState, rawStateLast;  // Raw input sampled at 1 kHz
         bool debouncedState, debouncedStateLast;
         bool& target;
         uint32_t lastDebounceTime;
@@ -168,11 +170,10 @@ private:
                 button.target = !button.target;
             }
         }
-
-
-        button.rawStateLast = button.rawState;
+        button.rawStateLast       = button.rawState;
         button.debouncedStateLast = button.debouncedState;
     }
+
     std::vector<ToggleButtonState> ENCODER_BUTTONS = {
         {"Jaw Rotation", ENCODER_JAW_ROTATION_SPEED_HIGH},
         {"Jaw Position", ENCODER_JAW_POSITION_SPEED_HIGH},
@@ -181,26 +182,24 @@ private:
     State state_;
     State des_state_;
 
+    constexpr static const char* SERIAL_ACK = "At Pos\r";
+
+    constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY = M_TWOPI / 100.0f;
+    constexpr static float ENCODER_JAW_POSITION_SENSITIVITY = 1.0f;
+    constexpr static float ENCODER_CLAMP_SENSITIVITY = 0.1f;
+
+    constexpr static const float RUN_RATE_HZ  = 1000.0f;
+    constexpr static const float HOMING_SPEED = 100.0f;  // Speed for homing in mm/s
+
     float last_enc_jaw_rot_;
     float last_enc_jaw_pos_;
     float last_enc_clamp_;
-
-    constexpr static const char* SERIAL_ACK = "At Pos\r";
-
-    constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY =
-        M_TWOPI / 100.0f;  // Sensitivity for jaw rotation encoder
-    constexpr static float ENCODER_JAW_POSITION_SENSITIVITY =
-        1.0f;  // Sensitivity for jaw position encoder
-    constexpr static float ENCODER_CLAMP_SENSITIVITY = 0.1f;  // Sensitivity for clamp encoder
-
-    constexpr static const float RUN_RATE_HZ  = 1000.0f;  // Change this to desired Hz
-    constexpr static const float HOMING_SPEED = 100.0f;   // Speed for homing in mm/s
 
     bool ENCODER_CLAMP_SPEED_HIGH        = false;
     bool ENCODER_JAW_POSITION_SPEED_HIGH = false;
     bool ENCODER_JAW_ROTATION_SPEED_HIGH = false;
 
-    bool AutoMode = false;  // True if the cleaner is in auto mode, false if in manual mode
+    bool AutoMode = false;
 
     PCF8575 IOExtender_;  // Must be defined before the rotary encoders
 

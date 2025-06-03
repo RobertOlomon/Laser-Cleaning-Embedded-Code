@@ -42,7 +42,7 @@ Cleaner::Cleaner()
     clamp_motor_.apply(ClampMotion);
 
     jaw_rotation_motor_.apply(JawRotationElectrical);
-    jaw_pos_motor_.apply(JawPositionElectrical);  // gentler on the position motor
+    jaw_pos_motor_.apply(JawPositionElectrical);
     clamp_motor_.apply(clampElectrical);
 
     jaw_rotation_motor_.apply(JawRotationPhysical);
@@ -54,34 +54,33 @@ Cleaner::Cleaner()
 
 Cleaner::~Cleaner() = default;
 
-void Cleaner::PCFMessageRec()
-{
-    // this is a message to be sent to the main loop
-    updatePCF8575_flag = true;
-}
 int Cleaner::begin()
 {
     // Initialize the communication bus
     Wire.begin();  // Initialize I2C bus
     Wire.setClock(400000);
 
-    IOExtender_.begin();
-
     // Initialize the motors
     for (auto* motor : motors)
     {
         if (motor->begin() != EXIT_SUCCESS)
         {
-            Serial.printf("Failed to initialize %s motor.\n", motor->getName());
+            std::string errorMessage =
+                std::string("Failed to initialize ") + motor->getName() + " motor.\n";
+            if (Serial.availableForWrite() > strlen(errorMessage.c_str()))
+            {
+                Serial.print(errorMessage.c_str());
+            }
             return EXIT_FAILURE;
         }
     }
+
     // Initialize the encoder
     encoder_.begin();
 
+    // Register the interrupt for the PCF8575
     if (IO_EXTENDER_INT != 255)
     {
-        // Register the interrupt for the PCF8575
         pinMode(IO_EXTENDER_INT, INPUT_PULLUP);
         detachInterrupt(IO_EXTENDER_INT);
         attachInterrupt(
@@ -89,6 +88,9 @@ int Cleaner::begin()
             bindArgGateThisAllocate(&Cleaner::PCFMessageRec, this),
             CHANGE);
     }
+    // Initialize the IO extender
+    IOExtender_.begin();
+
     // Initialize the pins
     pinMode(LIMIT_SWITCH_PIN_JAW_ROTATION, INPUT_PULLUP);
     pinMode(ESTOP_PIN, INPUT_PULLUP);
@@ -97,85 +99,15 @@ int Cleaner::begin()
     return EXIT_SUCCESS;
 }
 
-// This function is called in the main loop whenever the interrupt is triggered
-void Cleaner::updatePCF8575()
-{
-    // update the encoders
-    encoder_clamp_.tick();
-    encoder_jaw_pos_.tick();
-    encoder_jaw_rotation_.tick();
-
-    // read current state
-
-    ENCODER_BUTTONS[0].rawState = IOExtender_.readNoUpdate(ENCODER_JAW_ROTATION_BUTTON_PIN);
-    ENCODER_BUTTONS[1].rawState = IOExtender_.readNoUpdate(ENCODER_JAW_POSITION_BUTTON_PIN);
-    ENCODER_BUTTONS[2].rawState = IOExtender_.readNoUpdate(ENCODER_CLAMP_BUTTON_PIN);
-
-    for (auto& button : ENCODER_BUTTONS)
-    {
-        toggleButton(button);
-    }
-
-    des_state_.is_Brake = IOExtender_.readNoUpdate(ROLL_BRAKE_BUT_PIN) == HIGH;
-
-    IOExtender_.writeNoUpdate(
-        ENCODER_JAW_ROTATION_SPEED_LED,
-        ENCODER_JAW_ROTATION_SPEED_HIGH ? LOW : HIGH);
-    IOExtender_.writeNoUpdate(
-        ENCODER_JAW_POSITION_SPEED_LED,
-        ENCODER_JAW_POSITION_SPEED_HIGH ? LOW : HIGH);
-    IOExtender_.writeNoUpdate(ENCODER_CLAMP_SPEED_LED, ENCODER_CLAMP_SPEED_HIGH ? LOW : HIGH);
-
-    AutoMode = IOExtender_.readNoUpdate(MODE_PIN) == LOW;
-
-    IOExtender_.update();
-}
-
 void Cleaner::run()
 {
+    // Do not run if we're E-Stopped
     if (state_.is_Estopped)
     {
         return;
     }
-    static const unsigned long min_interval_us = 1e6 / RUN_RATE_HZ;
 
-    unsigned long now = micros();
-
-    if (now - last_read_time >= min_interval_us)
-    {
-        updateRealState();
-
-        // if (potValue != lastPotValue)
-        // {
-        //     const StepperMotor::ElectricalParams newElectrical{
-        //         clampElectrical.runCurrent_mA * potValue,
-        //         clampElectrical.microsteps};
-        //     clamp_motor_.apply(newElectrical);
-        //     lastPotValue = potValue;
-        // }
-
-        State error = des_state_ - state_;
-        jaw_rotation_motor_.moveToUnits(des_state_.jaw_rotation);
-        jaw_pos_motor_.moveToUnits(des_state_.jaw_pos);
-
-        // if we're done with moving, clear and then recompute the move command
-
-        // Serial.println(des_state_.clamp_pos + state_.jaw_rotation);
-        // Serial.println(error.clamp_pos);
-
-        desired_clamp_speed = limit_val(
-            ClampPID.filterData(error.clamp_pos),
-            -clamp_motor_.maxSpeedUnits() * .5f,
-            clamp_motor_.maxSpeedUnits() * .5f);
-
-        if (error.is_Brake)
-        {
-            // Invert what's currently on the brake
-            digitalWrite(ROLL_BRAKE_REAL_PIN, !digitalRead(ROLL_BRAKE_REAL_PIN));
-        }
-
-        last_read_time = now;
-    }
+    DO_EVERY(1.0f / RUN_RATE_HZ, runControl());
     // run all motors
     for (const auto& motor : motors)
     {
@@ -192,57 +124,34 @@ void Cleaner::run()
     }
 }
 
-// use on command, not allowed to modify
-void Cleaner::home(SerialReceiver::CommandMessage command)
+void Cleaner::runControl()
 {
-    // reset the states based on what is received
-    if (command.M80.a > 0)
-    {
-        state_.jaw_rotation     = 0.0f;
-        des_state_.jaw_rotation = 0.0f;
-        // enter a loop until we hit the limit switch
-        while (1)
-        {
-            Serial.println("HIT");
-        }
-        while (digitalRead(LIMIT_SWITCH_PIN_JAW_ROTATION))
-        {
-            jaw_rotation_motor_.setSpeedUnits(HOMING_SPEED);
-            jaw_rotation_motor_.runSpeed();
-        }
-        // encoder_.setZeroPosition(encoder_.getRawRotation());
-        state_.jaw_rotation = 0.0f;
-    }
+    updateRealState();
 
-    // if (command.M80.y > 0)
+    // if (potValue != lastPotValue)
     // {
-    //     state_.jaw_pos     = 0.0f;
-    //     des_state_.jaw_pos = 0.0f;
+    //     const StepperMotor::ElectricalParams newElectrical{
+    //         clampElectrical.runCurrent_mA * potValue,
+    //         clampElectrical.microsteps};
+    //     clamp_motor_.apply(newElectrical);
+    //     lastPotValue = potValue;
     // }
 
-    // if (command.M80.c > 0)
-    // {
-    //     state_.clamp_pos     = 0.0f;
-    //     des_state_.clamp_pos = 0.0f;
-    // }
-}
+    State error = des_state_ - state_;
+    jaw_rotation_motor_.moveToUnits(des_state_.jaw_rotation);
+    jaw_pos_motor_.moveToUnits(des_state_.jaw_pos);
 
-int Cleaner::reset()
-{
-    // Reset the state to default values
-    memset(&state_, 0, sizeof(state_));
-    memset(&des_state_, 0, sizeof(des_state_));
+    // if we're done with moving, clear and then recompute the move command
 
-    return EXIT_SUCCESS;
-}
+    desired_clamp_speed = limit_val(
+        ClampPID.filterData(error.clamp_pos),
+        -clamp_motor_.maxSpeedUnits() * .5f,
+        clamp_motor_.maxSpeedUnits() * .5f);
 
-void Cleaner::stop()
-{
-    // Stop all motors
-    for (auto* motor : motors)
+    if (error.is_Brake)
     {
-        motor->stop();
-        motor->run();
+        // Invert what's currently on the brake
+        digitalWrite(ROLL_BRAKE_REAL_PIN, !digitalRead(ROLL_BRAKE_REAL_PIN));
     }
 }
 
@@ -329,12 +238,114 @@ void Cleaner::initializeAutoMode()
 {
     updateRealState();
     reset();
+}
+
+// ISR for PCF8575
+void Cleaner::PCFMessageRec() { updatePCF8575_flag = true; }
+
+// This function is called in the main loop whenever the interrupt is triggered
+void Cleaner::updatePCF8575()
+{
+    // update the encoders
+    encoder_clamp_.tick();
+    encoder_jaw_pos_.tick();
+    encoder_jaw_rotation_.tick();
+
+    /* Encoder Dial button tracking */
+    ENCODER_BUTTONS[0].rawState = IOExtender_.readNoUpdate(ENCODER_JAW_ROTATION_BUTTON_PIN);
+    ENCODER_BUTTONS[1].rawState = IOExtender_.readNoUpdate(ENCODER_JAW_POSITION_BUTTON_PIN);
+    ENCODER_BUTTONS[2].rawState = IOExtender_.readNoUpdate(ENCODER_CLAMP_BUTTON_PIN);
+
+    for (auto& button : ENCODER_BUTTONS)
+    {
+        toggleButton(button);
+    }
+
+    des_state_.is_Brake = IOExtender_.readNoUpdate(ROLL_BRAKE_BUT_PIN) == HIGH;
+
+    // Update the LEDS with the current button state
+    IOExtender_.writeNoUpdate(
+        ENCODER_JAW_ROTATION_SPEED_LED,
+        ENCODER_JAW_ROTATION_SPEED_HIGH ? LOW : HIGH);
+    IOExtender_.writeNoUpdate(
+        ENCODER_JAW_POSITION_SPEED_LED,
+        ENCODER_JAW_POSITION_SPEED_HIGH ? LOW : HIGH);
+    IOExtender_.writeNoUpdate(ENCODER_CLAMP_SPEED_LED, ENCODER_CLAMP_SPEED_HIGH ? LOW : HIGH);
+
+    AutoMode = IOExtender_.readNoUpdate(MODE_PIN) == LOW;
+
+    // Actually send the i2c call
+    IOExtender_.update();
+}
+
+// use on command, not allowed to modify
+void Cleaner::home(SerialReceiver::CommandMessage command)
+{
+    // reset the states based on what is received
+    if (command.M80.a > 0)
+    {
+        state_.jaw_rotation     = 0.0f;
+        des_state_.jaw_rotation = 0.0f;
+        // enter a loop until we hit the limit switch
+        while (1)
+        {
+            Serial.println("HIT");
+        }
+        while (digitalRead(LIMIT_SWITCH_PIN_JAW_ROTATION))
+        {
+            jaw_rotation_motor_.setSpeedUnits(HOMING_SPEED);
+            jaw_rotation_motor_.runSpeed();
+        }
+        // encoder_.setZeroPosition(encoder_.getRawRotation());
+        state_.jaw_rotation = 0.0f;
+    }
+
+    // if (command.M80.y > 0)
+    // {
+    //     state_.jaw_pos     = 0.0f;
+    //     des_state_.jaw_pos = 0.0f;
+    // }
+
+    // if (command.M80.c > 0)
+    // {
+    //     state_.clamp_pos     = 0.0f;
+    //     des_state_.clamp_pos = 0.0f;
+    // }
+}
+
+int Cleaner::reset()
+{
+    // Reset the state to default values
+    memset(&state_, 0, sizeof(state_));
+    memset(&des_state_, 0, sizeof(des_state_));
+
     for (auto* motor : motors)
     {
         motor->setCurrentPosition(0);
     }
     // TO:DO Add encoder reset if we use encoder
     // jaw_rotation_motor_.setPositionUnits(0);
+    return EXIT_SUCCESS;
+}
+
+// Controlled stop through accelStepper
+void Cleaner::stop()
+{
+    uint8_t numRunning = 0;
+    while (numRunning > 0)
+    {
+        numRunning = 0;  // Reset the counter
+        // Stop all motors
+        for (auto* motor : motors)
+        {
+            motor->stop();
+            motor->run();
+            if (motor->isRunning())
+            {
+                numRunning++;
+            }
+        }
+    }
 }
 
 void Cleaner::processCommand(SerialReceiver::CommandMessage command)

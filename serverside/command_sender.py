@@ -70,37 +70,43 @@ cmd3 = [
     f"G0 A{math.pi * 2} Y0 C0\0",
     f"G0 A{math.pi * 2} Y0 C0\0",
     f"G0 A{math.pi * 2} Y0 C0\0",
-    "G0 A6.2831 Y0 C4\0",
-    "G0 A6.2831 Y0 C4\0",
-    "G0 A6.2831 Y100 C4\0",
-    "G0 A6.2831 Y100 C4\0",
-    "G0 A6.2831 Y100 C4\0",
-    "G0 A6.2831 Y100 C4\0",
-    "G0 A6.2831 Y100 C4\0",
-    "G0 A6.2831 Y100 C4\0",
-    "G0 C4\0",
-    "G0 C4\0",
-    "G0 C4\0",
-    "G0 C4\0",
-    "G0 C4\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
-    "G0 C1.5\0",
+    "G0 A6.2831 Y0 C5\0",
+    "G0 A6.2831 Y0 C5\0",
+    "G0 A6.2831 Y200 C5\0",
+    "G0 A6.2831 Y200 C5\0",
+    "G0 A6.2831 Y200 C5\0",
+    "G0 A6.2831 Y200 C5\0",
+    "G0 A6.2831 Y200 C5\0",
+    "G0 A6.2831 Y200 C5\0",
+    "G0 A6.2831 Y200 C5\0",
+    "G0 A6.2831 Y280 C5\0",
+    "G0 A6.2831 Y280 C5\0",
+    "G0 A6.2831 Y280 C5\0",
+    "G0 A6.2831 Y280 C5\0",
+    "G0 A6.2831 Y280 C5\0",
+    "G0 C5\0",
+    "G0 C5\0",
+    "G0 C5\0",
+    "G0 C5\0",
+    "G0 C5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
+    "G0 C2.5\0",
     "G0\0",
     "G0\0",
     "G0\0",
@@ -128,11 +134,11 @@ def main():
             if not cmd.endswith("\0"):
                 cmd += "\0"
             cmd2 = cmd3
-            # for j in range(10):
-            for i in range(len(cmd2)):
-                print(f"[sending] {cmd2[i]}")
-                tx.send_msg(transmitter.CommandMessage(cmd2[i]))
-                time.sleep(1)
+            for j in range(10):
+                for i in range(len(cmd2)):
+                    print(f"[sending] {cmd2[i]}")
+                    tx.send_msg(transmitter.CommandMessage(cmd2[i]))
+                    time.sleep(1)
             
             tx.send_msg(transmitter.CommandMessage(cmd))
             print("[sent]")
