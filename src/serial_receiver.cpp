@@ -128,7 +128,7 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
     }
 }
 
-/** Param is the rest of the gCode command in the form of Y10.0 A10.0 C10.0 */
+/** Param is the rest of the gCode command in the form of Y10.0 A10.0 C10.0 B1 */
 template <typename commandType>
 void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *command)
 {
@@ -147,6 +147,9 @@ void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *co
                 break;
             case 'C':
                 command->c = atof(token + 1);
+                break;
+            case 'B':
+                command->val = atoi(token + 1);
                 break;
             default:
                 Serial.print("Unhandled Gcode parameter: ");

@@ -353,18 +353,17 @@ void Cleaner::processCommand(SerialReceiver::CommandMessage command)
     if (command.G0.received)
     {
         // Move command, modify the state to the desired state
-        command.G0.received     = false;         // reset the received
-        des_state_.jaw_rotation = command.G0.a;  // jaw rotation
-        des_state_.jaw_pos      = command.G0.y;  // jaw position
-        des_state_.clamp_pos    = command.G0.c;  // clamp position
+        command.G0.received     = false;           // reset the received
+        des_state_.jaw_rotation = command.G0.a;    // jaw rotation
+        des_state_.jaw_pos      = command.G0.y;    // jaw position
+        des_state_.clamp_pos    = command.G0.c;    // clamp position
+        des_state_.is_Brake     = command.G0.val;  // brake
     }
     if (command.G4.received)
     {
         // Dwell command, wait for a certain time
-        // (BEING HACKED FOR USE AS THE BRAKE COMMAND)
         command.G4.received = false;  // reset the received
-        // delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
-        des_state_.is_Brake = !des_state_.is_Brake;  // toggle the brake state
+        delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
     }
     if (command.G28.received)
     {
