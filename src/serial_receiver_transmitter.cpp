@@ -1,5 +1,5 @@
 
-#include "serial_receiver.hpp"
+#include "serial_receiver_transmitter.hpp"
 
 #include <cstring>
 
@@ -8,7 +8,42 @@
 // #else
 // #endif
 
-SerialReceiver::CommandMessage::CommandMessage()
+void SerialReceiverTransmitter::begin(uint32_t baudrate)
+{
+    Serial.begin(baudrate);
+}
+
+// Generic template (catch-all for types not explicitly handled)
+template <typename T>
+void SerialReceiverTransmitter::SafePrint(T message)
+{
+    // Convert to String and get length
+    String str = String(message);
+    int neededSpace = str.length();
+
+    if (Serial.availableForWrite() >= neededSpace) {
+        Serial.print(str);
+    }
+}
+
+// Specialized for const char*
+void SerialReceiverTransmitter::SafePrint(const char* message)
+{
+    if (message == nullptr) return;
+
+    int remaining = Serial.availableForWrite();
+    for (int i = 0; message[i] != '\0' && remaining > 0; ++i, --remaining) {
+        Serial.write(message[i]);
+    }
+}
+
+// Specialized for Arduino String
+void SerialReceiverTransmitter::SafePrint(String message)
+{
+    SafePrint(message.c_str());
+}
+
+SerialReceiverTransmitter::CommandMessage::CommandMessage()
     : G0(),
       G4(),
       G28(),
@@ -19,7 +54,7 @@ SerialReceiver::CommandMessage::CommandMessage()
 {
 }
 
-SerialReceiver::CommandMessage::CommandMessage(
+SerialReceiverTransmitter::CommandMessage::CommandMessage(
     gCommand G0,
     gCommand G4,
     gCommand G28,
@@ -56,7 +91,7 @@ SerialReceiver::CommandMessage::CommandMessage(
  * extract the command type and parameters. Unhandled commands or parameters are logged using
  * `Serial.print`.
  */
-SerialReceiver::CommandMessage::CommandMessage(char buffer[])
+SerialReceiverTransmitter::CommandMessage::CommandMessage(char buffer[])
 {
     // received string from serial, parse to allowed Gcode and Mcode
     char POS_STRTOK_F_YOU[strlen(buffer) + 1];
@@ -130,7 +165,7 @@ SerialReceiver::CommandMessage::CommandMessage(char buffer[])
 
 /** Param is the rest of the gCode command in the form of Y10.0 A10.0 C10.0 B1 */
 template <typename commandType>
-void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *command)
+void SerialReceiverTransmitter::CommandMessage::ProcessCommand(char *param, commandType *command)
 {
     char *token = strtok(param, " ");
     // Process the command and extract parameters
@@ -163,7 +198,7 @@ void SerialReceiver::CommandMessage::ProcessCommand(char *param, commandType *co
 
 // Special code for the home command because of it's strangeness, it's a hack but I don't wanna
 // refactor stuff
-void SerialReceiver::CommandMessage::ProcessHomeCommand(char *param, gCommand *command)
+void SerialReceiverTransmitter::CommandMessage::ProcessHomeCommand(char *param, gCommand *command)
 {
     char *token = strtok(param, " ");
     // Process the command and extract parameters
@@ -192,15 +227,15 @@ void SerialReceiver::CommandMessage::ProcessHomeCommand(char *param, gCommand *c
     }
 }
 
-SerialReceiver::Stop::Stop() {}
+SerialReceiverTransmitter::Stop::Stop() {}
 
-SerialReceiver::Stop::Stop(char buffer[])
+SerialReceiverTransmitter::Stop::Stop(char buffer[])
 {
     // Empty constructor
 }
 
 // Constructor for SerialReceiver
-SerialReceiver::SerialReceiver()
+SerialReceiverTransmitter::SerialReceiverTransmitter()
     : state_(State::WAITING_FOR_HEADER),
       currMsgId_(MessageType::NONE),
       lastReceivedMsgId_(MessageType::NONE),
@@ -211,9 +246,9 @@ SerialReceiver::SerialReceiver()
 }
 
 /**
- * @brief Resets the SerialReceiver state to its initial values.
+ * @brief Resets the SerialReceiverTransmitter state to its initial values.
  */
-void SerialReceiver::reset()
+void SerialReceiverTransmitter::reset()
 {
     state_ = State::WAITING_FOR_HEADER;
     currMsgId_ = MessageType::NONE;
@@ -250,7 +285,7 @@ void SerialReceiver::reset()
  * of type COMMAND.
  */
 
-void SerialReceiver::parse()
+void SerialReceiverTransmitter::parse()
 {
     switch (state_)
     {
@@ -303,17 +338,17 @@ void SerialReceiver::parse()
     };
 }
 
-SerialReceiver::CommandMessage SerialReceiver::lastReceivedCommandMessage() const
+SerialReceiverTransmitter::CommandMessage SerialReceiverTransmitter::lastReceivedCommandMessage() const
 {
     return lastReceivedCommandMessage_;
 }
 
-SerialReceiver::Stop SerialReceiver::lastReceivedStopMessage() const
+SerialReceiverTransmitter::Stop SerialReceiverTransmitter::lastReceivedStopMessage() const
 {
     return lastReceivedStopMessage_;
 }
 
-SerialReceiver::MessageType SerialReceiver::lastReceivedMessageId() const
+SerialReceiverTransmitter::MessageType SerialReceiverTransmitter::lastReceivedMessageId() const
 {
     return lastReceivedMsgId_;
 }

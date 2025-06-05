@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "SimpleKalmanFilter.hpp"
+
 #include "AS5048A.hpp"
 #include "PCF8575.h"
 #include "RotaryEncoder.h"
@@ -9,7 +11,7 @@
 #include "controllers.hpp"
 #include "discrete_filter.hpp"
 #include "pin_defs.hpp"
-#include "serial_receiver.hpp"
+#include "serial_receiver_transmitter.hpp"
 #include "stepper_motor.hpp"
 
 class Cleaner
@@ -20,11 +22,11 @@ public:
     int begin();
     int reset();
     int shutdown();
-    void home(SerialReceiver::CommandMessage command);
-    void processCommand(SerialReceiver::CommandMessage command);
+    void home(SerialReceiverTransmitter::CommandMessage command);
+    void processCommand(SerialReceiverTransmitter::CommandMessage command);
     void run();
     void initializeManualMode();
-    void initializeAutoMode(SerialReceiver& receiver);
+    void initializeAutoMode(SerialReceiverTransmitter& receiver);
 
     void stop();
 
@@ -219,14 +221,19 @@ private:
 
     // Filters and Controllers
     DiscreteFilter<3> clampLowpassFilter;
-
+    DiscreteFilter<3> jawEncoderLowpassFilter;
+    DiscreteFilter<3> WhateverLowpassFilter;
+    
     DiscreteFilter<3> JawRotationPID;
     DiscreteFilter<3> JawPositionPID;
     DiscreteFilter<3> ClampPID;
 
+    // SimpleKalmanFilter JawRotKalman;
+
     float potValue     = 0;
     float lastPotValue = 0;
 
+    float desired_jaw_rotation_speed = 0;
     float desired_clamp_speed = 0;
 
     unsigned long last_read_time = 0;

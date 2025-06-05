@@ -48,21 +48,21 @@
 // void test_G0_received()
 // {
 //     char command[] = "G0 Y10.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.G0.received);
 // }
 
 // void test_G0_value()
 // {
 //     char command[] = "G0 Y10.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_EQUAL_FLOAT(10.0f, msg.G0.y);
 // }
 
 // void test2_G0_value()
 // {
 //     char command[] = "G0 Y40.0 A20.0 C30.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_EQUAL_FLOAT(40.0f, msg.G0.y);
 //     TEST_ASSERT_EQUAL_FLOAT(20.0f, msg.G0.a);
 //     TEST_ASSERT_EQUAL_FLOAT(30.0f, msg.G0.c);
@@ -71,10 +71,10 @@
 // void test_G1_received()
 // {
 //     char command[] = "G0 Y10.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.G0.received);
 //     char command2[] = "G1 Y10.0";
-//     SerialReceiver::CommandMessage msg2(command2);
+//     SerialReceiverTransmitter::CommandMessage msg2(command2);
 //     TEST_ASSERT_TRUE(msg2.G0.received);
 //     TEST_ASSERT_EQUAL_FLOAT(10.0f, msg2.G0.y);
 // }
@@ -82,7 +82,7 @@
 // void test_G4_Received()
 // {
 //     char command[] = "G4 S100.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.G4.received);
 //     TEST_ASSERT_EQUAL_FLOAT(100.0f, msg.G4.val);
 // }
@@ -90,7 +90,7 @@
 // void test_G28_Received()
 // {
 //     char command[] = "G28";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.G28.received);
 //     TEST_ASSERT_EQUAL_FLOAT(1.0f, msg.G28.c);
 //     TEST_ASSERT_EQUAL_FLOAT(1.0f, msg.G28.y);
@@ -100,7 +100,7 @@
 // void test_G28_Partial() 
 // {
 //     char command[] = "G28 C";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.G28.received);
 //     TEST_ASSERT_EQUAL_FLOAT(1.0f, msg.G28.c);
 //     TEST_ASSERT_EQUAL_FLOAT(0.0f, msg.G28.y);
@@ -110,7 +110,7 @@
 // void test_M80_Command()
 // {
 //     char command[] = "M80 Y40.0 A20.0 C30.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.M80.received);
 //     TEST_ASSERT_EQUAL_FLOAT(40.0f, msg.M80.y);
 //     TEST_ASSERT_EQUAL_FLOAT(20.0f, msg.M80.a);
@@ -120,7 +120,7 @@
 // void test_M17_Command()
 // {
 //     char command[] = "M17 Y40.0 A20.0 C30.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.M17.received);
 //     TEST_ASSERT_EQUAL_FLOAT(40.0f, msg.M17.y);
 //     TEST_ASSERT_EQUAL_FLOAT(20.0f, msg.M17.a);
@@ -130,7 +130,7 @@
 // void test_M906_Command()
 // {
 //     char command[] = "M906 Y40.0 A20.0 C30.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_TRUE(msg.M906.received);
 //     TEST_ASSERT_EQUAL_FLOAT(40.0f, msg.M906.y);
 //     TEST_ASSERT_EQUAL_FLOAT(20.0f, msg.M906.a);
@@ -140,7 +140,7 @@
 // void test_M906_Command_Trigger_When_Correct()
 // {
 //     char command[] = "M80 Y40.0 A20.0 C30.0";
-//     SerialReceiver::CommandMessage msg(command);
+//     SerialReceiverTransmitter::CommandMessage msg(command);
 //     TEST_ASSERT_FALSE(msg.M906.received);
 // }
 

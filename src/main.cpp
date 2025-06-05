@@ -2,12 +2,12 @@
 
 #include "cleaner_system.hpp"
 #include "macros.hpp"
-#include "serial_receiver.hpp"
+#include "serial_receiver_transmitter.hpp"
 #include "stepper_motor.hpp"
 
 constexpr int BAUDERATE = 921600;
 
-SerialReceiver receiver;
+SerialReceiverTransmitter receiver;
 
 Cleaner cleaner_system;
 
@@ -16,10 +16,17 @@ static bool wasInDebugMode  = false;
 
 void ESTOP_ISR()
 {
-    // cleaner_system.shutdown();
+    cleaner_system.shutdown();
     analogWrite(LED_RED, 0);      // Turn on red LED to indicate emergency stop
     analogWrite(LED_GREEN, 255);  // Turn off green LED
     analogWrite(LED_BLUE, 255);
+}
+
+void debugLed()
+{
+    analogWrite(LED_RED, 0);
+    analogWrite(LED_GREEN, 0);
+    analogWrite(LED_BLUE, 0);
 }
 
 Cleaner::CleanerOperatorMode cleaner_operator_mode;
@@ -35,7 +42,7 @@ void setup()
         CHANGE);  // Attach interrupt to ESTOP_PIN
     interrupts();
 
-    Serial.begin(BAUDERATE);
+    receiver.begin(BAUDERATE);
     // Serial.println("Starting Cleaner System...");
 
     pinMode(LED_BLUE, OUTPUT);  // Set LED pins as output
@@ -54,9 +61,7 @@ void setup()
 void loop()
 {
     cleaner_operator_mode = static_cast<Cleaner::CleanerOperatorMode>(cleaner_system.isAutoMode());
-    // cleaner_operator_mode = Cleaner::CleanerOperatorMode::AUTO;
     // cleaner_operator_mode = Cleaner::CleanerOperatorMode::DEBUG;
-    
     switch (cleaner_operator_mode)
     {
         case Cleaner::CleanerOperatorMode::MANUAL:
@@ -64,7 +69,7 @@ void loop()
             runOnSwitch(wasInManualMode, false, [&]{cleaner_system.initializeManualMode();});
             const auto state = cleaner_system.updateDesStateManual();
             cleaner_system.run();
-            // DO_EVERY(.1, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
+            DO_EVERY(.1, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
         }
         break;  // case MANUAL
 
@@ -75,17 +80,17 @@ void loop()
             receiver.parse();
             switch (receiver.lastReceivedMessageId())
             {
-                case SerialReceiver::MessageType::COMMAND:
+                case SerialReceiverTransmitter::MessageType::COMMAND:
                 {
-                    SerialReceiver::CommandMessage msg = receiver.lastReceivedCommandMessage();
+                    SerialReceiverTransmitter::CommandMessage msg = receiver.lastReceivedCommandMessage();
                     cleaner_system.processCommand(msg);
                     cleaner_system.run();
                 }
                 break;
-                case SerialReceiver::MessageType::STOP:
+                case SerialReceiverTransmitter::MessageType::STOP:
                 {
                     // If the message is a stop type, this is not the emergency stop
-                    SerialReceiver::Stop msg =
+                    SerialReceiverTransmitter::Stop msg =
                         receiver.lastReceivedStopMessage();  // read the message just cause?
                     cleaner_system.stop();
                 }
@@ -97,11 +102,14 @@ void loop()
         break;  // case AUTO
         case Cleaner::CleanerOperatorMode::DEBUG:
         {
-            // runOnSwitch(wasInDebugMode, false, cleaner_system, &Cleaner::initializeManualMode);
-            // DO_EVERY(1/1000.0f, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
-            // Serial.println(analogRead(CLAMP_POT_PIN));
+            debugLed();
+            // runOnSwitch(wasInManualMode, false, [&]{cleaner_system.initializeManualMode();});
+            // const auto state = cleaner_system.updateDesStateManual();
+            DO_EVERY(1/10.0f, Serial.println(cleaner_system.getEncoder().getRotationUnwrappedInRadians(), 5));
             // cleaner_system.run();
-            digitalWrite(ROLL_BRAKE_REAL_PIN, HIGH); 
+            // ledcWriteNote(JAW_ROTATION_STEP_PIN, NOTE_C, 4);
+            // Serial.println(analogRead(CLAMP_POT_PIN));
+            // digitalWrite(ROLL_BRAKE_REAL_PIN, HIGH); 
         }
         default:
             break;  // do nothing

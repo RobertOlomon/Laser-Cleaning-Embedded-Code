@@ -17,9 +17,11 @@ Cleaner::Cleaner()
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
       encoder_(ENCODER_CS_PIN, false),
       clampLowpassFilter(filter::butterworth<2, filter::LOWPASS>(50.0f, 1.0f / RUN_RATE_HZ)),
-      JawRotationPID(controller::PIDControllerCoefficients(100.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      jawEncoderLowpassFilter(filter::butterworth<2, filter::LOWPASS>(300.0f, 1.0f / RUN_RATE_HZ)),
+      WhateverLowpassFilter(filter::butterworth<2, filter::LOWPASS>(500.0f, 1.0f / RUN_RATE_HZ)),
+      JawRotationPID(controller::PIDControllerCoefficients(50.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       JawPositionPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
-      ClampPID(controller::PIDControllerCoefficients(10.0f, 1.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
+      ClampPID(controller::PIDControllerCoefficients(10.0f, 0.0f, 0.0f, 1.0f / RUN_RATE_HZ)),
       encoder_jaw_rotation_(
           ENCODER_JAW_ROTATION_PIN1,
           ENCODER_JAW_ROTATION_PIN2,
@@ -30,7 +32,8 @@ Cleaner::Cleaner()
           [&](int pin) { return IOExtender_.readNoUpdate(pin); }),
       encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, [&](int pin) {
           return IOExtender_.readNoUpdate(pin);
-      })
+      })//,
+        // JawRotKalman(.008,.002,.01f)
 {
     // Add motors to the array
     motors[0] = &jaw_rotation_motor_;
@@ -120,6 +123,7 @@ void Cleaner::run()
                 desired_clamp_speed / clamp_motor_.getPhysicalParams().stepDistance,
             -clamp_motor_.maxSpeed(),
             clamp_motor_.maxSpeed()));
+
         motor->run();
     }
 }
@@ -139,14 +143,32 @@ void Cleaner::runControl()
 
     State error = des_state_ - state_;
     jaw_rotation_motor_.moveToUnits(des_state_.jaw_rotation);
+    // desired_jaw_rotation_speed = limit_val(
+    //     JawRotationPID.filterData(error.jaw_rotation),
+    //     -jaw_rotation_motor_.maxSpeedUnits(),
+    //     jaw_rotation_motor_.maxSpeedUnits());
+
     jaw_pos_motor_.moveToUnits(des_state_.jaw_pos);
 
-    // if we're done with moving, clear and then recompute the move command
+    // DO_EVERY(.1, state_.print());
 
-    desired_clamp_speed = limit_val(
-        ClampPID.filterData(error.clamp_pos),
-        -clamp_motor_.maxSpeedUnits() * .5f,
-        clamp_motor_.maxSpeedUnits() * .5f);
+    // desired_jaw_rotation_speed = WhateverLowpassFilter.filterData(desired_jaw_rotation_speed);
+
+    // if (abs(desired_jaw_rotation_speed) < 0.30f){
+    //     desired_jaw_rotation_speed = 0;
+    // }
+    // if we're done with moving, clear and then recompute the move command
+    const float percentOfMax = .25f;
+    desired_clamp_speed      = limit_val(
+        clampLowpassFilter.filterData(ClampPID.filterData(error.clamp_pos)),
+        -clamp_motor_.maxSpeedUnits() * percentOfMax,
+        clamp_motor_.maxSpeedUnits() * percentOfMax);
+
+    // desired_clamp_speed = WhateverLowpassFilter.filterData(desired_clamp_speed);
+    if (abs(desired_clamp_speed) < 0.0f)
+    {
+        desired_clamp_speed = 0;
+    }
 
     if (error.is_Brake)
     {
@@ -166,9 +188,14 @@ Cleaner::State Cleaner::updateRealState()
     }
 
     state_.jaw_rotation = jaw_rotation_motor_.currentPositionUnits();
-    state_.jaw_pos      = jaw_pos_motor_.currentPositionUnits();
-    state_.clamp_pos    = clamp_motor_.currentPositionUnits() -
+    // state_.jaw_rotation =
+        // jawEncoderLowpassFilter.filterData(-encoder_.getRotationUnwrappedInRadians());
+        // JawRotKalman.updateEstimate(-encoder_.getRotationUnwrappedInRadians());
+    // state_.jaw_pos   = jaw_pos_motor_.currentPositionUnits();
+    state_.clamp_pos = clamp_motor_.currentPositionUnits() -
                        state_.jaw_rotation;  // clamp is relative to jaw rotation
+    // state_.clamp_pos = clamp_motor_.currentPositionUnits() -
+    //                    jaw_rotation_motor_.currentPositionUnits();  // clamp is relative to jaw rotation
 
     state_.is_Brake = digitalRead(ROLL_BRAKE_REAL_PIN);
 
@@ -210,12 +237,6 @@ Cleaner::State Cleaner::updateDesStateManual()
 
     des_state_.is_Brake = breakSwitchedOn;
 
-    // uint8_t constexpr binNum = 10;
-    // potValue = clampLowpassFilter.filterData(std::pow(2,12) - analogRead(CLAMP_POT_PIN)) /
-    // std::pow(2, 12); potValue = std::max(potValue, 1e-3f);  // Ensure it's not negative potValue
-    // = std::min(potValue, 1.0f);  // Ensure it's not greater than 1.0 potValue =
-    // std::ceil(potValue * binNum) / binNum;
-
     return des_state_;
 }
 
@@ -233,14 +254,17 @@ void Cleaner::updateModeAuto()
 void Cleaner::initializeManualMode()
 {
     updateRealState();  // Update the real state to get the current position
+    updateDesStateManual();
+    ClampPID.reset();
     des_state_ = state_;
 }
 
-void Cleaner::initializeAutoMode(SerialReceiver& receiver)
+void Cleaner::initializeAutoMode(SerialReceiverTransmitter& receiver)
 {
-    updateRealState();
     reset();
     receiver.reset();
+    ClampPID.reset();
+    updateRealState();
 }
 
 // ISR for PCF8575
@@ -282,7 +306,7 @@ void Cleaner::updatePCF8575()
 }
 
 // use on command, not allowed to modify
-void Cleaner::home(SerialReceiver::CommandMessage command)
+void Cleaner::home(SerialReceiverTransmitter::CommandMessage command)
 {
     // reset the states based on what is received
     if (command.M80.a > 0)
@@ -351,7 +375,7 @@ void Cleaner::stop()
     }
 }
 
-void Cleaner::processCommand(SerialReceiver::CommandMessage command)
+void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
 {
     if (command.G0.received)
     {

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstdint>
-class SerialReceiver
+#include <cstring>
+#include <Arduino.h>
+
+class SerialReceiverTransmitter
 {
 public:
     static constexpr int HEADER_SIZE = 5;
@@ -71,10 +74,18 @@ public:
         Stop(char buffer[]);
     };
 
-    SerialReceiver();
+    SerialReceiverTransmitter();
     
     void parse();
     void reset();
+    void begin(uint32_t baudrate);
+
+    template <typename T>
+    void SafePrint(T message);
+
+    void SafePrint(const char* message);
+    void SafePrint(String message);
+
     CommandMessage lastReceivedCommandMessage() const;
     Stop lastReceivedStopMessage() const;
     MessageType lastReceivedMessageId() const;

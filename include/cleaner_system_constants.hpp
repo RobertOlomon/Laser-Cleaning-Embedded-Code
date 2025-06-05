@@ -18,6 +18,7 @@ constexpr StepperMotor::StaticConfig clampCfg{
     "Clamp Motor"};
 
 /* Electrical Presets */
+// As of right now, clamp and jawRotation need to have the same microstepping
 constexpr StepperMotor::ElectricalParams JawRotationElectrical{2000, 32};
 constexpr StepperMotor::ElectricalParams JawPositionElectrical{1200, 32};
 constexpr StepperMotor::ElectricalParams clampElectrical{1500, 32};
@@ -35,7 +36,7 @@ constexpr StepperMotor::MotionParams JawRotationMotion{
     100 * JawRotationElectrical.microsteps,
     1000 * JawRotationElectrical.microsteps};
 constexpr StepperMotor::MotionParams JawPositionMotion{
-    1200 * JawPositionElectrical.microsteps,
+    1000 * JawPositionElectrical.microsteps,
     8000 * JawPositionElectrical.microsteps};
 constexpr StepperMotor::MotionParams ClampMotion{
     1200 * clampElectrical.microsteps,

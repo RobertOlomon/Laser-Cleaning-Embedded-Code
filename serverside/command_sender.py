@@ -46,76 +46,82 @@ cmd2 = [
 ]
 
 cmd3 = [
-    "G0 A0 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    "G0 A3 Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    f"G0 A{math.pi * 2} Y0 C0\0",
-    "G0 A6.2831 Y0 C5\0",
-    "G0 A6.2831 Y0 C5\0",
-    "G0 A6.2831 Y200 C5\0",
-    "G0 A6.2831 Y200 C5\0",
-    "G0 A6.2831 Y200 C5\0",
-    "G0 A6.2831 Y200 C5\0",
-    "G0 A6.2831 Y200 C5\0",
-    "G0 A6.2831 Y200 C5\0",
-    "G0 A6.2831 Y200 C5\0",
-    "G0 A6.2831 Y280 C5\0",
-    "G0 A6.2831 Y280 C5\0",
-    "G0 A6.2831 Y280 C5\0",
-    "G0 A6.2831 Y280 C5\0",
-    "G0 A6.2831 Y280 C5\0",
-    "G0 C5\0",
-    "G0 C5\0",
-    "G0 C5\0",
-    "G0 C5\0",
-    "G0 C5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0 C2.5\0",
-    "G0\0",
-    "G0\0",
-    "G0\0",
-    "G0\0",
-    "G0\0"
+    "G0 A0 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    "G0 A3 Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B1\0",
+    f"G0 A{math.pi * 2} Y0 C-.1 B0\0",
+    "G0 A6.2831 Y0 C5 B0\0",
+    "G0 A6.2831 Y0 C5 B0\0",
+    "G0 A6.2831 Y200 C5 B0\0",
+    "G0 A6.2831 Y200 C5 B0\0",
+    "G0 A6.2831 Y200 C5 B0\0",
+    "G0 A6.2831 Y200 C5 B0\0",
+    "G0 A6.2831 Y200 C5 B0\0",
+    "G0 A6.2831 Y200 C5 B0\0",
+    "G0 A6.2831 Y200 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 A6.2831 Y280 C5 B0\0",
+    "G0 C5 B0\0",
+    "G0 C5 B0\0",
+    "G0 C5 B0\0",
+    "G0 C5 B0\0",
+    "G0 C5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 C2.5 B0\0",
+    "G0 B0\0",
+    "G0 B0\0",
+    "G0 B0\0",
+    "G0 B0\0",
+    "G0 B0\0"
+    "G0 B0\0"
+    "G0 B0\0"
 ]
 # ─────────────────────────────── main program ────────────────────────────────
 def main():
-    tx = transmitter.Transmitter(PORT, BAUD, write_timeout=1, timeout=1)
+    tx = transmitter.Transmitter(PORT, BAUD, write_timeout=None, timeout=None)
 
     log_q: queue.Queue[str] = queue.Queue()
     threading.Thread(target=reader_task, args=(tx.serial, log_q), daemon=True).start()
@@ -133,15 +139,17 @@ def main():
                 continue
             if not cmd.endswith("\0"):
                 cmd += "\0"
-            cmd2 = cmd3
-            for j in range(10):
-                for i in range(len(cmd2)):
-                    print(f"[sending] {cmd2[i]}")
-                    tx.send_msg(transmitter.CommandMessage(cmd2[i]))
-                    time.sleep(1)
+            # cmd2 = cmd3
+            # while(1):
+            #     for i in range(len(cmd2)):
+            #         print(f"[sending] {cmd2[i]}")
+            #         tx.send_msg(transmitter.CommandMessage(cmd2[i]))
+            #         time.sleep(1)
             
             tx.send_msg(transmitter.CommandMessage(cmd))
             print("[sent]")
+    except:
+        print("Error has occurred:", sys.exc_info()[0])
     finally:
         tx.serial.close()
         print("Serial connection closed.")

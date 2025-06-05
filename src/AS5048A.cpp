@@ -44,7 +44,7 @@ void AS5048A::begin()
     setDelay();
 
     // 1MHz clock (AMS should be able to accept up to 10MHz)
-    this->settings = SPISettings(3000000, MSBFIRST, SPI_MODE1);
+    this->settings = SPISettings(3000000 / 10, MSBFIRST, SPI_MODE1);
 
     // setup pins
     pinMode(this->_cs, OUTPUT);
@@ -122,6 +122,16 @@ int32_t AS5048A::getRotationUnwrapped()
     if (errorFlag)
     {
         raw = prevRaw;  // If an error occurred, use the previous value
+    }
+
+    if (raw == 0)
+    {
+        raw = prevRaw;
+    }
+
+    if (raw >= FULL_SCALE)
+    {
+        raw = prevRaw;
     }
 
 	if (!prevRawinitialized){
