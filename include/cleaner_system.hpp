@@ -222,10 +222,7 @@ private:
     // Filters and Controllers
     DiscreteFilter<3> clampLowpassFilter;
     DiscreteFilter<3> jawEncoderLowpassFilter;
-    DiscreteFilter<3> WhateverLowpassFilter;
     
-    DiscreteFilter<3> JawRotationPID;
-    DiscreteFilter<3> JawPositionPID;
     DiscreteFilter<3> ClampPID;
 
     // SimpleKalmanFilter JawRotKalman;
