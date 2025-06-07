@@ -9,6 +9,8 @@
 *.code-workspace
 .VSCodeCounter/
 
+DoxyGenDocumentation/
+
 # Python virtual environment
 serverside/venv/
 
