@@ -14,6 +14,14 @@ Cleaner cleaner_system;
 static bool wasInManualMode = false;
 static bool wasInDebugMode  = false;
 
+/**
+ * @brief Emergency Stop Interrupt Service Routine.
+ *
+ * This ISR is triggered when an emergency stop condition occurs.
+ * It shuts down the cleaner system and updates the LED indicators:
+ * - Turns on the red LED to signal an emergency stop.
+ * - Turns off the green and blue LEDs.
+ */
 void ESTOP_ISR()
 {
     cleaner_system.shutdown();
