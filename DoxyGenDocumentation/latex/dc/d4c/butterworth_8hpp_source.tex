@@ -1,0 +1,334 @@
+\doxysection{butterworth.\+hpp}
+\hypertarget{butterworth_8hpp_source}{}\label{butterworth_8hpp_source}\index{include/butterworth.hpp@{include/butterworth.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifndef\ butterworth\_h}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ butterworth\_h}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <array>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <complex>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}discrete\_filter.hpp"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacefilter}{filter}}}
+\DoxyCodeLine{00080\ \{}
+\DoxyCodeLine{00081\ \textcolor{keyword}{enum}\ FilterType\ :\ uint8\_t}
+\DoxyCodeLine{00082\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ LOWPASS\ \ =\ 0b00,}
+\DoxyCodeLine{00084\ \ \ \ \ HIGHPASS\ =\ 0b01,}
+\DoxyCodeLine{00085\ \ \ \ \ BANDPASS\ =\ 0b10,}
+\DoxyCodeLine{00086\ \ \ \ \ BANDSTOP\ =\ 0b11,}
+\DoxyCodeLine{00087\ \};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00097\ std::complex<double>\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9}{s2z}}(std::complex<double>\ s,\ \textcolor{keywordtype}{double}\ Ts)}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(1.0)\ +\ (Ts\ /\ 2)\ *\ s)\ /}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(1.0)\ -\/\ (Ts\ /\ 2)\ *\ s);}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00115\ \textcolor{keyword}{template}\ <u\textcolor{keywordtype}{int}8\_t\ ORDER>}
+\DoxyCodeLine{00116\ std::array<double,\ ORDER\ +\ 1>\ \mbox{\hyperlink{namespacefilter_a01e4bc4ed062eab4a0341bd504d93770}{expandPolynomial}}(std::array<std::complex<double>,\ ORDER>\ zeros)}
+\DoxyCodeLine{00117\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ std::array<std::complex<double>,\ ORDER\ +\ 1>\ coefficients\{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ std::complex<double>(1.0,\ 0.0)\};\ \ \textcolor{comment}{//\ Start\ with\ 1}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ ORDER;\ i++)}
+\DoxyCodeLine{00122\ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Multiply\ current\ polynomial\ by\ (x\ -\/\ zero)}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ std::array<std::complex<double>,\ ORDER\ +\ 1>\ newCoefficients\{std::complex<double>(0.0,\ 0.0)\};}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ j\ =\ 0;\ j\ <\ i\ +\ 1;\ j++)}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ newCoefficients[j]\ -\/=}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ coefficients[j]\ *\ zeros[i];\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Multiply\ current\ coefficient\ by\ zero}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ newCoefficients[j\ +\ 1]\ +=\ coefficients[j];\ \ \textcolor{comment}{//\ Shift\ current\ coefficient}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ coefficients.swap(newCoefficients);}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \ std::array<double,\ ORDER\ +\ 1>\ stripped\_coefficients\{\};}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ Extract\ the\ real\ part\ of\ each\ coefficient,\ the\ imaginary\ appears\ to\ be\ an}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ artifact\ of\ double}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ ORDER\ +\ 1;\ i++)}
+\DoxyCodeLine{00137\ \ \ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ stripped\_coefficients[i]\ =\ coefficients[i].real();}
+\DoxyCodeLine{00139\ \ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordflow}{return}\ stripped\_coefficients;}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00154\ \textcolor{keyword}{template}\ <u\textcolor{keywordtype}{int}8\_t\ ORDER>}
+\DoxyCodeLine{00155\ std::complex<double>\ \mbox{\hyperlink{namespacefilter_a66dead7c0ff20a5b4f094642b903081b}{evaluateFrequencyResponse}}(}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keyword}{const}\ std::array<double,\ ORDER\ +\ 1>\ \&b,}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{const}\ std::array<double,\ ORDER\ +\ 1>\ \&a,}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{double}\ w,}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{double}\ Ts)}
+\DoxyCodeLine{00160\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ std::complex<double>\ j(0,\ 1);\ \ \textcolor{comment}{//\ imaginary\ unit\ i\ =\ sqrt(-\/1)}}
+\DoxyCodeLine{00162\ \ \ \ \ std::complex<double>\ numerator(0,\ 0);}
+\DoxyCodeLine{00163\ \ \ \ \ std::complex<double>\ denominator(0,\ 0);}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{double}\ omega\ =\ w\ *\ Ts;\ \ \textcolor{comment}{//\ omega\ is\ in\ terms\ of\ rad/sample}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ numerator:\ b0\ +\ b1\ *\ e\string^\{-\/jω\}\ +\ b2\ *\ e\string^\{-\/j2ω\}\ +\ ...}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ k\ =\ 0;\ k\ <\ b.size();\ ++k)}
+\DoxyCodeLine{00169\ \ \ \ \ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ numerator\ +=\ b[k]\ *\ (std::cos(omega\ *\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(k))\ -\/}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ j\ *\ std::sin(omega\ *\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(k)));}
+\DoxyCodeLine{00172\ \ \ \ \ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ denominator:\ a0\ +\ a1\ *\ e\string^\{-\/jω\}\ +\ a2\ *\ e\string^\{-\/j2ω\}\ +\ ...}}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ k\ =\ 0;\ k\ <\ a.size();\ ++k)}
+\DoxyCodeLine{00176\ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ denominator\ +=\ a[k]\ *\ (std::cos(omega\ *\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(k))\ -\/}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ j\ *\ std::sin(omega\ *\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(k)));}
+\DoxyCodeLine{00179\ \ \ \ \ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{return}\ numerator\ /\ denominator;}
+\DoxyCodeLine{00182\ \}}
+\DoxyCodeLine{00188\ \textcolor{keywordtype}{double}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacefilter_a135352cee1c6cae845ef7e95fe967958}{complexAbs}}(std::complex<double>\ z)}
+\DoxyCodeLine{00189\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordflow}{return}\ std::sqrt(z.real()\ *\ z.real()\ +\ z.imag()\ *\ z.imag());}
+\DoxyCodeLine{00191\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00199\ std::complex<double>\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacefilter_a2e2ae7e7db818d0354f6d4d6e2c37721}{complexSqrt}}(std::complex<double>\ z)}
+\DoxyCodeLine{00200\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordtype}{double}\ r\ \ \ \ \ =\ std::sqrt(\mbox{\hyperlink{namespacefilter_a135352cee1c6cae845ef7e95fe967958}{complexAbs}}(z));}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordtype}{double}\ theta\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(std::atan2(z.imag(),\ z.real()))\ *\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(0.5f);}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordflow}{return}\ \{r\ *\ std::cos(theta),\ r\ *\ std::sin(theta)\};}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \textcolor{keyword}{constexpr}\ uint16\_t\ getNumCoefficients(uint8\_t\ ORDER,\ FilterType\ type)}
+\DoxyCodeLine{00207\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordflow}{return}\ (1\ +\ ((type\ \&\ 0b10)\ !=\ 0))\ *\ ORDER\ +\ 1;}
+\DoxyCodeLine{00209\ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00219\ \textcolor{keyword}{template}\ <u\textcolor{keywordtype}{int}8\_t\ ORDER,\ FilterType\ Type\ =\ LOWPASS,\ \textcolor{keyword}{typename}\ T\ =\ \textcolor{keywordtype}{float}>}
+\DoxyCodeLine{00220\ \mbox{\hyperlink{struct_coefficients}{Coefficients}}<getNumCoefficients(ORDER,\ Type),\ T>\ \mbox{\hyperlink{namespacefilter_ae86ec6872c21deb8ecdcdbc0d1306e80}{butterworth}}(\textcolor{keywordtype}{double}\ wc,\ \textcolor{keywordtype}{double}\ Ts,\ \textcolor{keywordtype}{double}\ wh\ =\ 0.0)}
+\DoxyCodeLine{00221\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ COEFFICIENTS\ =\ getNumCoefficients(ORDER,\ Type);}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ std::array<T,\ COEFFICIENTS>\ naturalResponseCoefficients;}
+\DoxyCodeLine{00225\ \ \ \ \ std::array<T,\ COEFFICIENTS>\ forcedResponseCoefficients;}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ n\ =\ ORDER;}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ For\ band\ filters\ we\ treat\ wc\ as\ ωl}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordtype}{double}\ wl\ \ =\ wc;}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{double}\ whp\ =\ wh;}
+\DoxyCodeLine{00232\ \ \ \ \ std::array<std::complex<double>,\ 2\ *\ ORDER>\ bandpass\_stop\_poles;}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{comment}{//\ pre-\/warp\ all\ edges\ for\ bilinear\ transform}}
+\DoxyCodeLine{00235\ \ \ \ \ wl\ \ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(2.0)\ /\ Ts\ *\ std::tan(wl\ *\ (Ts\ /\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(2.0)));}
+\DoxyCodeLine{00236\ \ \ \ \ whp\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(2.0)\ /\ Ts\ *\ std::tan(whp\ *\ (Ts\ /\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(2.0)));}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{comment}{//\ generate\ N\ prototype\ poles\ on\ unit\ circle}}
+\DoxyCodeLine{00239\ \ \ \ \ std::array<std::complex<double>,\ COEFFICIENTS\ -\/\ 1>\ poles;}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ n;\ ++k)}
+\DoxyCodeLine{00241\ \ \ \ \ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ theta\ =\ M\_PI\ *\ (2.0\ *\ k\ +\ 1)\ /\ (2.0\ *\ n)\ +\ M\_PI\ /\ 2.0;}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ poles[k]\ \ \ \ \ =\ std::complex<double>(std::cos(theta),\ std::sin(theta));}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ std::array<std::complex<double>,\ COEFFICIENTS\ -\/\ 1>\ zPoles;}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{comment}{//\ apply\ the\ appropriate\ s-\/domaisn\ transform\ to\ each\ pole}}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{switch}\ (Type)}
+\DoxyCodeLine{00250\ \ \ \ \ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ LOWPASS:}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ poles\ are\ multiplied\ by\ wl\ to\ scale\ them\ to\ the\ desired\ cutoff\ frequency}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ n;\ ++j)\ poles[j]\ =\ poles[j]\ *\ wl;}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ now\ map\ each\ analog\ pole\ into\ the\ z-\/plane}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ COEFFICIENTS\ -\/\ 1;\ ++i)\ zPoles[i]\ =\ \mbox{\hyperlink{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9}{s2z}}(poles[i],\ Ts);}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HIGHPASS:}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ applys\ the\ inverse\ transform\ of\ the\ butterworth\ lowpass\ filter}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ n;\ ++j)}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poles[j]\ =\ wl\ /\ poles[j];}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ now\ map\ each\ analog\ pole\ into\ the\ z-\/plane}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ COEFFICIENTS\ -\/\ 1;\ ++i)\ zPoles[i]\ =\ \mbox{\hyperlink{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9}{s2z}}(poles[i],\ Ts);}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ the\ case\ of\ a\ bandpass\ or\ a\ bandstop\ the\ amount\ of\ poles\ doubles.}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BANDPASS:}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ transform\ in\ the\ form\ of\ s\ →\ (s²\ +\ Ω₀²)\ /\ (B\ ·\ s)}}
+\DoxyCodeLine{00276\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ where:}}
+\DoxyCodeLine{00277\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ \ \ \ \ Ω₀\ =\ √(Ω\_low\ *\ Ω\_high)\ \ \ \ \ \ //\ Center\ frequency\ (rad/sec)}}
+\DoxyCodeLine{00278\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ \ \ \ \ B\ \ =\ Ω\_high\ -\/\ Ω\_low\ \ \ \ \ \ \ \ \ //\ Bandwidth\ (rad/sec)}}
+\DoxyCodeLine{00279\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ B\ \ \ \ =\ whp\ -\/\ wl;}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ W0sq\ =\ whp\ *\ wl;}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ ORDER;\ ++j)}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ p\ =\ poles[j];}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ discriminant\ =}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p\ *\ B)\ *\ (p\ *\ B)\ -\/\ \textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(4.0)\ *\ W0sq;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ root\ =\ \mbox{\hyperlink{namespacefilter_a2e2ae7e7db818d0354f6d4d6e2c37721}{complexSqrt}}(discriminant);}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bandpass\_stop\_poles[2\ *\ j]\ =}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p\ *\ B\ +\ root)\ *\ \textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(0.5);}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bandpass\_stop\_poles[2\ *\ j\ +\ 1]\ =}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p\ *\ B\ -\/\ root)\ *\ \textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(0.5);}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ now\ map\ each\ analog\ pole\ into\ the\ z-\/plane}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ COEFFICIENTS\ -\/\ 1;\ ++i)\ zPoles[i]\ =\ \mbox{\hyperlink{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9}{s2z}}(bandpass\_stop\_poles[i],\ Ts);}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BANDSTOP:}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00306\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ transform\ in\ the\ form\ of\ \ s\ →\ B\ ·\ s\ /\ (s²\ +\ Ω₀²)}}
+\DoxyCodeLine{00307\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ where:}}
+\DoxyCodeLine{00308\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ \ \ \ \ Ω₀\ =\ √(Ω\_low\ *\ Ω\_high)\ \ \ \ \ \ //\ Center\ frequency\ (rad/sec)}}
+\DoxyCodeLine{00309\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ \ \ \ \ \ B\ \ =\ Ω\_high\ -\/\ Ω\_low\ \ \ \ \ \ \ \ \ //\ Bandwidth\ (rad/sec)}}
+\DoxyCodeLine{00310\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ B\ \ \ \ =\ whp\ -\/\ wl;}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ W0sq\ =\ whp\ *\ wl;}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ n;\ ++j)}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ p\ =\ poles[j];}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ discriminant\ =}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ B\ *\ B\ -\/\ (\textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(4.0)\ *\ -\/p\ *\ W0sq);}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ root\ =\ \mbox{\hyperlink{namespacefilter_a2e2ae7e7db818d0354f6d4d6e2c37721}{complexSqrt}}(discriminant);}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bandpass\_stop\_poles[2\ *\ j]\ =}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (B\ +\ root)\ /\ (\textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(2.0)\ *\ p);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bandpass\_stop\_poles[2\ *\ j\ +\ 1]\ =}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (B\ -\/\ root)\ /\ (\textcolor{keyword}{static\_cast<}std::complex<double>\textcolor{keyword}{>}(2.0)\ *\ p);}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ now\ map\ each\ analog\ pole\ into\ the\ z-\/plane}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ COEFFICIENTS\ -\/\ 1;\ ++i)\ zPoles[i]\ =\ \mbox{\hyperlink{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9}{s2z}}(bandpass\_stop\_poles[i],\ Ts);}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ \ \ \ \ \}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ std::array<std::complex<double>,\ COEFFICIENTS\ -\/\ 1>\ zZeros;}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordflow}{switch}\ (Type)}
+\DoxyCodeLine{00337\ \ \ \ \ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ LOWPASS:}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ zeros:\ for\ Butterworth\ lowpass\ all\ z-\/zeros\ at\ z\ =\ –1}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ zZeros.fill(std::complex<double>(-\/1,\ 0));}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HIGHPASS:}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ zeros:\ for\ butterworth\ highpass\ all\ z-\/zeros\ are\ at\ z\ =\ 1}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ zZeros.fill(std::complex<double>(1,\ 0));}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BANDPASS:}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ zeros:\ for\ butterworth\ bandpass\ all\ z-\/zeros\ are\ at\ z\ =\ ±1}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ COEFFICIENTS\ -\/\ 1;\ ++i)}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zZeros[i]\ =\ (i\ \%\ 2\ ==\ 0)\ ?\ std::complex<double>(1,\ 0)\ :\ std::complex<double>(-\/1,\ 0);}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BANDSTOP:}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ zeros:\ for\ butterworth\ bandstop\ are\ in\ a\ circle\ with\ radius\ 1\ at\ the}}
+\DoxyCodeLine{00356\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ center\ of\ the\ z-\/domain\ with\ an\ angle\ in\ radians\ per\ sample\ of\ the}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ *\ center\ frequency.\ The\ zeros\ are\ complex\ conjugates\ of\ each\ other.}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ the\ notch\ (center)\ frequency\ in\ radians/sample\ */}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ omega0\ =\ std::sqrt(wl\ *\ whp)\ *\ Ts;}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ realPart\ =\ std::cos(omega0);}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ imagPart\ =\ std::sin(omega0);}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ zeroPlus(realPart,\ imagPart);\ \ \ \ \textcolor{comment}{//\ e\string^(+jω0)}}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ std::complex<double>\ zeroMinus(realPart,\ -\/imagPart);\ \ \textcolor{comment}{//\ e\string^(-\/jω0)}}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ COEFFICIENTS\ -\/\ 1;\ i\ +=\ 2)}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zZeros[i]\ =\ zeroPlus;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ first\ of\ pair}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ +\ 1\ <\ COEFFICIENTS)\ zZeros[i\ +\ 1]\ =\ zeroMinus;\ \ \textcolor{comment}{//\ second\ of\ pair}}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00376\ \ \ \ \ \}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{comment}{//\ get\ expanded\ polynomials}}
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keyword}{auto}\ b\ =\ \mbox{\hyperlink{namespacefilter_a01e4bc4ed062eab4a0341bd504d93770}{expandPolynomial}}<COEFFICIENTS\ -\/\ 1>(zZeros);}
+\DoxyCodeLine{00380\ \ \ \ \ \textcolor{keyword}{auto}\ a\ =\ \mbox{\hyperlink{namespacefilter_a01e4bc4ed062eab4a0341bd504d93770}{expandPolynomial}}<COEFFICIENTS\ -\/\ 1>(zPoles);}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{comment}{//\ scale\ the\ gain\ properly}}
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{keywordflow}{switch}\ (Type)}
+\DoxyCodeLine{00384\ \ \ \ \ \{}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ LOWPASS:}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Eval\ at\ DC}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ freqResp\ =\ \mbox{\hyperlink{namespacefilter_a66dead7c0ff20a5b4f094642b903081b}{evaluateFrequencyResponse}}<COEFFICIENTS\ -\/\ 1>(b,\ a,\ 0,\ Ts);}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mag\ \ \ \ \ \ =\ \mbox{\hyperlink{namespacefilter_a135352cee1c6cae845ef7e95fe967958}{complexAbs}}(freqResp);}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ scale\ \ =\ 1\ /\ mag;}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&coef\ :\ b)\ coef\ *=\ scale;}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HIGHPASS:}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Eval\ at\ nyquist}}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ freqResp\ =\ \mbox{\hyperlink{namespacefilter_a66dead7c0ff20a5b4f094642b903081b}{evaluateFrequencyResponse}}<COEFFICIENTS\ -\/\ 1>(}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b,}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ a,}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(M\_PI)\ /\ Ts,}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Ts);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mag\ \ \ \ \ =\ \mbox{\hyperlink{namespacefilter_a135352cee1c6cae845ef7e95fe967958}{complexAbs}}(freqResp);}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ scale\ =\ 1\ /\ mag;}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&coef\ :\ b)\ coef\ *=\ scale;}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BANDPASS:}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Eval\ at\ center\ frequency}}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ freqResp\ =}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacefilter_a66dead7c0ff20a5b4f094642b903081b}{evaluateFrequencyResponse}}<COEFFICIENTS\ -\/\ 1>(b,\ a,\ std::sqrt(wl\ *\ whp),\ Ts);}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mag\ \ \ \ \ =\ \mbox{\hyperlink{namespacefilter_a135352cee1c6cae845ef7e95fe967958}{complexAbs}}(freqResp);}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ scale\ =\ 1\ /\ mag;}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&coef\ :\ b)\ coef\ *=\ scale;}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BANDSTOP:}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Eval\ at\ dc\ gain}}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ freqResp\ =\ \mbox{\hyperlink{namespacefilter_a66dead7c0ff20a5b4f094642b903081b}{evaluateFrequencyResponse}}<COEFFICIENTS\ -\/\ 1>(b,\ a,\ 0,\ Ts);}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mag\ \ \ \ \ \ =\ \mbox{\hyperlink{namespacefilter_a135352cee1c6cae845ef7e95fe967958}{complexAbs}}(freqResp);}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ scale\ \ =\ 1\ /\ mag;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&coef\ :\ b)\ coef\ *=\ scale;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00426\ \ \ \ \ \}}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{comment}{//\ store\ in\ member\ arrays\ (reverse\ order)}}
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ COEFFICIENTS;\ ++i)}
+\DoxyCodeLine{00430\ \ \ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ naturalResponseCoefficients[COEFFICIENTS\ -\/\ i\ -\/\ 1]\ =\ a[i];}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ forcedResponseCoefficients[COEFFICIENTS\ -\/\ i\ -\/\ 1]\ \ =\ b[i];}
+\DoxyCodeLine{00433\ \ \ \ \ \}}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{comment}{//\ Store\ in}}
+\DoxyCodeLine{00436\ \ \ \ \ \mbox{\hyperlink{struct_coefficients}{Coefficients<COEFFICIENTS,\ T>}}\ both\_coefficients;}
+\DoxyCodeLine{00437\ \ \ \ \ both\_coefficients.naturalResponseCoefficients\ =\ naturalResponseCoefficients;}
+\DoxyCodeLine{00438\ \ \ \ \ both\_coefficients.forcedResponseCoefficients\ \ =\ forcedResponseCoefficients;}
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{return}\ both\_coefficients;}
+\DoxyCodeLine{00440\ \}}
+\DoxyCodeLine{00441\ \}\ \ \textcolor{comment}{//\ namespace\ filter}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

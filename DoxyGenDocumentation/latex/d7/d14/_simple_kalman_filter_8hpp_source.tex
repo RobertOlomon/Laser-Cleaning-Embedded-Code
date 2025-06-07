@@ -1,0 +1,37 @@
+\doxysection{Simple\+Kalman\+Filter.\+hpp}
+\hypertarget{_simple_kalman_filter_8hpp_source}{}\label{_simple_kalman_filter_8hpp_source}\index{include/SimpleKalmanFilter.hpp@{include/SimpleKalmanFilter.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ SimpleKalmanFilter\ -\/\ a\ Kalman\ Filter\ implementation\ for\ single\ variable\ models.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Created\ by\ Denys\ Sene,\ January,\ 1,\ 2017.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ Released\ under\ MIT\ License\ -\/\ see\ LICENSE\ file\ for\ details.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#ifndef\ SimpleKalmanFilter\_h}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#define\ SimpleKalmanFilter\_h}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_simple_kalman_filter}{SimpleKalmanFilter}}}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00014\ \ \ \mbox{\hyperlink{class_simple_kalman_filter}{SimpleKalmanFilter}}(\textcolor{keywordtype}{float}\ mea\_e,\ \textcolor{keywordtype}{float}\ est\_e,\ \textcolor{keywordtype}{float}\ q);}
+\DoxyCodeLine{00015\ \ \ \textcolor{keywordtype}{float}\ updateEstimate(\textcolor{keywordtype}{float}\ mea);}
+\DoxyCodeLine{00016\ \ \ \textcolor{keywordtype}{void}\ setMeasurementError(\textcolor{keywordtype}{float}\ mea\_e);}
+\DoxyCodeLine{00017\ \ \ \textcolor{keywordtype}{void}\ setEstimateError(\textcolor{keywordtype}{float}\ est\_e);}
+\DoxyCodeLine{00018\ \ \ \textcolor{keywordtype}{void}\ setProcessNoise(\textcolor{keywordtype}{float}\ q);}
+\DoxyCodeLine{00019\ \ \ \textcolor{keywordtype}{float}\ getKalmanGain();}
+\DoxyCodeLine{00020\ \ \ \textcolor{keywordtype}{float}\ getEstimateError();}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00023\ \ \ \textcolor{keywordtype}{float}\ \_err\_measure;}
+\DoxyCodeLine{00024\ \ \ \textcolor{keywordtype}{float}\ \_err\_estimate;}
+\DoxyCodeLine{00025\ \ \ \textcolor{keywordtype}{float}\ \_q;}
+\DoxyCodeLine{00026\ \ \ \textcolor{keywordtype}{float}\ \_current\_estimate\ =\ 0;}
+\DoxyCodeLine{00027\ \ \ \textcolor{keywordtype}{float}\ \_last\_estimate\ =\ 0;}
+\DoxyCodeLine{00028\ \ \ \textcolor{keywordtype}{float}\ \_kalman\_gain\ =\ 0;}
+\DoxyCodeLine{00029\ \};}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -1,0 +1,108 @@
+\doxysection{Stepper\+Motor Class Reference}
+\hypertarget{class_stepper_motor}{}\label{class_stepper_motor}\index{StepperMotor@{StepperMotor}}
+
+
+{\ttfamily \#include $<$stepper\+\_\+motor.\+hpp$>$}
+
+Inheritance diagram for Stepper\+Motor\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{d5/d53/class_stepper_motor}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params}{Electrical\+Params}}
+\item 
+struct \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params}{Motion\+Params}}
+\item 
+struct \mbox{\hyperlink{struct_stepper_motor_1_1_physical_params}{Physical\+Params}}
+\item 
+struct \mbox{\hyperlink{struct_stepper_motor_1_1_pins}{Pins}}
+\item 
+struct \mbox{\hyperlink{struct_stepper_motor_1_1_static_config}{Static\+Config}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_stepper_motor_ad9176d3d6a5530249475a5663d782419}\label{class_stepper_motor_ad9176d3d6a5530249475a5663d782419} 
+{\bfseries Stepper\+Motor} (const \mbox{\hyperlink{struct_stepper_motor_1_1_static_config}{Static\+Config}} \&cfg)
+\item 
+\Hypertarget{class_stepper_motor_a54e497d396c932e28ce6230e2cc8e571}\label{class_stepper_motor_a54e497d396c932e28ce6230e2cc8e571} 
+int {\bfseries begin} ()
+\item 
+\Hypertarget{class_stepper_motor_a93f02154e04571b27a751ae5b85719d2}\label{class_stepper_motor_a93f02154e04571b27a751ae5b85719d2} 
+void {\bfseries kill} ()
+\item 
+\Hypertarget{class_stepper_motor_abef65c97a966b3b0f547420446a6fd53}\label{class_stepper_motor_abef65c97a966b3b0f547420446a6fd53} 
+void {\bfseries apply} (const \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params}{Motion\+Params}} \&p)
+\item 
+\Hypertarget{class_stepper_motor_a44b3a14863f33352f8ed6caac729e034}\label{class_stepper_motor_a44b3a14863f33352f8ed6caac729e034} 
+void {\bfseries apply} (const \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params}{Electrical\+Params}} \&p)
+\item 
+\Hypertarget{class_stepper_motor_a6307df565f3f2988aa57fbdf6bd0fc6c}\label{class_stepper_motor_a6307df565f3f2988aa57fbdf6bd0fc6c} 
+void {\bfseries apply} (const \mbox{\hyperlink{struct_stepper_motor_1_1_physical_params}{Physical\+Params}} \&p)
+\item 
+\Hypertarget{class_stepper_motor_a7bb6bdde5dd09d5f63e9db4d3ffefe5b}\label{class_stepper_motor_a7bb6bdde5dd09d5f63e9db4d3ffefe5b} 
+float {\bfseries current\+Position\+Units} ()
+\item 
+\Hypertarget{class_stepper_motor_a3021cee8d24fa8b9db86ffb9b3df92b3}\label{class_stepper_motor_a3021cee8d24fa8b9db86ffb9b3df92b3} 
+void {\bfseries set\+Position\+Units} (float pos)
+\item 
+\Hypertarget{class_stepper_motor_a8ed2a6df33a85963aa68ec8fc0336c64}\label{class_stepper_motor_a8ed2a6df33a85963aa68ec8fc0336c64} 
+void {\bfseries move\+To\+Units} (float pos)
+\item 
+\Hypertarget{class_stepper_motor_acef7abe4a9362b4efdfe2ca21f371672}\label{class_stepper_motor_acef7abe4a9362b4efdfe2ca21f371672} 
+void {\bfseries set\+Speed\+Units} (float speed)
+\item 
+\Hypertarget{class_stepper_motor_a5460bf10949e4e6a531c10250357d37f}\label{class_stepper_motor_a5460bf10949e4e6a531c10250357d37f} 
+float {\bfseries speed\+Units} ()
+\item 
+\Hypertarget{class_stepper_motor_a8260817fea4d2ba8430eb8374f9618b8}\label{class_stepper_motor_a8260817fea4d2ba8430eb8374f9618b8} 
+float {\bfseries max\+Speed\+Units} ()
+\item 
+\Hypertarget{class_stepper_motor_aa09b3d0cfae9352239a445fa8637db78}\label{class_stepper_motor_aa09b3d0cfae9352239a445fa8637db78} 
+const char \texorpdfstring{$\ast$}{*} {\bfseries get\+Name} () const
+\item 
+\Hypertarget{class_stepper_motor_a07adbc6b1c9684e949bb84d659be46e7}\label{class_stepper_motor_a07adbc6b1c9684e949bb84d659be46e7} 
+int {\bfseries get\+Microsteps} () const
+\item 
+\Hypertarget{class_stepper_motor_a5876ce54187e8008be3b5ab822fba8fc}\label{class_stepper_motor_a5876ce54187e8008be3b5ab822fba8fc} 
+\mbox{\hyperlink{struct_stepper_motor_1_1_pins}{Pins}} {\bfseries get\+Pins} () const
+\item 
+\Hypertarget{class_stepper_motor_aa40191c767ae6e60421f42c5a656871e}\label{class_stepper_motor_aa40191c767ae6e60421f42c5a656871e} 
+TMC5160\+Stepper \& {\bfseries driver} ()
+\item 
+\Hypertarget{class_stepper_motor_a08eae1a48abae86fc44b031dd38fe1c1}\label{class_stepper_motor_a08eae1a48abae86fc44b031dd38fe1c1} 
+\mbox{\hyperlink{struct_stepper_motor_1_1_motion_params}{Motion\+Params}} {\bfseries get\+Motion\+Params} () const
+\item 
+\Hypertarget{class_stepper_motor_a0f43abacc407eadd4dc4603e8388d4f4}\label{class_stepper_motor_a0f43abacc407eadd4dc4603e8388d4f4} 
+\mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params}{Electrical\+Params}} {\bfseries get\+Electrical\+Params} () const
+\item 
+\Hypertarget{class_stepper_motor_a690de335a01cd73f4cbd8bea8f3242f6}\label{class_stepper_motor_a690de335a01cd73f4cbd8bea8f3242f6} 
+\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params}{Physical\+Params}} {\bfseries get\+Physical\+Params} () const
+\item 
+\Hypertarget{class_stepper_motor_a2653b01bd17909c6ab2e9637ab91da8f}\label{class_stepper_motor_a2653b01bd17909c6ab2e9637ab91da8f} 
+void {\bfseries dump\+DRV} (const char \texorpdfstring{$\ast$}{*}name)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_stepper_motor_a43f9dac47eaf23e0a53acf7bd4939328}\label{class_stepper_motor_a43f9dac47eaf23e0a53acf7bd4939328} 
+static constexpr float {\bfseries TMC5160\+\_\+\+PLUS\+\_\+\+RSENSE} = 0.\+022f
+\item 
+\Hypertarget{class_stepper_motor_a57fec41b3b3a1a4ac54e08283e1cbc4f}\label{class_stepper_motor_a57fec41b3b3a1a4ac54e08283e1cbc4f} 
+static constexpr float {\bfseries TMC5160\+\_\+\+PRO\+\_\+\+RSENSE} = 0.\+075f
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Lightweight wrapper around TMC5160\+Stepper + Accel\+Stepper that separates {\itshape static} hardware‑level data (pins, rsense, etc.) from {\itshape dynamic} runtime‑tuned parameters (motion profile and current limits).
+
+┌────────────────────┐ ┌─────────────────────┐ │ \doxylink{struct_stepper_motor_1_1_static_config}{Static\+Config} │ ────► ctor ─►│ \doxylink{class_stepper_motor}{Stepper\+Motor} │ └────────────────────┘ └─────────────────────┘ ▲ │ │ apply(...) │ provides ┌──────────────────────────┐ ┌──────────────────────────────┐ │ \doxylink{struct_stepper_motor_1_1_motion_params}{Motion\+Params} / │──────────►│ Accel\+Stepper / Driver │ │ \doxylink{struct_stepper_motor_1_1_electrical_params}{Electrical\+Params} │ └──────────────────────────────┘ 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/stepper\+\_\+motor.\+hpp\item 
+src/stepper\+\_\+motor.\+cpp\end{DoxyCompactItemize}

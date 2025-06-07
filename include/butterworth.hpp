@@ -32,7 +32,7 @@
  * The following transforms map a lowpass prototype into other filter types (s-domain):
  *
  * - **Lowpass to Lowpass**:
- *   \f$ s \rightarrow \frac{s}{\Omega_c} \f$
+ *   @f$ s \rightarrow \frac{s}{\Omega_c} @f$
  *
  * - **Lowpass to Highpass**:
  *   \f$ s \rightarrow \frac{\Omega_c}{s} \f$

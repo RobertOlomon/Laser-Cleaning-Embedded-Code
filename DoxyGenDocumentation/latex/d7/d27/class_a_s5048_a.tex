@@ -1,0 +1,152 @@
+\doxysection{AS5048A Class Reference}
+\hypertarget{class_a_s5048_a}{}\label{class_a_s5048_a}\index{AS5048A@{AS5048A}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_a_s5048_a_a48bee9a7b8eeb1a8b8ab7053bff11864}{AS5048A}} (uint8\+\_\+t arg\+\_\+cs, bool debug=false)
+\item 
+void \mbox{\hyperlink{class_a_s5048_a_a9393f5f154cf5ea08eb01244a06fa6bb}{begin}} ()
+\item 
+\Hypertarget{class_a_s5048_a_a35f61d8355e972a01a04257a2bd791f4}\label{class_a_s5048_a_a35f61d8355e972a01a04257a2bd791f4} 
+int32\+\_\+t {\bfseries get\+Revolutions} ()
+\item 
+int16\+\_\+t \mbox{\hyperlink{class_a_s5048_a_afe90817275f5893416d54962534347b2}{get\+Raw\+Rotation}} ()
+\item 
+int32\+\_\+t \mbox{\hyperlink{class_a_s5048_a_a960a8658590f61673328d1c1cdacd016}{get\+Rotation\+Unwrapped}} ()
+\item 
+double \mbox{\hyperlink{class_a_s5048_a_a0ba1e7e023ec7df38564a5d05e82bec9}{get\+Rotation\+In\+Degrees}} ()
+\item 
+double \mbox{\hyperlink{class_a_s5048_a_a40ecdea569599028102a14730ec7c9d4}{get\+Rotation\+In\+Radians}} ()
+\item 
+double \mbox{\hyperlink{class_a_s5048_a_a82e0d1122cdbfbbbd2be18df3dc723fb}{get\+Rotation\+Unwrapped\+In\+Radians}} ()
+\item 
+uint16\+\_\+t \mbox{\hyperlink{class_a_s5048_a_afee7dc02f73ab15b0ced5b756ca0d6de}{get\+State}} ()
+\item 
+void \mbox{\hyperlink{class_a_s5048_a_ab14e60942c472eefa2092d0701a96028}{print\+State}} ()
+\item 
+uint8\+\_\+t \mbox{\hyperlink{class_a_s5048_a_a4734f6924cfd91f5ca5697e6e4915d92}{get\+Gain}} ()
+\item 
+\Hypertarget{class_a_s5048_a_aa082881e5ce1e91e7822f9145f4ff67a}\label{class_a_s5048_a_aa082881e5ce1e91e7822f9145f4ff67a} 
+String {\bfseries get\+Errors} ()
+\item 
+String \mbox{\hyperlink{class_a_s5048_a_ad1c42ff9013cf02015b7d196f8347e10}{get\+Diagnostic}} ()
+\item 
+\Hypertarget{class_a_s5048_a_adf29beebcbedd83939bb54f481f3b9b8}\label{class_a_s5048_a_adf29beebcbedd83939bb54f481f3b9b8} 
+void {\bfseries set\+Zero\+Position} (uint16\+\_\+t arg\+\_\+position)
+\item 
+\Hypertarget{class_a_s5048_a_ad712ee693bc45366febeb725917160af}\label{class_a_s5048_a_ad712ee693bc45366febeb725917160af} 
+uint16\+\_\+t {\bfseries get\+Zero\+Position} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_a_s5048_a_a48bee9a7b8eeb1a8b8ab7053bff11864}\index{AS5048A@{AS5048A}!AS5048A@{AS5048A}}
+\index{AS5048A@{AS5048A}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{AS5048A()}{AS5048A()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_a48bee9a7b8eeb1a8b8ab7053bff11864} 
+AS5048\+A\+::\+AS5048A (\begin{DoxyParamCaption}\item[{uint8\+\_\+t}]{arg\+\_\+cs}{, }\item[{bool}]{debug}{ = {\ttfamily false}}\end{DoxyParamCaption})}
+
+Constructor 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_a_s5048_a_a9393f5f154cf5ea08eb01244a06fa6bb}\index{AS5048A@{AS5048A}!begin@{begin}}
+\index{begin@{begin}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{begin()}{begin()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_a9393f5f154cf5ea08eb01244a06fa6bb} 
+void AS5048\+A\+::begin (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Initializer Sets up the SPI interface
+
+Initialise Sets up the SPI interface \Hypertarget{class_a_s5048_a_ad1c42ff9013cf02015b7d196f8347e10}\index{AS5048A@{AS5048A}!getDiagnostic@{getDiagnostic}}
+\index{getDiagnostic@{getDiagnostic}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getDiagnostic()}{getDiagnostic()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_ad1c42ff9013cf02015b7d196f8347e10} 
+String AS5048\+A\+::get\+Diagnostic (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Get diagnostic \Hypertarget{class_a_s5048_a_a4734f6924cfd91f5ca5697e6e4915d92}\index{AS5048A@{AS5048A}!getGain@{getGain}}
+\index{getGain@{getGain}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getGain()}{getGain()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_a4734f6924cfd91f5ca5697e6e4915d92} 
+uint8\+\_\+t AS5048\+A\+::get\+Gain (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Returns the value used for Automatic Gain Control (Part of diagnostic register) \Hypertarget{class_a_s5048_a_afe90817275f5893416d54962534347b2}\index{AS5048A@{AS5048A}!getRawRotation@{getRawRotation}}
+\index{getRawRotation@{getRawRotation}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getRawRotation()}{getRawRotation()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_afe90817275f5893416d54962534347b2} 
+int16\+\_\+t AS5048\+A\+::get\+Raw\+Rotation (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Returns the raw angle directly from the sensor \Hypertarget{class_a_s5048_a_a0ba1e7e023ec7df38564a5d05e82bec9}\index{AS5048A@{AS5048A}!getRotationInDegrees@{getRotationInDegrees}}
+\index{getRotationInDegrees@{getRotationInDegrees}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getRotationInDegrees()}{getRotationInDegrees()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_a0ba1e7e023ec7df38564a5d05e82bec9} 
+double AS5048\+A\+::get\+Rotation\+In\+Degrees (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Get the rotation of the sensor relative to the zero position in degrees.
+
+\begin{DoxyReturn}{Returns}
+\{double\} between 0 and 360 
+\end{DoxyReturn}
+\Hypertarget{class_a_s5048_a_a40ecdea569599028102a14730ec7c9d4}\index{AS5048A@{AS5048A}!getRotationInRadians@{getRotationInRadians}}
+\index{getRotationInRadians@{getRotationInRadians}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getRotationInRadians()}{getRotationInRadians()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_a40ecdea569599028102a14730ec7c9d4} 
+double AS5048\+A\+::get\+Rotation\+In\+Radians (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Get the rotation of the sensor relative to the zero position in radians.
+
+\begin{DoxyReturn}{Returns}
+\{double\} between 0 and 2 \texorpdfstring{$\ast$}{*} PI 
+\end{DoxyReturn}
+\Hypertarget{class_a_s5048_a_a960a8658590f61673328d1c1cdacd016}\index{AS5048A@{AS5048A}!getRotationUnwrapped@{getRotationUnwrapped}}
+\index{getRotationUnwrapped@{getRotationUnwrapped}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getRotationUnwrapped()}{getRotationUnwrapped()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_a960a8658590f61673328d1c1cdacd016} 
+int32\+\_\+t AS5048\+A\+::get\+Rotation\+Unwrapped (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Get the unwrapped rotation
+
+Get the unwrapped rotation of the sensor, referenced to {\ttfamily position}. The result can grow beyond ±8191 by counting full revolutions.
+
+\begin{DoxyReturn}{Returns}
+int32\+\_\+t continuous angle in raw counts (1 LSB ≈ 0.\+02197°) 
+\end{DoxyReturn}
+\Hypertarget{class_a_s5048_a_a82e0d1122cdbfbbbd2be18df3dc723fb}\index{AS5048A@{AS5048A}!getRotationUnwrappedInRadians@{getRotationUnwrappedInRadians}}
+\index{getRotationUnwrappedInRadians@{getRotationUnwrappedInRadians}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getRotationUnwrappedInRadians()}{getRotationUnwrappedInRadians()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_a82e0d1122cdbfbbbd2be18df3dc723fb} 
+double AS5048\+A\+::get\+Rotation\+Unwrapped\+In\+Radians (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Get the unwrapped rotation of the sensor relative to the zero position in radians.
+
+\begin{DoxyReturn}{Returns}
+\{double\}
+\end{DoxyReturn}
+Get the rotation unwrapped of the sensor relative to the zero position in radians.
+
+\begin{DoxyReturn}{Returns}
+\{double\} 
+\end{DoxyReturn}
+\Hypertarget{class_a_s5048_a_afee7dc02f73ab15b0ced5b756ca0d6de}\index{AS5048A@{AS5048A}!getState@{getState}}
+\index{getState@{getState}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{getState()}{getState()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_afee7dc02f73ab15b0ced5b756ca0d6de} 
+uint16\+\_\+t AS5048\+A\+::get\+State (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+returns the value of the state register \begin{DoxyReturn}{Returns}
+16 bit uint16\+\_\+t containing flags
+\end{DoxyReturn}
+returns the value of the state register \begin{DoxyReturn}{Returns}
+unsigned 16 bit integer containing flags 
+\end{DoxyReturn}
+\Hypertarget{class_a_s5048_a_ab14e60942c472eefa2092d0701a96028}\index{AS5048A@{AS5048A}!printState@{printState}}
+\index{printState@{printState}!AS5048A@{AS5048A}}
+\doxysubsubsection{\texorpdfstring{printState()}{printState()}}
+{\footnotesize\ttfamily \label{class_a_s5048_a_ab14e60942c472eefa2092d0701a96028} 
+void AS5048\+A\+::print\+State (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+Print the diagnostic register of the sensor 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/AS5048\+A.\+hpp\item 
+src/AS5048\+A.\+cpp\end{DoxyCompactItemize}

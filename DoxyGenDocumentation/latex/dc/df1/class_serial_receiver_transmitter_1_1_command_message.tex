@@ -1,0 +1,69 @@
+\doxysection{Serial\+Receiver\+Transmitter\+::Command\+Message Class Reference}
+\hypertarget{class_serial_receiver_transmitter_1_1_command_message}{}\label{class_serial_receiver_transmitter_1_1_command_message}\index{SerialReceiverTransmitter::CommandMessage@{SerialReceiverTransmitter::CommandMessage}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_a5056820aad6885b131afc6d2837932b5}\label{class_serial_receiver_transmitter_1_1_command_message_a5056820aad6885b131afc6d2837932b5} 
+{\bfseries Command\+Message} (\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} G0, \mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} G4, \mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} G28, \mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} G90, \mbox{\hyperlink{struct_serial_receiver_transmitter_1_1m_command}{m\+Command}} M80, \mbox{\hyperlink{struct_serial_receiver_transmitter_1_1m_command}{m\+Command}} M17, \mbox{\hyperlink{struct_serial_receiver_transmitter_1_1m_command}{m\+Command}} M906)
+\item 
+\mbox{\hyperlink{class_serial_receiver_transmitter_1_1_command_message_a4ed3fb209c23b4b8fd0541f35e00de69}{Command\+Message}} (char buffer\mbox{[}$\,$\mbox{]})
+\begin{DoxyCompactList}\small\item\em Constructs a \doxylink{class_serial_receiver_transmitter_1_1_command_message}{Command\+Message} object by parsing a buffer containing G-\/code or M-\/code commands. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_ade4d63d635c1d4e33970431134a61cdf}\label{class_serial_receiver_transmitter_1_1_command_message_ade4d63d635c1d4e33970431134a61cdf} 
+\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} {\bfseries G0}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_a6e00674dc18a47156c4eb041f4bfaf07}\label{class_serial_receiver_transmitter_1_1_command_message_a6e00674dc18a47156c4eb041f4bfaf07} 
+\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} {\bfseries G4}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_a95b212ed7f21a587bcae7d1385fdbd15}\label{class_serial_receiver_transmitter_1_1_command_message_a95b212ed7f21a587bcae7d1385fdbd15} 
+\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} {\bfseries G28}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_ab1d10d619a753f35cb4c19a5b5425ee3}\label{class_serial_receiver_transmitter_1_1_command_message_ab1d10d619a753f35cb4c19a5b5425ee3} 
+\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1g_command}{g\+Command}} {\bfseries G90}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_a7b0144520f2a182a0d6528d6b91521b5}\label{class_serial_receiver_transmitter_1_1_command_message_a7b0144520f2a182a0d6528d6b91521b5} 
+\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1m_command}{m\+Command}} {\bfseries M80}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_aedb3e1a0e9687cb9be64d899ed315612}\label{class_serial_receiver_transmitter_1_1_command_message_aedb3e1a0e9687cb9be64d899ed315612} 
+\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1m_command}{m\+Command}} {\bfseries M17}
+\item 
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_a7270611a4e82f4c2ae77a9d4108d99a3}\label{class_serial_receiver_transmitter_1_1_command_message_a7270611a4e82f4c2ae77a9d4108d99a3} 
+\mbox{\hyperlink{struct_serial_receiver_transmitter_1_1m_command}{m\+Command}} {\bfseries M906}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_serial_receiver_transmitter_1_1_command_message_a4ed3fb209c23b4b8fd0541f35e00de69}\index{SerialReceiverTransmitter::CommandMessage@{SerialReceiverTransmitter::CommandMessage}!CommandMessage@{CommandMessage}}
+\index{CommandMessage@{CommandMessage}!SerialReceiverTransmitter::CommandMessage@{SerialReceiverTransmitter::CommandMessage}}
+\doxysubsubsection{\texorpdfstring{CommandMessage()}{CommandMessage()}}
+{\footnotesize\ttfamily \label{class_serial_receiver_transmitter_1_1_command_message_a4ed3fb209c23b4b8fd0541f35e00de69} 
+Serial\+Receiver\+Transmitter\+::\+Command\+Message\+::\+Command\+Message (\begin{DoxyParamCaption}\item[{char}]{buffer}{\mbox{[}$\,$\mbox{]}}\end{DoxyParamCaption})}
+
+
+
+Constructs a \doxylink{class_serial_receiver_transmitter_1_1_command_message}{Command\+Message} object by parsing a buffer containing G-\/code or M-\/code commands. 
+
+This constructor takes a character buffer as input, which represents a G-\/code or M-\/code command string. It parses the buffer to identify the command type (G or M) and its associated parameters. The parsed data is stored in the respective command fields (e.\+g., G0, G4, M80, etc.) of the \doxylink{class_serial_receiver_transmitter_1_1_command_message}{Command\+Message} object.
+
+The parsing logic handles\+:
+\begin{DoxyItemize}
+\item G-\/code commands (e.\+g., G0, G4, G28, G90) and their parameters (e.\+g., Y, A, C).
+\item M-\/code commands (e.\+g., M80, M17, M906) and their parameters.
+\end{DoxyItemize}
+
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & A null-\/terminated character array containing the G-\/code or M-\/code command string.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+The constructor uses {\ttfamily strtok} to tokenize the input buffer and processes each token to extract the command type and parameters. Unhandled commands or parameters are logged using {\ttfamily Serial.\+print}. 
+\end{DoxyNote}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/serial\+\_\+receiver\+\_\+transmitter.\+hpp\item 
+src/serial\+\_\+receiver\+\_\+transmitter.\+cpp\end{DoxyCompactItemize}

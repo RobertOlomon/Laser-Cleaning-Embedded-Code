@@ -1,0 +1,45 @@
+\doxysection{Coefficients\texorpdfstring{$<$}{<} SIZE, T \texorpdfstring{$>$}{>} Struct Template Reference}
+\hypertarget{struct_coefficients}{}\label{struct_coefficients}\index{Coefficients$<$ SIZE, T $>$@{Coefficients$<$ SIZE, T $>$}}
+
+
+Represents the coefficients used in a discrete filter.  
+
+
+
+
+{\ttfamily \#include $<$discrete\+\_\+filter.\+hpp$>$}
+
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{struct_coefficients_a5f937be607b5149a2c6d69d651c7226c}\label{struct_coefficients_a5f937be607b5149a2c6d69d651c7226c} 
+std\+::array$<$ T, SIZE $>$ {\bfseries natural\+Response\+Coefficients}
+\item 
+\Hypertarget{struct_coefficients_a8306d33de5873f1ffd20ea56c50fb91d}\label{struct_coefficients_a8306d33de5873f1ffd20ea56c50fb91d} 
+std\+::array$<$ T, SIZE $>$ {\bfseries forced\+Response\+Coefficients}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\subsubsection*{template$<$uint8\+\_\+t SIZE, typename T = float$>$\newline
+struct Coefficients$<$ SIZE, T $>$}
+Represents the coefficients used in a discrete filter. 
+
+This structure holds two sets of coefficients\+:
+\begin{DoxyItemize}
+\item {\ttfamily natural\+Response\+Coefficients}\+: \doxylink{struct_coefficients}{Coefficients} related to the natural response of the system.
+\item {\ttfamily forced\+Response\+Coefficients}\+: \doxylink{struct_coefficients}{Coefficients} related to the forced response of the system.
+\end{DoxyItemize}
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em SIZE} & The size of the coefficient arrays. \\
+\hline
+{\em T} & The data type of the coefficients (e.\+g., float, double). \\
+\hline
+\end{DoxyTemplParams}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/discrete\+\_\+filter.\+hpp\end{DoxyCompactItemize}

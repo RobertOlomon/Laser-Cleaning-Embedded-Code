@@ -139,12 +139,12 @@ def main():
                 continue
             if not cmd.endswith("\0"):
                 cmd += "\0"
-            # cmd2 = cmd3
-            # while(1):
-            #     for i in range(len(cmd2)):
-            #         print(f"[sending] {cmd2[i]}")
-            #         tx.send_msg(transmitter.CommandMessage(cmd2[i]))
-            #         time.sleep(1)
+            cmd2 = cmd3
+            while(1):
+                for i in range(len(cmd2)):
+                    print(f"[sending] {cmd2[i]}")
+                    tx.send_msg(transmitter.CommandMessage(cmd2[i]))
+                    time.sleep(1)
             
             tx.send_msg(transmitter.CommandMessage(cmd))
             print("[sent]")

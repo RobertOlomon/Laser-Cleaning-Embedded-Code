@@ -1,0 +1,201 @@
+\doxysection{filter Namespace Reference}
+\hypertarget{namespacefilter}{}\label{namespacefilter}\index{filter@{filter}}
+
+
+Implementation of Butterworth filter design in the discrete domain.  
+
+
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespacefilter_a242fdf3b598613d14a945d81afdacc89}\label{namespacefilter_a242fdf3b598613d14a945d81afdacc89} 
+enum {\bfseries Filter\+Type} \+: uint8\+\_\+t \{ {\bfseries LOWPASS} = 0b00
+, {\bfseries HIGHPASS} = 0b01
+, {\bfseries BANDPASS} = 0b10
+, {\bfseries BANDSTOP} = 0b11
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+std\+::complex$<$ double $>$ \mbox{\hyperlink{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9}{s2z}} (std\+::complex$<$ double $>$ s, double Ts)
+\item 
+{\footnotesize template$<$uint8\+\_\+t ORDER$>$ }\\std\+::array$<$ double, ORDER+1 $>$ \mbox{\hyperlink{namespacefilter_a01e4bc4ed062eab4a0341bd504d93770}{expand\+Polynomial}} (std\+::array$<$ std\+::complex$<$ double $>$, ORDER $>$ zeros)
+\item 
+{\footnotesize template$<$uint8\+\_\+t ORDER$>$ }\\std\+::complex$<$ double $>$ \mbox{\hyperlink{namespacefilter_a66dead7c0ff20a5b4f094642b903081b}{evaluate\+Frequency\+Response}} (const std\+::array$<$ double, ORDER+1 $>$ \&b, const std\+::array$<$ double, ORDER+1 $>$ \&a, double w, double Ts)
+\item 
+double \mbox{\hyperlink{namespacefilter_a135352cee1c6cae845ef7e95fe967958}{complex\+Abs}} (std\+::complex$<$ double $>$ z)
+\item 
+std\+::complex$<$ double $>$ \mbox{\hyperlink{namespacefilter_a2e2ae7e7db818d0354f6d4d6e2c37721}{complex\+Sqrt}} (std\+::complex$<$ double $>$ z)
+\item 
+\Hypertarget{namespacefilter_a2bf5f290d39499d2ae8cad58a90edf43}\label{namespacefilter_a2bf5f290d39499d2ae8cad58a90edf43} 
+constexpr uint16\+\_\+t {\bfseries get\+Num\+Coefficients} (uint8\+\_\+t ORDER, Filter\+Type type)
+\item 
+{\footnotesize template$<$uint8\+\_\+t ORDER, Filter\+Type Type = LOWPASS, typename T  = float$>$ }\\\mbox{\hyperlink{struct_coefficients}{Coefficients}}$<$ get\+Num\+Coefficients(ORDER, Type), T $>$ \mbox{\hyperlink{namespacefilter_ae86ec6872c21deb8ecdcdbc0d1306e80}{butterworth}} (double wc, double Ts, double wh=0.\+0)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of Butterworth filter design in the discrete domain. 
+
+This header file provides a implementation of Butterworth filters, including low-\/pass, high-\/pass, band-\/pass, and band-\/stop filters. The Butterworth filter is known for its maximally flat frequency response in the passband, making it ideal for applications requiring minimal signal distortion.
+
+The implementation includes\+:
+\begin{DoxyItemize}
+\item Conversion of poles and zeros from the Laplace domain to the Z domain using the bilinear transform.
+\item Expansion of polynomial coefficients from a set of poles or zeros.
+\item Evaluation of the frequency response of the filter at a given frequency.
+\item A templated Butterworth filter class for designing filters of arbitrary order and type.
+\end{DoxyItemize}
+
+The design process includes pre-\/warping of frequencies for the bilinear transform, generation of prototype poles, and scaling of coefficients.
+
+The following transforms map a lowpass prototype into other filter types (s-\/domain)\+:
+
+{\bfseries{Lowpass to Lowpass\+:}}\textbackslash{} $ s \rightarrow \frac{s}{\Omega_c} $
+
+
+\begin{DoxyItemize}
+\item {\bfseries{Lowpass to Highpass}}\+: $ s \rightarrow \frac{\Omega_c}{s} $
+\item {\bfseries{Lowpass to Bandpass}}\+: $ s \rightarrow \frac{s^2 + \Omega_0^2}{B s} $
+\item {\bfseries{Lowpass to Bandstop}}\+: $ s \rightarrow \frac{B s}{s^2 + \Omega_0^2} $
+\end{DoxyItemize}
+
+Where\+: $ \Omega_0 = \sqrt{\Omega_l \cdot \Omega_h}, \quad B = \Omega_h - \Omega_l $
+
+After analog transformation, apply the bilinear transform\+: \[ s = \frac{2}{T} \cdot \frac{z - 1}{z + 1} \]
+
+\begin{DoxyNote}{Note}
+This implementation is designed for C++20 {\ttfamily constexpr}.
+\end{DoxyNote}
+\begin{DoxyWarning}{Warning}
+High-\/order filters can introduce high phase delays and should be used with caution. For most applications, low-\/pass and high-\/pass filters of order 2 or lower are sufficient.
+\end{DoxyWarning}
+If results are suspicious, verify filter coefficients using external tools such as MATLAB or Python (e.\+g., Sci\+Py).\hypertarget{namespacefilter_Usage}{}\doxysubsection{\texorpdfstring{Usage}{Usage}}\label{namespacefilter_Usage}
+To use this implementation, include this header file and instantiate the {\ttfamily Butterworth} class with the desired filter order, type, and parameters. Then, pass those coefficients into a {\ttfamily \doxylink{class_discrete_filter}{Discrete\+Filter}}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{struct_coefficients}{Coefficients}}\ coe\ =\ \ \mbox{\hyperlink{namespacefilter_ae86ec6872c21deb8ecdcdbc0d1306e80}{butterworth<1,\ LOWPASS>}}(wc,\ Ts);}
+\DoxyCodeLine{\mbox{\hyperlink{class_discrete_filter}{DiscreteFilter<2>}}\ Filter(coe);}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAuthor}{Author}
+Aiden Prevey 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+4/29/2025 
+\end{DoxyDate}
+\begin{DoxyVersion}{Version}
+2.\+0 
+\end{DoxyVersion}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{namespacefilter_ae86ec6872c21deb8ecdcdbc0d1306e80}\index{filter@{filter}!butterworth@{butterworth}}
+\index{butterworth@{butterworth}!filter@{filter}}
+\doxysubsubsection{\texorpdfstring{butterworth()}{butterworth()}}
+{\footnotesize\ttfamily \label{namespacefilter_ae86ec6872c21deb8ecdcdbc0d1306e80} 
+template$<$uint8\+\_\+t ORDER, Filter\+Type Type = LOWPASS, typename T  = float$>$ \\
+\mbox{\hyperlink{struct_coefficients}{Coefficients}}$<$ get\+Num\+Coefficients(ORDER, Type), T $>$ filter\+::butterworth (\begin{DoxyParamCaption}\item[{double}]{wc}{, }\item[{double}]{Ts}{, }\item[{double}]{wh}{ = {\ttfamily 0.0}}\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em wc} & for LOW/\+HIGHPASS\+: cutoff ωc. for BANDPASS/\+BANDSTOP\+: lower edge ωl. \\
+\hline
+\mbox{\texttt{ in}}  & {\em Ts} & sample time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em type} & filter type, LOWPASS, HIGHPASS, BANDPASS, BANDSTOP. defaults to LOWPASS. \\
+\hline
+\mbox{\texttt{ in}}  & {\em wh} & upper edge ωh (only used for band filters). \\
+\hline
+\end{DoxyParams}
+\Hypertarget{namespacefilter_a135352cee1c6cae845ef7e95fe967958}\index{filter@{filter}!complexAbs@{complexAbs}}
+\index{complexAbs@{complexAbs}!filter@{filter}}
+\doxysubsubsection{\texorpdfstring{complexAbs()}{complexAbs()}}
+{\footnotesize\ttfamily \label{namespacefilter_a135352cee1c6cae845ef7e95fe967958} 
+double filter\+::complex\+Abs (\begin{DoxyParamCaption}\item[{std\+::complex$<$ double $>$}]{z}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+used to calculate the magnitude of a complex number, created for constexpr useage 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em z} & the complex number to calculate the magnitude of \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the magnitude of the complex number 
+\end{DoxyReturn}
+\Hypertarget{namespacefilter_a2e2ae7e7db818d0354f6d4d6e2c37721}\index{filter@{filter}!complexSqrt@{complexSqrt}}
+\index{complexSqrt@{complexSqrt}!filter@{filter}}
+\doxysubsubsection{\texorpdfstring{complexSqrt()}{complexSqrt()}}
+{\footnotesize\ttfamily \label{namespacefilter_a2e2ae7e7db818d0354f6d4d6e2c37721} 
+std\+::complex$<$ double $>$ filter\+::complex\+Sqrt (\begin{DoxyParamCaption}\item[{std\+::complex$<$ double $>$}]{z}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+used to calculate the square root of a complex number, created for constexpr useage 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em z} & the complex number to calculate the square root of \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the square root of the complex number 
+\end{DoxyReturn}
+\Hypertarget{namespacefilter_a66dead7c0ff20a5b4f094642b903081b}\index{filter@{filter}!evaluateFrequencyResponse@{evaluateFrequencyResponse}}
+\index{evaluateFrequencyResponse@{evaluateFrequencyResponse}!filter@{filter}}
+\doxysubsubsection{\texorpdfstring{evaluateFrequencyResponse()}{evaluateFrequencyResponse()}}
+{\footnotesize\ttfamily \label{namespacefilter_a66dead7c0ff20a5b4f094642b903081b} 
+template$<$uint8\+\_\+t ORDER$>$ \\
+std\+::complex$<$ double $>$ filter\+::evaluate\+Frequency\+Response (\begin{DoxyParamCaption}\item[{const std\+::array$<$ double, ORDER+1 $>$ \&}]{b}{, }\item[{const std\+::array$<$ double, ORDER+1 $>$ \&}]{a}{, }\item[{double}]{w}{, }\item[{double}]{Ts}{}\end{DoxyParamCaption})}
+
+used to evaluate the frequency response of a filter at a given frequency 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em b} & the numerator coefficients of the filter \\
+\hline
+\mbox{\texttt{ in}}  & {\em a} & the denominator coefficients of the filter \\
+\hline
+\mbox{\texttt{ in}}  & {\em w} & the frequency to evaluate at in rad/s \\
+\hline
+\mbox{\texttt{ in}}  & {\em Ts} & the sample time \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the frequency response of the filter at the given frequency 
+\end{DoxyReturn}
+\Hypertarget{namespacefilter_a01e4bc4ed062eab4a0341bd504d93770}\index{filter@{filter}!expandPolynomial@{expandPolynomial}}
+\index{expandPolynomial@{expandPolynomial}!filter@{filter}}
+\doxysubsubsection{\texorpdfstring{expandPolynomial()}{expandPolynomial()}}
+{\footnotesize\ttfamily \label{namespacefilter_a01e4bc4ed062eab4a0341bd504d93770} 
+template$<$uint8\+\_\+t ORDER$>$ \\
+std\+::array$<$ double, ORDER+1 $>$ filter\+::expand\+Polynomial (\begin{DoxyParamCaption}\item[{std\+::array$<$ std\+::complex$<$ double $>$, ORDER $>$}]{zeros}{}\end{DoxyParamCaption})}
+
+used to multiply out a series of zeros to obtain a list of coefficients
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em zeros} & a vector of complex poles or zeros to multiply out, works for any polynomial in the form of (x -\/ z1)(x -\/ z2)...(x -\/ zn) where z1, z2, ... zn are the value of zeros.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a vector of coefficients for the polynomial with the 0th index being the constant term and the last index being the leading coefficient 
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+the coefficients are returned as doubles, the imaginary part of the complex number is ignored 
+\end{DoxyNote}
+\Hypertarget{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9}\index{filter@{filter}!s2z@{s2z}}
+\index{s2z@{s2z}!filter@{filter}}
+\doxysubsubsection{\texorpdfstring{s2z()}{s2z()}}
+{\footnotesize\ttfamily \label{namespacefilter_ac52f17b1906e24e647858a052c5e0dc9} 
+std\+::complex$<$ double $>$ filter\+::s2z (\begin{DoxyParamCaption}\item[{std\+::complex$<$ double $>$}]{s}{, }\item[{double}]{Ts}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+used to transform poles from the laplace domain to the Z domain for discrete time using the bilinear transform
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em s} & a pole or zero from the laplace domain \\
+\hline
+\mbox{\texttt{ in}}  & {\em Ts} & the sample time \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a complex number corresponding to the Z domain location 
+\end{DoxyReturn}

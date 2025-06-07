@@ -1,0 +1,171 @@
+\doxysection{stepper\+\_\+motor.\+hpp}
+\hypertarget{stepper__motor_8hpp_source}{}\label{stepper__motor_8hpp_source}\index{include/stepper\_motor.hpp@{include/stepper\_motor.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <optional>}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <AccelStepper.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <Arduino.h>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}TMCStepper.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_stepper_motor}{StepperMotor}}\ :\ \textcolor{keyword}{public}\ AccelStepper}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ TMC5160\_PLUS\_RSENSE\ =\ 0.022f;}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ TMC5160\_PRO\_RSENSE\ \ =\ 0.075f;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_stepper_motor_1_1_pins}{Pins}}}
+\DoxyCodeLine{00030\ \ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a6a985036d95db167361a8d793c066371}{cs}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_adb6394158bc4096614466269f813cb31}{step}};\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a6d0aa4edfdf84dfd1adbe25606c5d1d9}{dir}};\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a170da08cd493e8a760f4aa5790ed0d0e}{brake}}\ =\ 255;\ \ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_ae4c1fa9bde135266b2c92fae6a738fe4}{mosi}}\ \ =\ 255;\ \ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a707e4ee0c263448a16b0a8a3a4f0e4ba}{miso}}\ \ =\ 255;\ \ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a8e58a5dbfb49db56bb3730fb52483ba2}{sck}}\ \ \ =\ 255;\ \ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins}{Pins}}(}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ cs\_,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ step\_,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ dir\_,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ brake\_\ =\ 255,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ mosi\_\ \ =\ 255,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ miso\_\ \ =\ 255,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ sck\_\ \ \ =\ 255)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a6a985036d95db167361a8d793c066371}{cs}}(cs\_),}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_adb6394158bc4096614466269f813cb31}{step}}(step\_),}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a6d0aa4edfdf84dfd1adbe25606c5d1d9}{dir}}(dir\_),}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a170da08cd493e8a760f4aa5790ed0d0e}{brake}}(brake\_),}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_ae4c1fa9bde135266b2c92fae6a738fe4}{mosi}}(mosi\_),}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a707e4ee0c263448a16b0a8a3a4f0e4ba}{miso}}(miso\_),}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_pins_a8e58a5dbfb49db56bb3730fb52483ba2}{sck}}(sck\_)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \ \};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_stepper_motor_1_1_static_config}{StaticConfig}}}
+\DoxyCodeLine{00059\ \ \ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_pins}{Pins}}\ pins;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ rSense;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ name\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_static_config}{StaticConfig}}(\mbox{\hyperlink{struct_stepper_motor_1_1_pins}{Pins}}\ pins\_,\ \textcolor{keywordtype}{float}\ rSense\_,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ name\_)}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ :\ pins(pins\_),}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rSense(rSense\_),}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ name(name\_)}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \};}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ runtime‑tuned\ groups\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_stepper_motor_1_1_motion_params}{MotionParams}}}
+\DoxyCodeLine{00074\ \ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params_aedb5bfaacc4f68e251530a972dc0d039}{maxSpeed}}\ \ \ \ \ =\ 0.0f;\ \ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params_ae413a5147f425cde2c7d7c6f7fdb78bc}{acceleration}}\ =\ 0.0f;\ \ }
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params}{MotionParams}}()\ :\ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params_aedb5bfaacc4f68e251530a972dc0d039}{maxSpeed}}(0.0f),\ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params_ae413a5147f425cde2c7d7c6f7fdb78bc}{acceleration}}(0.0f)\ \{\}\ \ \textcolor{comment}{//\ default}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params}{MotionParams}}(\textcolor{keywordtype}{float}\ maxSpeed\_,\ \textcolor{keywordtype}{float}\ acceleration\_)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params_aedb5bfaacc4f68e251530a972dc0d039}{maxSpeed}}(maxSpeed\_),}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_motion_params_ae413a5147f425cde2c7d7c6f7fdb78bc}{acceleration}}(acceleration\_)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ \ \ \ \ \};}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params}{ElectricalParams}}}
+\DoxyCodeLine{00088\ \ \ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a7d042c52eeed2aad4fbea3f0f0742fa8}{runCurrent\_mA}}\ =\ 1000.0f;\ \ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ uint16\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a9fd5d961032a79c8bc6b0e2ea8d3232b}{microsteps}}\ =\ 16;\ \ \ \ \ \ \ }
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params}{ElectricalParams}}()\ :\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a7d042c52eeed2aad4fbea3f0f0742fa8}{runCurrent\_mA}}(1000.0f)\ \{\}\ \ \textcolor{comment}{//\ default}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params}{ElectricalParams}}(\textcolor{keywordtype}{float}\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a7d042c52eeed2aad4fbea3f0f0742fa8}{runCurrent\_mA}},\ uint16\_t\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a9fd5d961032a79c8bc6b0e2ea8d3232b}{microsteps}})}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a7d042c52eeed2aad4fbea3f0f0742fa8}{runCurrent\_mA}}(\mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a7d042c52eeed2aad4fbea3f0f0742fa8}{runCurrent\_mA}}),}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a9fd5d961032a79c8bc6b0e2ea8d3232b}{microsteps}}(\mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a9fd5d961032a79c8bc6b0e2ea8d3232b}{microsteps}})}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00098\ \ \ \ \ \};}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params}{PhysicalParams}}}
+\DoxyCodeLine{00101\ \ \ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}}\ =\ 1.0f;\ \ }
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_physical_params}{PhysicalParams}}()\ :\ \mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}}(1.0f)\ \{\}\ \ \textcolor{comment}{//\ default}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{struct_stepper_motor_1_1_physical_params}{PhysicalParams}}(\textcolor{keywordtype}{float}\ stepDistance\_)\ :\ \mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}}(stepDistance\_)\ \{\}}
+\DoxyCodeLine{00106\ \ \ \ \ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{class_stepper_motor}{StepperMotor}}(\textcolor{keyword}{const}\ StaticConfig\&\ cfg);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordtype}{int}\ begin();}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{void}\ kill();}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//\ Setters}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{void}\ apply(\textcolor{keyword}{const}\ MotionParams\&\ p);}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{void}\ apply(\textcolor{keyword}{const}\ ElectricalParams\&\ p);}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{void}\ apply(\textcolor{keyword}{const}\ PhysicalParams\&\ p);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordtype}{float}\ currentPositionUnits()\ \{\ \textcolor{keywordflow}{return}\ currentPosition()\ *\ phys\_.\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}};\ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordtype}{void}\ setPositionUnits(\textcolor{keywordtype}{float}\ pos)\ \{\ setCurrentPosition(pos\ /\ phys\_.\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}});\ \}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{void}\ moveToUnits(\textcolor{keywordtype}{float}\ pos)\ \{\ moveTo(pos\ /\ phys\_.\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}});\ \}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{void}\ setSpeedUnits(\textcolor{keywordtype}{float}\ speed)\ \{\ setSpeed(speed\ /\ phys\_.\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}});\ \}}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{float}\ speedUnits()\ \{\ \textcolor{keywordflow}{return}\ speed()\ *\ phys\_.\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}};\ \}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordtype}{float}\ maxSpeedUnits()\ \{\ \textcolor{keywordflow}{return}\ maxSpeed()\ *\ phys\_.\mbox{\hyperlink{struct_stepper_motor_1_1_physical_params_a9621e45295cd3d242d9a7acbdaecf288}{stepDistance}};\ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ getters}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ getName()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ cfg\_.name;\ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{int}\ getMicrosteps()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ elec\_.\mbox{\hyperlink{struct_stepper_motor_1_1_electrical_params_a9fd5d961032a79c8bc6b0e2ea8d3232b}{microsteps}};\ \}}
+\DoxyCodeLine{00128\ \ \ \ \ Pins\ getPins()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ cfg\_.pins;\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ TMC5160Stepper\&\ driver()\ \{\ \textcolor{keywordflow}{return}\ stepper\_driver\_;\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ MotionParams\ getMotionParams()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ motion\_;\ \}}
+\DoxyCodeLine{00133\ \ \ \ \ ElectricalParams\ getElectricalParams()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ elec\_;\ \}}
+\DoxyCodeLine{00134\ \ \ \ \ PhysicalParams\ getPhysicalParams()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ phys\_;\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{void}\ dumpDRV(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ name)}
+\DoxyCodeLine{00137\ \ \ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ TMC5160Stepper\ drv\ =\ stepper\_driver\_;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ uint32\_t\ s\ \ \ \ \ \ \ \ \ =\ drv.DRV\_STATUS();}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}\%s\ 0x\%08lX\ \ "{}},\ name,\ s);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}SGR:\ \%d\ "{}},\ drv.sg\_result());\ \ \textcolor{comment}{//\ StallGuard\ value}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}FS:\ \%d\ "{}},\ drv.fsactive());\ \ \ \ \textcolor{comment}{//\ FS\ value}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}CS:\ \%d\ "{}},\ drv.cs\_actual());\ \ \ \textcolor{comment}{//\ Current\ sense}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}SG:\ \%d\ "{}},\ drv.stallguard());\ \ \textcolor{comment}{//\ StallGuard}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}OT:\ \%d\ "{}},\ drv.ot());\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Overtemperature}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}OTPW:\ \%d\ "{}},\ drv.otpw());\ \ \ \ \ \ \textcolor{comment}{//\ Overtemperature\ prewarning}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}S2GA:\ \%d\ "{}},\ drv.s2ga());\ \ \ \ \ \ \textcolor{comment}{//\ Short\ to\ ground\ A}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}S2GB:\ \%d\ "{}},\ drv.s2gb());\ \ \ \ \ \ \textcolor{comment}{//\ Short\ to\ ground\ B}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}OLA:\ \%d\ "{}},\ drv.ola());\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Overload\ A}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}OLB:\ \%d\ "{}},\ drv.olb());\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Overload\ B}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}STST:\ \%d\ "{}},\ drv.stst());\ \ \ \ \ \ \textcolor{comment}{//\ Stepper\ state}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ Serial.printf(s\ \&\ (1\ <<\ 12)\ ?\ \textcolor{stringliteral}{"{}2vsa:\ 1"{}}\ :\ \textcolor{stringliteral}{"{}2vsa:\ 0\ "{}});}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}2vsg:\ \%d\ "{}},\ drv.s2vs\_level());\ \ \textcolor{comment}{//\ Short\ to\ VSA}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1.\ \ Read\ GSTAT\ –\ it\ latches\ the\ reason\ for\ the\ last\ internal\ reset}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ uint8\_t\ gstat\ =\ drv.GSTAT();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ bits:\ 0-\/reset,\ 1-\/drv\_err,\ 2-\/uv\_cp}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}Reset:\ \%d\ "{}},\ drv.reset());\ \ \ \ \ \ \textcolor{comment}{//\ reset\ status}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}DRV\_ERR:\ \%d\ "{}},\ drv.drv\_err());\ \ \textcolor{comment}{//\ driver\ error}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}UV\_CP:\ \%d\ "{}},\ drv.uv\_cp());\ \ \ \ \ \ \textcolor{comment}{//\ undervoltage\ condition}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}ION\ Mode:\ sd\ \%d\ "{}},\ drv.sd\_mode());\ \ \ \ \ \ \ \textcolor{comment}{//\ ION\ mode}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ Serial.printf(\textcolor{stringliteral}{"{}ION\ Mode:\ drv\_enn\ \%d\ "{}},\ drv.drv\_enn());\ \ \textcolor{comment}{//\ ION\ mode}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ Serial.println();}
+\DoxyCodeLine{00165\ \ \ \ \ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00168\ \ \ \ \ StaticConfig\ cfg\_;}
+\DoxyCodeLine{00169\ \ \ \ \ MotionParams\ motion\_;}
+\DoxyCodeLine{00170\ \ \ \ \ ElectricalParams\ elec\_;}
+\DoxyCodeLine{00171\ \ \ \ \ PhysicalParams\ phys\_;}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{/*\ driver\ instance\ (soft‑SPI\ vs\ HW‑SPI\ picked\ at\ run‑time)\ */}}
+\DoxyCodeLine{00174\ \ \ \ \ uint8\_t\ BrakePin;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Pin\ used\ to\ brake\ the\ motor}}
+\DoxyCodeLine{00175\ \ \ \ \ TMC5160Stepper\ stepper\_driver\_;\ \ \textcolor{comment}{//\ The\ wrapped\ driver\ instance}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{bool}\ BrakeOn\ =\ LOW;\ \ \ \ \ \ \textcolor{comment}{//\ Define\ which\ direction\ for\ the\ pin\ to\ activate\ the\ break.}}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordtype}{char}*\ name\_\ \ =\ \textcolor{keyword}{nullptr};\ \ \textcolor{comment}{//\ The\ name\ of\ the\ motor,\ used\ for\ debugging}}
+\DoxyCodeLine{00179\ \};}
+
+\end{DoxyCode}

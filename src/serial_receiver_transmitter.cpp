@@ -8,40 +8,36 @@
 // #else
 // #endif
 
-void SerialReceiverTransmitter::begin(uint32_t baudrate)
-{
-    Serial.begin(baudrate);
-}
+void SerialReceiverTransmitter::begin(uint32_t baudrate) { Serial.begin(baudrate); }
 
 // Generic template (catch-all for types not explicitly handled)
 template <typename T>
 void SerialReceiverTransmitter::SafePrint(T message)
 {
     // Convert to String and get length
-    String str = String(message);
+    String str      = String(message);
     int neededSpace = str.length();
 
-    if (Serial.availableForWrite() >= neededSpace) {
+    if (Serial.availableForWrite() >= neededSpace)
+    {
         Serial.print(str);
     }
 }
 
 // Specialized for const char*
-void SerialReceiverTransmitter::SafePrint(const char* message)
+void SerialReceiverTransmitter::SafePrint(const char *message)
 {
     if (message == nullptr) return;
 
     int remaining = Serial.availableForWrite();
-    for (int i = 0; message[i] != '\0' && remaining > 0; ++i, --remaining) {
+    for (int i = 0; message[i] != '\0' && remaining > 0; ++i, --remaining)
+    {
         Serial.write(message[i]);
     }
 }
 
 // Specialized for Arduino String
-void SerialReceiverTransmitter::SafePrint(String message)
-{
-    SafePrint(message.c_str());
-}
+void SerialReceiverTransmitter::SafePrint(String message) { SafePrint(message.c_str()); }
 
 SerialReceiverTransmitter::CommandMessage::CommandMessage()
     : G0(),
@@ -250,13 +246,13 @@ SerialReceiverTransmitter::SerialReceiverTransmitter()
  */
 void SerialReceiverTransmitter::reset()
 {
-    state_ = State::WAITING_FOR_HEADER;
-    currMsgId_ = MessageType::NONE;
+    state_             = State::WAITING_FOR_HEADER;
+    currMsgId_         = MessageType::NONE;
     lastReceivedMsgId_ = MessageType::NONE;
-    currMsgLen_ = 0;
+    currMsgLen_        = 0;
     std::memset(currMsgData_, 0, BUFFER_SIZE);
     lastReceivedCommandMessage_ = CommandMessage();
-    lastReceivedStopMessage_ = Stop();
+    lastReceivedStopMessage_    = Stop();
 }
 
 /**
@@ -338,7 +334,8 @@ void SerialReceiverTransmitter::parse()
     };
 }
 
-SerialReceiverTransmitter::CommandMessage SerialReceiverTransmitter::lastReceivedCommandMessage() const
+SerialReceiverTransmitter::CommandMessage SerialReceiverTransmitter::lastReceivedCommandMessage()
+    const
 {
     return lastReceivedCommandMessage_;
 }
