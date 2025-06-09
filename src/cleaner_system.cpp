@@ -158,6 +158,12 @@ void Cleaner::run()
 
         motor->run();
     }
+
+    if (command_in_progress_ && atTarget())
+    {
+        Serial.println(SERIAL_ACK);
+        command_in_progress_ = false;
+    }
 }
 /**
  * @brief Runs the 1kHz control loop
@@ -458,6 +464,7 @@ void Cleaner::stop()
  */
 void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
 {
+    bool ack = false;
     if (command.G0.received)
     {
         // Move command, modify the state to the desired state
@@ -466,23 +473,27 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
         des_state_.jaw_pos      = command.G0.y;    // jaw position
         des_state_.clamp_pos    = command.G0.c;    // clamp position
         des_state_.is_Brake     = command.G0.val;  // brake
+        command_in_progress_    = true;
     }
     if (command.G4.received)
     {
         // Dwell command, wait for a certain time
         command.G4.received = false;  // reset the received
         delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
+        ack = true;
     }
     if (command.G28.received)
     {
         // Home command
         command.G28.received = false;
         home(command);
+        ack = true;
     }
     if (command.G90.received)
     {
         // Absolute positioning command, not yet implemented
         Serial.print("I ain't doin that\n");
+        ack = true;
     }
     if (command.M80.received)
     {
@@ -501,6 +512,7 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
         {
             clamp_motor_.setMaxSpeed(command.M80.c);
         }
+        ack = true;
     }
     if (command.M17.received)
     {
@@ -516,6 +528,7 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
         {
             clamp_motor_.setAcceleration(command.M17.c);
         }
+        ack = true;
     }
     if (command.M906.received)
     {
@@ -539,7 +552,20 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
             electricalParams.runCurrent_mA                  = command.M906.c * 1000;
             clamp_motor_.apply(electricalParams);  // set current limit in mA
         }
+        ack = true;
     }
+    if (ack && !command_in_progress_)
+    {
+        Serial.println(SERIAL_ACK);
+    }
+}
+
+bool Cleaner::atTarget() const
+{
+    State error = des_state_ - state_;
+    return fabs(error.jaw_rotation) < POSITION_EPSILON &&
+           fabs(error.jaw_pos) < POSITION_EPSILON &&
+           fabs(error.clamp_pos) < POSITION_EPSILON;
 }
 
 /**

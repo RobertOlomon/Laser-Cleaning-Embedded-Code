@@ -125,6 +125,7 @@ public:
 
 private:
     void runControl();
+    bool atTarget() const;
 
     static constexpr uint32_t DEBOUNCE_TIME_MS = 10;
     struct ToggleButtonState
@@ -185,6 +186,7 @@ private:
     State des_state_;
 
     constexpr static const char* SERIAL_ACK = "At Pos\r";
+    constexpr static float POSITION_EPSILON = 0.01f;
 
     constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY = M_TWOPI / 100.0f;
     constexpr static float ENCODER_JAW_POSITION_SENSITIVITY = 1.0f;
@@ -234,4 +236,6 @@ private:
     float desired_clamp_speed = 0;
 
     unsigned long last_read_time = 0;
+
+    bool command_in_progress_ = false;
 };
