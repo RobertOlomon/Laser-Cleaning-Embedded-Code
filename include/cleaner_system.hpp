@@ -2,11 +2,10 @@
 
 #include <vector>
 
-#include "SimpleKalmanFilter.hpp"
-
 #include "AS5048A.hpp"
 #include "PCF8575.h"
 #include "RotaryEncoder.h"
+#include "SimpleKalmanFilter.hpp"
 #include "TMCStepper.h"
 #include "controllers.hpp"
 #include "discrete_filter.hpp"
@@ -17,7 +16,7 @@
 class Cleaner
 {
 public:
-    Cleaner();
+    Cleaner(SerialReceiverTransmitter& receiver);
     ~Cleaner();
     int begin();
     int reset();
@@ -188,7 +187,7 @@ private:
 
     constexpr static float ENCODER_JAW_ROTATION_SENSITIVITY = M_TWOPI / 100.0f;
     constexpr static float ENCODER_JAW_POSITION_SENSITIVITY = 1.0f;
-    constexpr static float ENCODER_CLAMP_SENSITIVITY = 0.1f;
+    constexpr static float ENCODER_CLAMP_SENSITIVITY        = 0.1f;
 
     constexpr static const float RUN_RATE_HZ  = 1000.0f;
     constexpr static const float HOMING_SPEED = 100.0f;  // Speed for homing in mm/s
@@ -201,8 +200,10 @@ private:
     bool ENCODER_JAW_POSITION_SPEED_HIGH = false;
     bool ENCODER_JAW_ROTATION_SPEED_HIGH = false;
 
-    bool AutoMode = false;
+    bool AutoMode        = false;
     bool breakSwitchedOn = false;
+
+    bool command_in_progress_ = false;
 
     PCF8575 IOExtender_;  // Must be defined before the rotary encoders
 
@@ -222,16 +223,24 @@ private:
     // Filters and Controllers
     DiscreteFilter<3> clampLowpassFilter;
     DiscreteFilter<3> jawEncoderLowpassFilter;
-    
+
     DiscreteFilter<3> ClampPID;
 
-    // SimpleKalmanFilter JawRotKalman;
+    SerialReceiverTransmitter& receiver;
 
     float potValue     = 0;
     float lastPotValue = 0;
 
     float desired_jaw_rotation_speed = 0;
-    float desired_clamp_speed = 0;
+    float desired_clamp_speed        = 0;
 
     unsigned long last_read_time = 0;
 };
+
+Cleaner::State abs(Cleaner::State state)
+{
+    state.jaw_rotation = std::abs(state.jaw_rotation);
+    state.jaw_pos      = std::abs(state.jaw_pos);
+    state.clamp_pos    = std::abs(state.clamp_pos);
+    return state;
+}

@@ -14,13 +14,15 @@
 /**
  * @brief Constructs a Cleaner object and initializes all member components.
  *
- * This constructor initializes the jaw rotation, jaw position, and clamp motors with their respective configurations.
- * It also sets up the encoder for clamp position, lowpass filters for clamp and jaw encoder signals, and the PID controller for the clamp.
- * The jaw rotation, jaw position, and clamp encoders are initialized with their respective pins and IO extender read callbacks.
- * Motors are added to the internal array for management, and default motion, electrical, and physical profiles are applied to each motor.
- * Finally, the system is reset to its initial state.
+ * This constructor initializes the jaw rotation, jaw position, and clamp motors with their
+ * respective configurations. It also sets up the encoder for clamp position, lowpass filters for
+ * clamp and jaw encoder signals, and the PID controller for the clamp. The jaw rotation, jaw
+ * position, and clamp encoders are initialized with their respective pins and IO extender read
+ * callbacks. Motors are added to the internal array for management, and default motion, electrical,
+ * and physical profiles are applied to each motor. Finally, the system is reset to its initial
+ * state.
  */
-Cleaner::Cleaner()
+Cleaner::Cleaner(SerialReceiverTransmitter& receiver)
     : jaw_rotation_motor_(jawRotationCfg),
       jaw_pos_motor_(jawPosCfg),
       clamp_motor_(clampCfg),  // Assume hardware SPI for now
@@ -36,9 +38,11 @@ Cleaner::Cleaner()
           ENCODER_JAW_POSITION_PIN1,
           ENCODER_JAW_POSITION_PIN2,
           [&](int pin) { return IOExtender_.readNoUpdate(pin); }),
-      encoder_clamp_(ENCODER_CLAMP_PIN1, ENCODER_CLAMP_PIN2, [&](int pin) {
-          return IOExtender_.readNoUpdate(pin);
-      })
+      encoder_clamp_(
+          ENCODER_CLAMP_PIN1,
+          ENCODER_CLAMP_PIN2,
+          [&](int pin) { return IOExtender_.readNoUpdate(pin); }),
+      receiver(receiver)
 {
     // Add motors to the array
     motors[0] = &jaw_rotation_motor_;
@@ -74,7 +78,8 @@ Cleaner::~Cleaner() = default;
  * - Initializes the IO extender.
  * - Configures the necessary GPIO pins for limit switch, emergency stop, and roll brake.
  *
- * @return int Returns EXIT_SUCCESS on successful initialization, or EXIT_FAILURE if any component fails to initialize.
+ * @return int Returns EXIT_SUCCESS on successful initialization, or EXIT_FAILURE if any component
+ * fails to initialize.
  */
 int Cleaner::begin()
 {
@@ -130,7 +135,7 @@ int Cleaner::begin()
  * - Iterates through all motors, running each one.
  * - For the clamp motor, synchronizes its speed with the jaw rotation motor and adjusts
  *   the speed to account for any additional required movement based on error.
- * 
+ *
  * The function ensures coordinated movement between the jaw rotation and clamp motors,
  * and enforces speed limits for safe operation.
  */
@@ -161,7 +166,7 @@ void Cleaner::run()
 }
 /**
  * @brief Runs the 1kHz control loop
- * 
+ *
  */
 void Cleaner::runControl()
 {
@@ -188,9 +193,19 @@ void Cleaner::runControl()
         // Invert what's currently on the brake
         digitalWrite(ROLL_BRAKE_REAL_PIN, !digitalRead(ROLL_BRAKE_REAL_PIN));
     }
+
+    State errorTol;
+    errorTol.jaw_rotation = 0.05f;
+    errorTol.jaw_pos      = 0.1f;
+    errorTol.clamp_pos    = 0.01f;
+    if (abs(error) < errorTol && command_in_progress_)
+    {
+        receiver.SafePrint(SERIAL_ACK);
+        command_in_progress_ = false;
+    }
 }
 
-/**
+/**std
  * @brief Updates and returns the real-time state of the Cleaner system.
  *
  * This function checks the emergency stop (ESTOP) pin and, if triggered,
@@ -225,10 +240,11 @@ Cleaner::State Cleaner::updateRealState()
 /**
  * @brief Updates the desired state of the cleaner system in manual mode based on encoder inputs.
  *
- * This function reads the current positions from the jaw rotation, jaw position, and clamp encoders,
- * computes the deltas since the last update, and applies these changes to the desired state using
- * configurable sensitivity and speed factors. It also updates the brake state based on the current
- * brake switch status. The function ensures that encoder values are stored for the next update cycle.
+ * This function reads the current positions from the jaw rotation, jaw position, and clamp
+ * encoders, computes the deltas since the last update, and applies these changes to the desired
+ * state using configurable sensitivity and speed factors. It also updates the brake state based on
+ * the current brake switch status. The function ensures that encoder values are stored for the next
+ * update cycle.
  *
  * @return Cleaner::State The updated desired state of the cleaner system.
  */
@@ -273,7 +289,7 @@ Cleaner::State Cleaner::updateDesStateManual()
 /**
  * @brief Used to see if we need to switch
  * from auto mode
- * 
+ *
  */
 void Cleaner::updateModeAuto()
 {
@@ -466,23 +482,26 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
         des_state_.jaw_pos      = command.G0.y;    // jaw position
         des_state_.clamp_pos    = command.G0.c;    // clamp position
         des_state_.is_Brake     = command.G0.val;  // brake
+        command_in_progress_    = true;
     }
     if (command.G4.received)
     {
         // Dwell command, wait for a certain time
         command.G4.received = false;  // reset the received
         delay(command.G4.val);        // kinda sucks it's blocking but good enough for now
+        command_in_progress_ = true;
     }
     if (command.G28.received)
     {
         // Home command
         command.G28.received = false;
         home(command);
+        receiver.SafePrint(SERIAL_ACK);
     }
     if (command.G90.received)
     {
         // Absolute positioning command, not yet implemented
-        Serial.print("I ain't doin that\n");
+        receiver.SafePrint("I ain't doin that\n");
     }
     if (command.M80.received)
     {
@@ -501,6 +520,7 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
         {
             clamp_motor_.setMaxSpeed(command.M80.c);
         }
+        receiver.SafePrint(SERIAL_ACK);
     }
     if (command.M17.received)
     {
@@ -516,6 +536,7 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
         {
             clamp_motor_.setAcceleration(command.M17.c);
         }
+        receiver.SafePrint(SERIAL_ACK);
     }
     if (command.M906.received)
     {
@@ -539,6 +560,7 @@ void Cleaner::processCommand(SerialReceiverTransmitter::CommandMessage command)
             electricalParams.runCurrent_mA                  = command.M906.c * 1000;
             clamp_motor_.apply(electricalParams);  // set current limit in mA
         }
+        receiver.SafePrint(SERIAL_ACK);
     }
 }
 

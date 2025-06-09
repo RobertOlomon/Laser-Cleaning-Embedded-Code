@@ -30,7 +30,7 @@ void SerialReceiverTransmitter::SafePrint(const char *message)
     if (message == nullptr) return;
 
     int remaining = Serial.availableForWrite();
-    for (int i = 0; message[i] != '\0' && remaining > 0; ++i, --remaining)
+    for (int i = 0; message[i] != '\0' && remaining > 0; ++i, remaining = Serial.availableForWrite())
     {
         Serial.write(message[i]);
     }
@@ -120,12 +120,12 @@ SerialReceiverTransmitter::CommandMessage::CommandMessage(char buffer[])
                     break;
                 case 90:
                     G90.received = true;
-                    Serial.println("G90 received, I ain't implementing that\n");
+                    SafePrint("G90 received, I ain't implementing that\n");
                     break;
                 default:
-                    Serial.print("Unhandled Gcode type: G");
-                    Serial.print(std::to_string(token[0]).c_str());
-                    Serial.print("\n");
+                    SafePrint("Unhandled Gcode type: G");
+                    SafePrint(std::to_string(token[0]).c_str());
+                    SafePrint("\n");
                     break;
             }
         }
@@ -150,8 +150,8 @@ SerialReceiverTransmitter::CommandMessage::CommandMessage(char buffer[])
                     ProcessCommand(&buffer[strlen(token) + 1], &M906);
                     break;
                 default:
-                    Serial.print("Unhandled M-code: M");
-                    Serial.println(mCmd);
+                    SafePrint("Unhandled M-code: M");
+                    SafePrint(mCmd);
                     break;
             }
         }

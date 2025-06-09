@@ -81,10 +81,10 @@ public:
     void begin(uint32_t baudrate);
 
     template <typename T>
-    void SafePrint(T message);
+    void static SafePrint(T message);
 
-    void SafePrint(const char* message);
-    void SafePrint(String message);
+    void static SafePrint(const char* message);
+    void static SafePrint(String message);
 
     CommandMessage lastReceivedCommandMessage() const;
     Stop lastReceivedStopMessage() const;

@@ -9,7 +9,7 @@ constexpr int BAUDERATE = 921600;
 
 SerialReceiverTransmitter receiver;
 
-Cleaner cleaner_system;
+Cleaner cleaner_system(receiver);
 
 static bool wasInManualMode = false;
 static bool wasInDebugMode  = false;
