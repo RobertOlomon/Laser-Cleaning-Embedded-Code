@@ -237,7 +237,7 @@ private:
     unsigned long last_read_time = 0;
 };
 
-Cleaner::State abs(Cleaner::State state)
+inline Cleaner::State abs(Cleaner::State state)
 {
     state.jaw_rotation = std::abs(state.jaw_rotation);
     state.jaw_pos      = std::abs(state.jaw_pos);
